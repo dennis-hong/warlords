@@ -2,13 +2,15 @@
 
 import { useState } from 'react';
 import { useGameState } from '../hooks/useGameState';
-import { 
-  ResourceBar, 
-  WorldMap, 
-  DomesticPanel, 
-  BottomTabs, 
-  RegionList 
+import {
+  ResourceBar,
+  WorldMap,
+  DomesticPanel,
+  BottomTabs,
+  RegionList,
+  MarchPanel
 } from './ui';
+import BattleScreen from './BattleScreen';
 import { SEASONS } from '../constants/worldData';
 import type { GameTab, RegionId } from '../types';
 
@@ -21,7 +23,17 @@ export default function WarlordsGame() {
     selectRegion,
     executeDomestic,
     endTurn,
-    newGame
+    newGame,
+    // 출진 시스템
+    startMarch,
+    cancelMarch,
+    selectMarchTarget,
+    setMarchStep,
+    toggleMarchGeneral,
+    setCommander,
+    assignTroops,
+    confirmMarch,
+    handleBattleEnd
   } = useGameState();
 
   const [activeTab, setActiveTab] = useState<GameTab>('map');
@@ -56,6 +68,17 @@ export default function WarlordsGame() {
       endTurn();
     }
   };
+
+  // 전투 화면
+  if (game.phase === 'battle' && game.battleData) {
+    return (
+      <BattleScreen
+        battleData={game.battleData}
+        regions={game.regions}
+        onBattleEnd={handleBattleEnd}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900 pb-20">
@@ -162,12 +185,48 @@ export default function WarlordsGame() {
         {/* 군사 탭 */}
         {activeTab === 'military' && (
           <div className="space-y-4">
-            <h2 className="text-lg font-bold text-yellow-400">⚔️ 군사</h2>
-            <div className="bg-gray-800 rounded-lg p-6 text-center text-gray-400">
-              <div className="text-4xl mb-2">🚧</div>
-              <p>출진 시스템 준비 중...</p>
-              <p className="text-sm mt-2">지도에서 적 영토를 선택하세요</p>
-            </div>
+            <h2 className="text-lg font-bold text-yellow-400 flex items-center gap-2">
+              ⚔️ 출진
+              {game.march && (
+                <span className="text-sm font-normal text-gray-400">
+                  출발: {selectedRegionData?.nameKo || playerRegions[0]?.nameKo}
+                </span>
+              )}
+            </h2>
+
+            {/* 출진 상태가 없으면 시작 버튼 */}
+            {!game.march ? (
+              <div className="bg-gray-800 rounded-lg p-6 text-center">
+                <div className="text-4xl mb-3">⚔️</div>
+                <p className="text-gray-300 mb-4">
+                  {playerRegions.length > 0
+                    ? `${isPlayerRegion ? selectedRegionData?.nameKo : playerRegions[0].nameKo}에서 출진합니다`
+                    : '출발할 영토가 없습니다'}
+                </p>
+                <button
+                  onClick={startMarch}
+                  disabled={playerRegions.length === 0}
+                  className="w-full py-3 rounded-lg bg-red-600 text-white font-bold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-red-500 transition-colors"
+                >
+                  출진 준비
+                </button>
+              </div>
+            ) : (
+              /* 출진 패널 */
+              <MarchPanel
+                march={game.march}
+                playerRegions={playerRegions}
+                allRegions={game.regions}
+                selectedSourceRegion={selectedRegionData && isPlayerRegion ? selectedRegionData : null}
+                onSelectTarget={selectMarchTarget}
+                onToggleGeneral={toggleMarchGeneral}
+                onSetCommander={setCommander}
+                onAssignTroops={assignTroops}
+                onSetStep={setMarchStep}
+                onConfirm={confirmMarch}
+                onCancel={cancelMarch}
+              />
+            )}
           </div>
         )}
 

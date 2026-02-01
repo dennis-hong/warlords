@@ -143,7 +143,52 @@ export interface GameState {
   actionsRemaining: number;
   maxActions: number;
   phase: 'map' | 'domestic' | 'military' | 'battle';
+  // 출진 상태
+  march: MarchState | null;
+  // 전투 데이터
+  battleData: BattleInitData | null;
 }
 
 // 탭 종류
 export type GameTab = 'map' | 'domestic' | 'military' | 'diplomacy';
+
+// 게임 단계 (구 GameContext용)
+export type GamePhase = 'title' | 'faction_select' | 'playing' | 'battle' | 'game_over';
+
+// ============================================
+// 출진 시스템
+// ============================================
+
+export type MarchStep = 'target' | 'generals' | 'troops' | 'confirm';
+
+export interface MarchUnit {
+  generalId: string;
+  troops: number;
+  troopType: TroopType;
+  isCommander: boolean;  // 주장 여부
+}
+
+export interface MarchState {
+  step: MarchStep;
+  targetRegion: RegionId | null;
+  units: MarchUnit[];
+  foodRequired: number;
+}
+
+// 전투 초기화 데이터
+export interface BattleInitData {
+  playerUnits: MarchUnit[];
+  playerRegionId: RegionId;
+  enemyRegionId: RegionId;
+  enemyGeneralIds: string[];
+  enemyTroops: number;
+}
+
+// 전투 결과
+export interface BattleOutcome {
+  winner: 'player' | 'enemy';
+  playerTroopsLost: number;
+  enemyTroopsLost: number;
+  capturedGenerals: string[];
+  conqueredRegion: boolean;
+}
