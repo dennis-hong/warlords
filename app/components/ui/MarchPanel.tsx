@@ -64,6 +64,9 @@ export function MarchPanel({
 
   // 현재 배분된 총 병력
   const totalAssignedTroops = march.units.reduce((sum, u) => sum + u.troops, 0);
+  
+  // 남은 가용 병력
+  const remainingTroops = availableTroops - totalAssignedTroops;
 
   // 목표 지역 정보
   const targetRegion = march.targetRegion ? allRegions[march.targetRegion] : null;
@@ -241,17 +244,40 @@ export function MarchPanel({
         <div className="bg-gray-800 rounded-lg p-4 space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-yellow-400 font-bold">⚔️ 병력 편성</h3>
-            <span className="text-sm text-gray-400">
-              가용: {availableTroops.toLocaleString()}
-            </span>
           </div>
 
-          <div className="bg-gray-700/50 rounded p-2 text-sm">
-            <div className="flex justify-between text-gray-300">
-              <span>총 배분 병력:</span>
-              <span className={totalAssignedTroops > availableTroops ? 'text-red-400' : 'text-green-400'}>
-                {totalAssignedTroops.toLocaleString()} / {availableTroops.toLocaleString()}
+          {/* 병력 현황 바 */}
+          <div className="bg-gray-700 rounded-lg p-3 space-y-2">
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-400">출발지 병력</span>
+              <span className="text-white">{sourceRegion.troops.toLocaleString()}</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-400">최소 수비</span>
+              <span className="text-red-400">-{minDefenseTroops.toLocaleString()}</span>
+            </div>
+            <div className="border-t border-gray-600 my-1"></div>
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-400">가용 병력</span>
+              <span className="text-blue-400 font-bold">{availableTroops.toLocaleString()}</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-400">배분 완료</span>
+              <span className="text-green-400">-{totalAssignedTroops.toLocaleString()}</span>
+            </div>
+            <div className="border-t border-gray-600 my-1"></div>
+            <div className="flex justify-between text-sm font-bold">
+              <span className="text-yellow-400">남은 가용</span>
+              <span className={remainingTroops >= 0 ? 'text-yellow-400' : 'text-red-400'}>
+                {remainingTroops.toLocaleString()}
               </span>
+            </div>
+            {/* 프로그레스 바 */}
+            <div className="h-2 bg-gray-600 rounded-full overflow-hidden">
+              <div 
+                className={`h-full transition-all ${totalAssignedTroops > availableTroops ? 'bg-red-500' : 'bg-green-500'}`}
+                style={{ width: `${Math.min(100, (totalAssignedTroops / availableTroops) * 100)}%` }}
+              />
             </div>
           </div>
 
@@ -259,13 +285,21 @@ export function MarchPanel({
             {march.units.map(unit => {
               const general = GENERALS[unit.generalId];
               if (!general) return null;
+              
+              // 이 장수가 사용 가능한 최대 병력 = 남은 가용 + 현재 배분량
+              const maxForThisUnit = remainingTroops + unit.troops;
 
               return (
                 <div key={unit.generalId} className="bg-gray-700 rounded-lg p-3 space-y-3">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xl">{general.portrait}</span>
-                    <span className="font-bold text-white">{general.nameKo}</span>
-                    {unit.isCommander && <span className="text-yellow-400 text-sm">⭐ 주장</span>}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xl">{general.portrait}</span>
+                      <span className="font-bold text-white">{general.nameKo}</span>
+                      {unit.isCommander && <span className="text-yellow-400 text-sm">⭐</span>}
+                    </div>
+                    <span className="text-lg font-bold text-green-400">
+                      {unit.troops.toLocaleString()}
+                    </span>
                   </div>
 
                   {/* 병종 선택 */}
@@ -287,23 +321,37 @@ export function MarchPanel({
 
                   {/* 병력 슬라이더 */}
                   <div className="space-y-1">
-                    <div className="flex justify-between text-sm text-gray-400">
-                      <span>병력</span>
-                      <span>{unit.troops.toLocaleString()}</span>
-                    </div>
                     <input
                       type="range"
                       min={0}
-                      max={availableTroops}
+                      max={Math.max(0, maxForThisUnit)}
                       step={100}
                       value={unit.troops}
                       onChange={(e) => onAssignTroops(unit.generalId, Number(e.target.value), unit.troopType)}
-                      className="w-full h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer accent-yellow-500"
+                      className="w-full h-3 bg-gray-600 rounded-lg appearance-none cursor-pointer accent-yellow-500"
                     />
-                    <div className="flex justify-between text-xs text-gray-500">
-                      <span>0</span>
-                      <span>{availableTroops.toLocaleString()}</span>
-                    </div>
+                  </div>
+
+                  {/* 빠른 배분 버튼 */}
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => onAssignTroops(unit.generalId, 0, unit.troopType)}
+                      className="flex-1 py-1 text-xs bg-gray-600 hover:bg-gray-500 rounded transition-colors"
+                    >
+                      초기화
+                    </button>
+                    <button
+                      onClick={() => onAssignTroops(unit.generalId, Math.floor(maxForThisUnit / 2), unit.troopType)}
+                      className="flex-1 py-1 text-xs bg-gray-600 hover:bg-gray-500 rounded transition-colors"
+                    >
+                      절반
+                    </button>
+                    <button
+                      onClick={() => onAssignTroops(unit.generalId, maxForThisUnit, unit.troopType)}
+                      className="flex-1 py-1 text-xs bg-yellow-600 hover:bg-yellow-500 rounded transition-colors"
+                    >
+                      최대
+                    </button>
                   </div>
                 </div>
               );

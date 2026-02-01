@@ -250,13 +250,6 @@ export default function WarlordsGame() {
         onEndTurn={handleEndTurn}
       />
 
-      {/* 새 게임 버튼 (디버그용) */}
-      <button
-        onClick={newGame}
-        className="fixed top-16 right-4 bg-gray-700 hover:bg-gray-600 text-xs text-gray-300 px-2 py-1 rounded"
-      >
-        🔄 새 게임
-      </button>
     </div>
   );
 }
