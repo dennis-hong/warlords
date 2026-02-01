@@ -1,5 +1,5 @@
-import BattleGame from './components/BattleGame';
+import WarlordsGame from './components/WarlordsGame';
 
 export default function Home() {
-  return <BattleGame />;
+  return <WarlordsGame />;
 }

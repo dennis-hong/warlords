@@ -1,4 +1,7 @@
-// 장수 데이터
+// ============================================
+// 장수 시스템
+// ============================================
+
 export interface General {
   id: string;
   name: string;
@@ -10,10 +13,12 @@ export interface General {
   portrait?: string;  // 이모지 or 이미지
 }
 
-// 병종
+// ============================================
+// 전투 시스템
+// ============================================
+
 export type TroopType = 'infantry' | 'cavalry' | 'archer';
 
-// 계략
 export interface Stratagem {
   id: string;
   name: string;
@@ -25,30 +30,24 @@ export interface Stratagem {
   cooldown: number;
 }
 
-// 전투 유닛 (장수 + 병력)
 export interface BattleUnit {
   general: General;
   troops: number;
   maxTroops: number;
   morale: number;
   troopType: TroopType;
-  usedStratagems: string[];  // 쿨다운 중인 계략
+  usedStratagems: string[];
 }
 
-// 일기토 선택지
 export type DuelChoice = 'power' | 'counter' | 'special';
-
-// 전투 행동
 export type BattleAction = 'charge' | 'defend' | 'stratagem' | 'duel';
 
-// 전투 로그
 export interface BattleLog {
   round: number;
   message: string;
   type: 'info' | 'damage' | 'morale' | 'stratagem' | 'duel' | 'victory' | 'defeat';
 }
 
-// 전투 상태
 export interface BattleState {
   round: number;
   maxRounds: number;
@@ -63,10 +62,88 @@ export interface BattleState {
   };
 }
 
-// 전투 결과
 export interface BattleResult {
   winner: 'player' | 'enemy';
   playerTroopsLost: number;
   enemyTroopsLost: number;
   rounds: number;
 }
+
+// ============================================
+// 지역 & 세력 & 내정 시스템
+// ============================================
+
+// 세력 ID
+export type FactionId = 'player' | 'caocao' | 'sunquan' | 'dongzhuo' | 'yuanshao' | 'liubiao' | 'liuzhang' | 'gongsunzan' | 'rebels';
+
+// 세력 정보
+export interface Faction {
+  id: FactionId;
+  name: string;
+  nameKo: string;
+  color: string;     // 맵 표시용 색상
+  ruler: string;     // 군주 장수 ID
+}
+
+// 지역 ID
+export type RegionId = 'luoyang' | 'xuchang' | 'chengdu' | 'jianye' | 'changan' | 'ye' | 'jingzhou' | 'yizhou' | 'youzhou';
+
+// 지역 정보
+export interface Region {
+  id: RegionId;
+  name: string;
+  nameKo: string;
+  description: string;
+  adjacent: RegionId[];  // 인접 지역
+  owner: FactionId;      // 소유 세력
+  // 자원
+  gold: number;
+  food: number;
+  population: number;
+  troops: number;
+  // 개발도 (0~100)
+  commerce: number;      // 상업
+  agriculture: number;   // 농업
+  defense: number;       // 성벽 내구도
+  // 주둔 장수
+  generals: string[];
+}
+
+// 자원 종류
+export interface Resources {
+  gold: number;
+  food: number;
+  population: number;
+  troops: number;
+}
+
+// 내정 명령
+export type DomesticAction = 'develop_farm' | 'develop_commerce' | 'recruit' | 'train' | 'rest';
+
+// 내정 명령 정보
+export interface DomesticCommand {
+  id: DomesticAction;
+  name: string;
+  nameKo: string;
+  icon: string;
+  description: string;
+  cost: Partial<Resources>;
+  statRequired: 'politics' | 'might' | 'charisma';
+}
+
+// 게임 상태
+export interface GameState {
+  turn: number;
+  season: 'spring' | 'summer' | 'fall' | 'winter';
+  year: number;
+  playerFaction: FactionId;
+  regions: Record<RegionId, Region>;
+  factions: Record<FactionId, Faction>;
+  selectedRegion: RegionId | null;
+  actionsRemaining: number;
+  maxActions: number;
+  phase: 'map' | 'domestic' | 'military' | 'battle';
+}
+
+// 탭 종류
+export type GameTab = 'map' | 'domestic' | 'military' | 'diplomacy';
