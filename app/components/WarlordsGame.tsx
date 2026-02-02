@@ -13,7 +13,8 @@ import {
   PrisonerPanel,
   Toast,
   useToast,
-  ConfirmModal
+  ConfirmModal,
+  EventModal
 } from './ui';
 import BattleScreen from './BattleScreen';
 import TitleScreen from './TitleScreen';
@@ -56,7 +57,9 @@ export default function WarlordsGame() {
     recruitFreeGeneral,
     recruitPrisoner,
     executePrisoner,
-    releasePrisoner
+    releasePrisoner,
+    // 이벤트 시스템
+    handleEventChoice
   } = useGameState();
 
   const [activeTab, setActiveTab] = useState<GameTab>('map');
@@ -406,6 +409,14 @@ export default function WarlordsGame() {
         onConfirm={confirmEndTurn}
         onCancel={() => setShowEndTurnModal(false)}
       />
+
+      {/* 역사 이벤트 모달 */}
+      {game.activeEvent && (
+        <EventModal
+          event={game.activeEvent}
+          onChoice={handleEventChoice}
+        />
+      )}
 
     </div>
   );

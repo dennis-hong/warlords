@@ -17,3 +17,5 @@ export { PrisonerPanel } from './PrisonerPanel';
 // UI 공통
 export { Toast, useToast } from './Toast';
 export { ConfirmModal } from './ConfirmModal';
+// 이벤트 시스템
+export { EventModal } from './EventModal';

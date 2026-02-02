@@ -4,10 +4,12 @@ import { useState, useEffect, useCallback } from 'react';
 import type {
   GameState, RegionId, DomesticAction, Region,
   MarchState, MarchStep, MarchUnit, BattleInitData, BattleOutcome, TroopType,
-  Prisoner, FreeGeneral, GeneralFate, FactionId, GamePhase
+  Prisoner, FreeGeneral, GeneralFate, FactionId, GamePhase,
+  HistoricalEvent, EventTrigger, EventChoice, EventEffect, EventCondition
 } from '../types';
 import { REGIONS, FACTIONS, DOMESTIC_COMMANDS, FACTION_DETAILS } from '../constants/worldData';
 import { GENERALS, INITIAL_FREE_GENERALS, INITIAL_LOYALTY, UNAFFILIATED_GENERALS } from '../constants/gameData';
+import { HISTORICAL_EVENTS } from '../constants/events';
 import { attemptRecruit, getInitialLoyalty } from '../utils/battle';
 
 // 세력 선택에 따른 초기 상태 생성
@@ -28,6 +30,7 @@ const createInitialState = (selectedFaction: FactionId = 'player'): GameState =>
     season: 'spring',
     year: 190,
     playerFaction: 'player',
+    selectedFaction: selectedFaction,  // 원래 선택한 세력 저장 (이벤트 조건용)
     regions,
     factions: FACTIONS,
     selectedRegion: null,
@@ -40,7 +43,11 @@ const createInitialState = (selectedFaction: FactionId = 'player'): GameState =>
     prisoners: [],
     freeGenerals: JSON.parse(JSON.stringify(INITIAL_FREE_GENERALS)),
     deadGenerals: [],
-    generalLoyalty: { ...INITIAL_LOYALTY }
+    generalLoyalty: { ...INITIAL_LOYALTY },
+    // 이벤트 시스템
+    triggeredEvents: [],
+    activeEvent: null,
+    battleBonuses: {}
   };
 };
 
@@ -80,7 +87,24 @@ export function useGameState() {
 
   // 세력 선택 완료 후 게임 시작
   const selectFactionAndStart = useCallback((factionId: FactionId) => {
-    const initial = createInitialState(factionId);
+    let initial = createInitialState(factionId);
+    
+    // 게임 시작 이벤트 체크
+    const startEvent = HISTORICAL_EVENTS
+      .filter(event => {
+        if (event.trigger !== 'game_start') return false;
+        // 세력 조건 체크
+        return event.conditions.every(cond => {
+          if (cond.type === 'faction') return cond.factionId === factionId;
+          return true;
+        });
+      })
+      .sort((a, b) => b.priority - a.priority)[0];
+    
+    if (startEvent) {
+      initial = { ...initial, activeEvent: startEvent };
+    }
+    
     setGame(initial);
     setGamePhase('playing');
     localStorage.setItem('warlords_save', JSON.stringify(initial));
@@ -801,6 +825,289 @@ export function useGameState() {
     };
   }, [game, getGeneral]);
 
+  // ============================================
+  // 역사 이벤트 시스템
+  // ============================================
+
+  // 이벤트 조건 체크
+  const checkEventCondition = useCallback((condition: EventCondition, state: GameState): boolean => {
+    switch (condition.type) {
+      case 'faction':
+        return state.selectedFaction === condition.factionId;
+      
+      case 'turn':
+        return state.turn === condition.turn;
+      
+      case 'turnMin':
+        return condition.turnMin !== undefined && state.turn >= condition.turnMin;
+      
+      case 'turnMax':
+        return condition.turnMax !== undefined && state.turn <= condition.turnMax;
+      
+      case 'region_owner':
+        if (!condition.regionId) return false;
+        return state.regions[condition.regionId]?.owner === state.playerFaction;
+      
+      case 'has_general':
+        if (!condition.generalId) return false;
+        // 플레이어 영토의 장수 중에 있는지 확인
+        return Object.values(state.regions).some(
+          region => region.owner === state.playerFaction && 
+                    region.generals.includes(condition.generalId!)
+        );
+      
+      case 'general_free':
+        if (!condition.generalId) return false;
+        return state.freeGenerals.some(fg => fg.generalId === condition.generalId);
+      
+      case 'general_in_region':
+        if (!condition.generalId || !condition.regionId) return false;
+        return state.regions[condition.regionId]?.generals.includes(condition.generalId) || false;
+      
+      case 'troops_ratio':
+        // 전투 중일 때만 체크 (battleData 필요)
+        if (!state.battleData || !condition.ratio) return false;
+        const playerTroops = state.battleData.playerUnits.reduce((sum, u) => sum + u.troops, 0);
+        const enemyTroops = state.battleData.enemyTroops;
+        return (playerTroops / enemyTroops) <= condition.ratio;
+      
+      case 'custom':
+        // 커스텀 조건은 나중에 구현
+        return false;
+      
+      default:
+        return false;
+    }
+  }, []);
+
+  // 특정 조건에 맞는 조건 체크 (turnMin, turnMax 등)
+  const checkEventConditionExtended = useCallback((condition: EventCondition, state: GameState): boolean => {
+    // 기본 조건 체크
+    if (!checkEventCondition(condition, state)) {
+      // turnMin, turnMax 체크
+      if (condition.turnMin !== undefined && state.turn < condition.turnMin) return false;
+      if (condition.turnMax !== undefined && state.turn > condition.turnMax) return false;
+      if (condition.type === 'faction' || condition.type === 'turn') return false;
+    }
+    
+    // turnMin/turnMax 추가 체크
+    if (condition.turnMin !== undefined && state.turn < condition.turnMin) return false;
+    if (condition.turnMax !== undefined && state.turn > condition.turnMax) return false;
+    
+    return checkEventCondition(condition, state);
+  }, [checkEventCondition]);
+
+  // 트리거에 해당하는 이벤트 찾기
+  const findTriggeredEvent = useCallback((trigger: EventTrigger, state: GameState): HistoricalEvent | null => {
+    const eligibleEvents = HISTORICAL_EVENTS
+      .filter(event => {
+        // 이미 발생한 이벤트인지 체크
+        if (!event.isRepeatable && state.triggeredEvents.includes(event.id)) {
+          return false;
+        }
+        // 트리거 타입 체크
+        if (event.trigger !== trigger) {
+          return false;
+        }
+        // 모든 조건 만족하는지 체크
+        return event.conditions.every(cond => checkEventConditionExtended(cond, state));
+      })
+      .sort((a, b) => b.priority - a.priority); // 우선순위 높은 순
+
+    return eligibleEvents[0] || null;
+  }, [checkEventConditionExtended]);
+
+  // 이벤트 트리거 (특정 시점에 호출)
+  const triggerEvent = useCallback((trigger: EventTrigger) => {
+    if (!game) return;
+    
+    const event = findTriggeredEvent(trigger, game);
+    if (event) {
+      setGame(prev => prev ? { ...prev, activeEvent: event } : null);
+    }
+  }, [game, findTriggeredEvent]);
+
+  // 이벤트 효과 적용
+  const applyEventEffect = useCallback((effect: EventEffect, state: GameState): GameState => {
+    const newState = { ...state };
+    
+    switch (effect.type) {
+      case 'add_general': {
+        // 재야 장수를 플레이어 영토로 이동
+        if (!effect.generalId) break;
+        const freeGeneral = newState.freeGenerals.find(fg => fg.generalId === effect.generalId);
+        if (freeGeneral) {
+          // 재야에서 제거
+          newState.freeGenerals = newState.freeGenerals.filter(fg => fg.generalId !== effect.generalId);
+          // 플레이어 첫 번째 영토에 추가
+          const playerRegion = Object.values(newState.regions).find(r => r.owner === newState.playerFaction);
+          if (playerRegion) {
+            newState.regions = {
+              ...newState.regions,
+              [playerRegion.id]: {
+                ...playerRegion,
+                generals: [...playerRegion.generals, effect.generalId!]
+              }
+            };
+          }
+        }
+        break;
+      }
+      
+      case 'set_loyalty': {
+        if (effect.generalId && effect.value !== undefined) {
+          newState.generalLoyalty = {
+            ...newState.generalLoyalty,
+            [effect.generalId]: effect.value
+          };
+        }
+        break;
+      }
+      
+      case 'add_loyalty': {
+        if (effect.generalId && effect.value !== undefined) {
+          const current = newState.generalLoyalty[effect.generalId] || 50;
+          newState.generalLoyalty = {
+            ...newState.generalLoyalty,
+            [effect.generalId]: Math.min(100, Math.max(0, current + effect.value))
+          };
+        }
+        break;
+      }
+      
+      case 'add_gold': {
+        if (effect.value !== undefined) {
+          if (effect.regionId) {
+            // 특정 지역에 추가
+            const region = newState.regions[effect.regionId];
+            if (region) {
+              newState.regions = {
+                ...newState.regions,
+                [effect.regionId]: { ...region, gold: region.gold + effect.value }
+              };
+            }
+          } else {
+            // 플레이어 첫 번째 영토에 추가
+            const playerRegion = Object.values(newState.regions).find(r => r.owner === newState.playerFaction);
+            if (playerRegion) {
+              newState.regions = {
+                ...newState.regions,
+                [playerRegion.id]: { ...playerRegion, gold: playerRegion.gold + effect.value }
+              };
+            }
+          }
+        }
+        break;
+      }
+      
+      case 'add_food': {
+        if (effect.value !== undefined) {
+          if (effect.regionId) {
+            const region = newState.regions[effect.regionId];
+            if (region) {
+              newState.regions = {
+                ...newState.regions,
+                [effect.regionId]: { ...region, food: region.food + effect.value }
+              };
+            }
+          } else {
+            const playerRegion = Object.values(newState.regions).find(r => r.owner === newState.playerFaction);
+            if (playerRegion) {
+              newState.regions = {
+                ...newState.regions,
+                [playerRegion.id]: { ...playerRegion, food: playerRegion.food + effect.value }
+              };
+            }
+          }
+        }
+        break;
+      }
+      
+      case 'add_troops': {
+        if (effect.value !== undefined) {
+          if (effect.regionId) {
+            const region = newState.regions[effect.regionId];
+            if (region) {
+              newState.regions = {
+                ...newState.regions,
+                [effect.regionId]: { ...region, troops: region.troops + effect.value }
+              };
+            }
+          } else {
+            const playerRegion = Object.values(newState.regions).find(r => r.owner === newState.playerFaction);
+            if (playerRegion) {
+              newState.regions = {
+                ...newState.regions,
+                [playerRegion.id]: { ...playerRegion, troops: playerRegion.troops + effect.value }
+              };
+            }
+          }
+        }
+        break;
+      }
+      
+      case 'battle_bonus': {
+        if (effect.generalId && effect.value !== undefined) {
+          newState.battleBonuses = {
+            ...newState.battleBonuses,
+            [effect.generalId]: (newState.battleBonuses[effect.generalId] || 0) + effect.value
+          };
+        }
+        break;
+      }
+      
+      case 'message':
+        // 메시지는 UI에서 처리
+        break;
+      
+      default:
+        break;
+    }
+    
+    return newState;
+  }, []);
+
+  // 이벤트 선택 처리
+  const handleEventChoice = useCallback((choice: EventChoice) => {
+    setGame(prev => {
+      if (!prev || !prev.activeEvent) return prev;
+      
+      let newState = { ...prev };
+      
+      // 모든 효과 적용
+      for (const effect of choice.effects) {
+        newState = applyEventEffect(effect, newState);
+      }
+      
+      // 이벤트 완료 처리
+      newState.triggeredEvents = [...newState.triggeredEvents, prev.activeEvent.id];
+      newState.activeEvent = null;
+      
+      return newState;
+    });
+  }, [applyEventEffect]);
+
+  // 이벤트 닫기 (선택지 없는 경우)
+  const closeEvent = useCallback(() => {
+    setGame(prev => {
+      if (!prev || !prev.activeEvent) return prev;
+      return {
+        ...prev,
+        triggeredEvents: [...prev.triggeredEvents, prev.activeEvent.id],
+        activeEvent: null
+      };
+    });
+  }, []);
+
+  // 게임 시작 시 이벤트 체크 (selectFactionAndStart 수정 필요)
+  const checkGameStartEvents = useCallback((state: GameState): GameState => {
+    const event = findTriggeredEvent('game_start', state);
+    if (event) {
+      return { ...state, activeEvent: event };
+    }
+    return state;
+  }, [findTriggeredEvent]);
+
   return {
     game,
     isClient,
@@ -835,6 +1142,10 @@ export function useGameState() {
     recruitFreeGeneral,
     recruitPrisoner,
     executePrisoner,
-    releasePrisoner
+    releasePrisoner,
+    // 이벤트 시스템
+    triggerEvent,
+    handleEventChoice,
+    closeEvent
   };
 }
