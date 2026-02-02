@@ -5,7 +5,8 @@ import type {
   GameState, RegionId, DomesticAction, Region,
   MarchState, MarchStep, MarchUnit, BattleInitData, BattleOutcome, TroopType,
   Prisoner, FreeGeneral, GeneralFate, FactionId, GamePhase,
-  HistoricalEvent, EventTrigger, EventChoice, EventEffect, EventCondition
+  HistoricalEvent, EventTrigger, EventChoice, EventEffect, EventCondition,
+  BattleResultData
 } from '../types';
 import { REGIONS, FACTIONS, DOMESTIC_COMMANDS, FACTION_DETAILS } from '../constants/worldData';
 import { GENERALS, INITIAL_FREE_GENERALS, INITIAL_LOYALTY, UNAFFILIATED_GENERALS } from '../constants/gameData';
@@ -39,6 +40,7 @@ const createInitialState = (selectedFaction: FactionId = 'player'): GameState =>
     phase: 'map',
     march: null,
     battleData: null,
+    battleResult: null,
     // 장수 시스템
     prisoners: [],
     freeGenerals: JSON.parse(JSON.stringify(INITIAL_FREE_GENERALS)),
@@ -574,6 +576,17 @@ export function useGameState() {
         };
       }
 
+      // 포로로 잡힌 적 장수들 (처리 대기)
+      const pendingPrisoners = outcome.enemyGeneralFates?.filter(f => f.fate === 'captured') || [];
+
+      // 전투 결과 데이터 생성
+      const battleResult: BattleResultData = {
+        outcome,
+        conqueredRegionId: outcome.winner === 'player' ? enemyRegionId : null,
+        sourceRegionId: playerRegionId,
+        pendingPrisoners
+      };
+
       return {
         ...prev,
         regions: newRegions,
@@ -581,8 +594,29 @@ export function useGameState() {
         deadGenerals: newDeadGenerals,
         generalLoyalty: newLoyalty,
         battleData: null,
-        phase: 'map',
+        battleResult,
+        phase: 'battle_result',
         actionsRemaining: Math.max(0, prev.actionsRemaining - 1)
+      };
+    });
+  }, []);
+
+  // 전투 결과 화면 닫기 -> 점령 지역 또는 출발 지역으로 이동
+  const closeBattleResult = useCallback(() => {
+    setGame(prev => {
+      if (!prev || !prev.battleResult) return prev;
+
+      const { conqueredRegionId, sourceRegionId } = prev.battleResult;
+      
+      // 승리: 점령한 지역 선택
+      // 패배: 출발 지역 선택
+      const targetRegion = conqueredRegionId || sourceRegionId;
+
+      return {
+        ...prev,
+        battleResult: null,
+        selectedRegion: targetRegion,
+        phase: 'map'  // UI 탭은 WarlordsGame에서 activeTab으로 처리
       };
     });
   }, []);
@@ -1135,6 +1169,7 @@ export function useGameState() {
     assignTroops,
     confirmMarch,
     handleBattleEnd,
+    closeBattleResult,
     // 장수 등용 시스템
     getFreeGeneralsInRegion,
     getPlayerPrisoners,

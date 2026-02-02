@@ -17,6 +17,7 @@ import {
   EventModal
 } from './ui';
 import BattleScreen from './BattleScreen';
+import BattleResultScreen from './BattleResultScreen';
 import TitleScreen from './TitleScreen';
 import FactionSelectScreen from './FactionSelectScreen';
 import { SEASONS, DOMESTIC_COMMANDS } from '../constants/worldData';
@@ -50,6 +51,7 @@ export default function WarlordsGame() {
     assignTroops,
     confirmMarch,
     handleBattleEnd,
+    closeBattleResult,
     // 장수 등용 시스템
     getFreeGeneralsInRegion,
     getPlayerPrisoners,
@@ -159,6 +161,14 @@ export default function WarlordsGame() {
     showToast(`턴 ${game.turn} 시작!`, 'info');
   };
 
+  // 전투 결과 화면 닫기 핸들러
+  const handleCloseBattleResult = () => {
+    const isVictory = game.battleResult?.conqueredRegionId;
+    closeBattleResult();
+    // 승리: 점령 지역 내정 탭, 패배: 맵 탭
+    setActiveTab(isVictory ? 'domestic' : 'map');
+  };
+
   // 전투 화면
   if (game.phase === 'battle' && game.battleData) {
     return (
@@ -166,6 +176,24 @@ export default function WarlordsGame() {
         battleData={game.battleData}
         regions={game.regions}
         onBattleEnd={handleBattleEnd}
+      />
+    );
+  }
+
+  // 전투 결과 화면
+  if (game.phase === 'battle_result' && game.battleResult) {
+    return (
+      <BattleResultScreen
+        result={game.battleResult}
+        regions={game.regions}
+        onRecruitPrisoner={recruitPrisoner}
+        onExecutePrisoner={executePrisoner}
+        onReleasePrisoner={releasePrisoner}
+        playerGenerals={playerRegions.flatMap(r =>
+          r.generals.map(g => ({ generalId: g, regionId: r.id }))
+        )}
+        getGeneral={getGeneral}
+        onClose={handleCloseBattleResult}
       />
     );
   }

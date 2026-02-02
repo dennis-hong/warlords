@@ -227,6 +227,14 @@ export interface DomesticCommand {
 // 게임 상태
 // ============================================
 
+// 전투 결과 데이터 (결과 화면 표시용)
+export interface BattleResultData {
+  outcome: BattleOutcome;
+  conqueredRegionId: RegionId | null;  // 점령한 지역 (승리 시)
+  sourceRegionId: RegionId;            // 출발 지역
+  pendingPrisoners: GeneralFate[];     // 처리 대기 중인 포로들
+}
+
 export interface GameState {
   turn: number;
   season: 'spring' | 'summer' | 'fall' | 'winter';
@@ -238,7 +246,9 @@ export interface GameState {
   selectedRegion: RegionId | null;
   actionsRemaining: number;
   maxActions: number;
-  phase: 'map' | 'domestic' | 'military' | 'battle' | 'recruit' | 'prisoner';
+  phase: 'map' | 'domestic' | 'military' | 'battle' | 'battle_result' | 'recruit' | 'prisoner';
+  // 전투 결과 데이터
+  battleResult: BattleResultData | null;
   // 출진 상태
   march: MarchState | null;
   // 전투 데이터
