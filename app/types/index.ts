@@ -134,6 +134,7 @@ export interface Region {
   commerce: number;      // 상업
   agriculture: number;   // 농업
   defense: number;       // 성벽 내구도
+  training: number;      // 훈련도 (0~100) - 전투력 보너스
   // 주둔 장수
   generals: string[];
 }
@@ -147,7 +148,7 @@ export interface Resources {
 }
 
 // 내정 명령
-export type DomesticAction = 'develop_farm' | 'develop_commerce' | 'recruit' | 'train' | 'rest';
+export type DomesticAction = 'develop_farm' | 'develop_commerce' | 'recruit' | 'train';
 
 // 내정 명령 정보
 export interface DomesticCommand {
@@ -216,6 +217,8 @@ export interface BattleInitData {
   enemyRegionId: RegionId;
   enemyGeneralIds: string[];
   enemyTroops: number;
+  playerTraining: number;  // 플레이어 훈련도
+  enemyTraining: number;   // 적 훈련도
 }
 
 // 전투 결과

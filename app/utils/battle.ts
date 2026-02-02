@@ -12,13 +12,16 @@ export function hasAdvantage(attacker: BattleUnit, defender: BattleUnit): boolea
 }
 
 // 기본 피해 계산
-export function calculateDamage(attacker: BattleUnit, defender: BattleUnit, multiplier = 1): number {
+// training: 훈련도 (0-100), 기본값 50
+export function calculateDamage(attacker: BattleUnit, defender: BattleUnit, multiplier = 1, training = 50): number {
   const baseDamage = attacker.troops * GAME_CONFIG.BASE_DAMAGE_RATE;
   const mightBonus = 1 + attacker.general.might / 100;
   const advantageBonus = hasAdvantage(attacker, defender) ? GAME_CONFIG.TROOP_ADVANTAGE_BONUS : 1;
+  // 훈련도 보너스: 50이면 1.0, 100이면 1.25 (최대 25% 추가 데미지)
+  const trainingBonus = 1 + (training - 50) / 200;
   const randomFactor = random(GAME_CONFIG.RANDOM_MIN, GAME_CONFIG.RANDOM_MAX);
-  
-  return Math.round(baseDamage * mightBonus * advantageBonus * randomFactor * multiplier);
+
+  return Math.round(baseDamage * mightBonus * advantageBonus * trainingBonus * randomFactor * multiplier);
 }
 
 // 계략 성공률 계산

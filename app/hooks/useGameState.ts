@@ -173,10 +173,9 @@ export function useGameState() {
           newRegion.troops += recruited;
           break;
         case 'train':
-          // 훈련 효과는 나중에 전투력에 반영
-          break;
-        case 'rest':
-          // 아무것도 안 함
+          // 훈련도 증가 (최대 100)
+          const trainingIncrease = Math.floor(5 * (1 + bonus));
+          newRegion.training = Math.min(100, (newRegion.training || 50) + trainingIncrease);
           break;
       }
 
@@ -392,13 +391,31 @@ export function useGameState() {
       const targetRegion = prev.regions[prev.march.targetRegion];
       if (!targetRegion) return prev;
 
+      // 플레이어 영토 목록 (prev에서 직접 계산)
+      const currentPlayerRegions = Object.values(prev.regions).filter(r => r.owner === prev.playerFaction);
+
       // 식량 체크 & 차감 (출발 지역에서)
-      const sourceRegion = prev.selectedRegion
+      // selectedRegion이 플레이어 영토인 경우 사용, 아니면 첫 번째 영토
+      let sourceRegion = prev.selectedRegion && prev.regions[prev.selectedRegion]?.owner === prev.playerFaction
         ? prev.regions[prev.selectedRegion]
-        : playerRegions[0];
+        : currentPlayerRegions[0];
 
       if (!sourceRegion || sourceRegion.food < prev.march.foodRequired) {
         return prev; // 식량 부족
+      }
+
+      // 병종 비용 계산 (기병 500금, 궁병 300금)
+      const TROOP_COSTS: Record<string, number> = {
+        infantry: 0,
+        cavalry: 500,
+        archer: 300
+      };
+      const goldRequired = prev.march.units.reduce((sum, unit) => {
+        return sum + (TROOP_COSTS[unit.troopType] || 0);
+      }, 0);
+
+      if (sourceRegion.gold < goldRequired) {
+        return prev; // 금 부족
       }
 
       // 병력 차감 체크
@@ -413,16 +430,19 @@ export function useGameState() {
         playerRegionId: sourceRegion.id,
         enemyRegionId: prev.march.targetRegion,
         enemyGeneralIds: targetRegion.generals,
-        enemyTroops: targetRegion.troops
+        enemyTroops: targetRegion.troops,
+        playerTraining: sourceRegion.training || 50,
+        enemyTraining: targetRegion.training || 50
       };
 
-      // 출발 지역에서 병력 & 식량 차감
+      // 출발 지역에서 병력 & 식량 & 금 차감
       const newRegions = {
         ...prev.regions,
         [sourceRegion.id]: {
           ...sourceRegion,
           troops: sourceRegion.troops - totalMarchTroops,
-          food: sourceRegion.food - prev.march.foodRequired
+          food: sourceRegion.food - prev.march.foodRequired,
+          gold: sourceRegion.gold - goldRequired
         }
       };
 
@@ -434,7 +454,7 @@ export function useGameState() {
         march: null
       };
     });
-  }, [playerRegions]);
+  }, []);
 
   // 전투 종료 처리
   const handleBattleEnd = useCallback((outcome: BattleOutcome) => {

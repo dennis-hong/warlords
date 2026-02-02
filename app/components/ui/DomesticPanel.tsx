@@ -78,15 +78,61 @@ export function DomesticPanel({ region, actionsRemaining, onExecute, onClose }: 
           <div className="flex items-center gap-2">
             <span className="text-xs text-dynasty-medium w-12">성벽</span>
             <div className="flex-1 progress-bar h-2">
-              <div 
+              <div
                 className="progress-fill"
-                style={{ 
+                style={{
                   width: `${region.defense}%`,
                   background: 'linear-gradient(180deg, #3b82f6 0%, #1d4ed8 100%)'
                 }}
               />
             </div>
             <span className="text-xs text-blue-600 font-bold w-10 text-right">{region.defense}%</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-dynasty-medium w-12">훈련</span>
+            <div className="flex-1 progress-bar h-2">
+              <div
+                className="progress-fill crimson"
+                style={{ width: `${region.training || 50}%` }}
+              />
+            </div>
+            <span className="text-xs text-crimson-light font-bold w-10 text-right">{region.training || 50}%</span>
+          </div>
+        </div>
+
+        {/* 예상 수입 */}
+        <div className="mt-4 p-3 bg-dynasty-dark/30 rounded-lg">
+          <h4 className="text-xs text-dynasty-medium mb-2">📊 턴당 예상 수입</h4>
+          <div className="grid grid-cols-2 gap-2 text-xs">
+            <div className="flex justify-between">
+              <span className="text-dynasty-medium">💰 금 수입</span>
+              <span className="text-gold font-bold">
+                +{Math.floor(region.population * 0.1 * (region.commerce / 100)).toLocaleString()}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-dynasty-medium">🌾 식량 수입</span>
+              <span className="text-jade font-bold">
+                +{Math.floor(region.population * 0.2 * (region.agriculture / 100)).toLocaleString()}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-dynasty-medium">🍖 병력 유지비</span>
+              <span className="text-crimson font-bold">
+                -{Math.floor(region.troops * 0.05).toLocaleString()}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-dynasty-medium">📈 순 식량</span>
+              <span className={`font-bold ${
+                Math.floor(region.population * 0.2 * (region.agriculture / 100)) - Math.floor(region.troops * 0.05) >= 0
+                  ? 'text-jade'
+                  : 'text-crimson'
+              }`}>
+                {(Math.floor(region.population * 0.2 * (region.agriculture / 100)) - Math.floor(region.troops * 0.05)) >= 0 ? '+' : ''}
+                {(Math.floor(region.population * 0.2 * (region.agriculture / 100)) - Math.floor(region.troops * 0.05)).toLocaleString()}
+              </span>
+            </div>
           </div>
         </div>
       </div>

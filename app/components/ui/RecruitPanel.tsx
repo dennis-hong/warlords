@@ -9,6 +9,7 @@ interface RecruitPanelProps {
   regionName: string;
   freeGenerals: FreeGeneral[];
   regionGenerals: string[];
+  actionsRemaining: number;
   getGeneral: (id: string) => General | null;
   getLoyalty: (id: string) => number;
   onRecruit: (generalId: string, recruiterId: string) => { success: boolean; message: string };
@@ -20,6 +21,7 @@ export function RecruitPanel({
   regionName,
   freeGenerals,
   regionGenerals,
+  actionsRemaining,
   getGeneral,
   getLoyalty,
   onRecruit,
@@ -57,7 +59,12 @@ export function RecruitPanel({
       <div className="bg-gray-900 rounded-lg max-w-md w-full max-h-[80vh] overflow-hidden flex flex-col">
         {/* 헤더 */}
         <div className="bg-blue-900 p-4 flex justify-between items-center">
-          <h2 className="text-lg font-bold">🎯 재야 장수 등용 - {regionName}</h2>
+          <div>
+            <h2 className="text-lg font-bold">🎯 재야 장수 등용 - {regionName}</h2>
+            <p className={`text-sm ${actionsRemaining > 0 ? 'text-yellow-400' : 'text-red-400'}`}>
+              남은 행동력: {actionsRemaining}회
+            </p>
+          </div>
           <button onClick={onClose} className="text-gray-400 hover:text-white text-2xl">×</button>
         </div>
 

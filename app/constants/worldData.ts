@@ -210,6 +210,7 @@ export const REGIONS: Record<RegionId, Region> = {
     commerce: 60,
     agriculture: 50,
     defense: 100,
+    training: 50,
     generals: []
   },
   xuchang: {
@@ -226,6 +227,7 @@ export const REGIONS: Record<RegionId, Region> = {
     commerce: 70,
     agriculture: 65,
     defense: 100,
+    training: 70,
     generals: ['caocao', 'xiaohoudun', 'zhangliao']
   },
   chengdu: {
@@ -242,6 +244,7 @@ export const REGIONS: Record<RegionId, Region> = {
     commerce: 50,
     agriculture: 80,
     defense: 100,
+    training: 60,
     generals: ['guanyu', 'zhangfei', 'zhaoyun', 'zhugeliang']
   },
   jianye: {
@@ -258,6 +261,7 @@ export const REGIONS: Record<RegionId, Region> = {
     commerce: 80,
     agriculture: 60,
     defense: 100,
+    training: 65,
     generals: ['zhouyu']
   },
   changan: {
@@ -274,6 +278,7 @@ export const REGIONS: Record<RegionId, Region> = {
     commerce: 45,
     agriculture: 40,
     defense: 100,
+    training: 55,
     generals: ['lvbu']
   },
   ye: {
@@ -290,6 +295,7 @@ export const REGIONS: Record<RegionId, Region> = {
     commerce: 55,
     agriculture: 55,
     defense: 100,
+    training: 60,
     generals: []
   },
   jingzhou: {
@@ -306,6 +312,7 @@ export const REGIONS: Record<RegionId, Region> = {
     commerce: 50,
     agriculture: 70,
     defense: 100,
+    training: 45,
     generals: []
   },
   yizhou: {
@@ -322,6 +329,7 @@ export const REGIONS: Record<RegionId, Region> = {
     commerce: 40,
     agriculture: 60,
     defense: 100,
+    training: 40,
     generals: []
   },
   youzhou: {
@@ -338,6 +346,7 @@ export const REGIONS: Record<RegionId, Region> = {
     commerce: 35,
     agriculture: 45,
     defense: 100,
+    training: 50,
     generals: []
   }
 };
@@ -450,18 +459,9 @@ export const DOMESTIC_COMMANDS: DomesticCommand[] = [
     name: '訓練',
     nameKo: '훈련',
     icon: '⚔️',
-    description: '병력 전투력 강화',
+    description: '병력 전투력 강화 (훈련도 +5%)',
     cost: { gold: 800, food: 500 },
     statRequired: 'might'
-  },
-  {
-    id: 'rest',
-    name: '休息',
-    nameKo: '휴식',
-    icon: '😴',
-    description: '행동 종료',
-    cost: {},
-    statRequired: 'politics'
   }
 ];
 

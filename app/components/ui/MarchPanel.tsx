@@ -25,10 +25,10 @@ const STEP_CONFIG: Record<MarchStep, { num: number; title: string; icon: string 
   confirm: { num: 4, title: '출진 확인', icon: '🚀' }
 };
 
-const TROOP_TYPES: { id: TroopType; name: string; icon: string }[] = [
-  { id: 'infantry', name: '보병', icon: '⚔️' },
-  { id: 'cavalry', name: '기병', icon: '🐴' },
-  { id: 'archer', name: '궁병', icon: '🏹' }
+const TROOP_TYPES: { id: TroopType; name: string; icon: string; cost: number; advantage: string; disadvantage: string }[] = [
+  { id: 'infantry', name: '보병', icon: '⚔️', cost: 0, advantage: '궁병', disadvantage: '기병' },
+  { id: 'cavalry', name: '기병', icon: '🐴', cost: 500, advantage: '보병', disadvantage: '궁병' },
+  { id: 'archer', name: '궁병', icon: '🏹', cost: 300, advantage: '기병', disadvantage: '보병' }
 ];
 
 export function MarchPanel({
@@ -314,9 +314,23 @@ export function MarchPanel({
                             : 'btn-wood'
                         }`}
                       >
-                        {type.icon} {type.name}
+                        <div>{type.icon} {type.name}</div>
+                        {type.cost > 0 && <div className="text-xs opacity-70">💰{type.cost}</div>}
                       </button>
                     ))}
+                  </div>
+                  {/* 상성 설명 */}
+                  <div className="text-xs text-center text-silk/60 bg-dynasty-dark/50 rounded px-2 py-1">
+                    {(() => {
+                      const type = TROOP_TYPES.find(t => t.id === unit.troopType);
+                      return type ? (
+                        <span>
+                          <span className="text-jade">✓ {type.advantage}에 강함</span>
+                          {' / '}
+                          <span className="text-crimson">✗ {type.disadvantage}에 약함</span>
+                        </span>
+                      ) : null;
+                    })()}
                   </div>
 
                   {/* 병력 슬라이더 */}
@@ -421,14 +435,38 @@ export function MarchPanel({
           </div>
 
           {/* 소모 자원 */}
-          <div className="silk-card rounded-lg p-3">
-            <div className="flex justify-between items-center">
-              <span className="text-dynasty-medium">🌾 필요 식량</span>
-              <span className={sourceRegion.food >= march.foodRequired ? 'text-jade font-bold' : 'text-crimson font-bold'}>
-                {march.foodRequired.toLocaleString()} / {sourceRegion.food.toLocaleString()}
-              </span>
-            </div>
-          </div>
+          {(() => {
+            const troopCost = march.units.reduce((sum, unit) => {
+              const type = TROOP_TYPES.find(t => t.id === unit.troopType);
+              return sum + (type?.cost || 0);
+            }, 0);
+            const hasEnoughGold = sourceRegion.gold >= troopCost;
+            const hasEnoughFood = sourceRegion.food >= march.foodRequired;
+
+            return (
+              <div className="silk-card rounded-lg p-3 space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-dynasty-medium">🌾 필요 식량</span>
+                  <span className={hasEnoughFood ? 'text-jade font-bold' : 'text-crimson font-bold'}>
+                    {march.foodRequired.toLocaleString()} / {sourceRegion.food.toLocaleString()}
+                  </span>
+                </div>
+                {troopCost > 0 && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-dynasty-medium">💰 병종 편성비</span>
+                    <span className={hasEnoughGold ? 'text-gold font-bold' : 'text-crimson font-bold'}>
+                      {troopCost.toLocaleString()} / {sourceRegion.gold.toLocaleString()}
+                    </span>
+                  </div>
+                )}
+                {troopCost > 0 && (
+                  <div className="text-xs text-dynasty-medium/70 text-center">
+                    기병 500금, 궁병 300금 (부대당)
+                  </div>
+                )}
+              </div>
+            );
+          })()}
 
           {/* 전력 비교 */}
           <div className="dynasty-card rounded-lg p-3 text-center border border-gold/30">
@@ -454,13 +492,23 @@ export function MarchPanel({
             >
               ← 이전
             </button>
-            <button
-              onClick={onConfirm}
-              disabled={sourceRegion.food < march.foodRequired}
-              className="btn-war flex-1 py-3 rounded-lg text-lg animate-pulse-crimson"
-            >
-              ⚔️ 출진!
-            </button>
+            {(() => {
+              const troopCost = march.units.reduce((sum, unit) => {
+                const type = TROOP_TYPES.find(t => t.id === unit.troopType);
+                return sum + (type?.cost || 0);
+              }, 0);
+              const canAfford = sourceRegion.food >= march.foodRequired && sourceRegion.gold >= troopCost;
+
+              return (
+                <button
+                  onClick={onConfirm}
+                  disabled={!canAfford}
+                  className="btn-war flex-1 py-3 rounded-lg text-lg animate-pulse-crimson"
+                >
+                  ⚔️ 출진!
+                </button>
+              );
+            })()}
           </div>
         </div>
       )}

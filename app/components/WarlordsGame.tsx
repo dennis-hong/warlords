@@ -10,14 +10,17 @@ import {
   RegionList,
   MarchPanel,
   RecruitPanel,
-  PrisonerPanel
+  PrisonerPanel,
+  Toast,
+  useToast,
+  ConfirmModal
 } from './ui';
 import BattleScreen from './BattleScreen';
 import TitleScreen from './TitleScreen';
 import FactionSelectScreen from './FactionSelectScreen';
-import { SEASONS } from '../constants/worldData';
+import { SEASONS, DOMESTIC_COMMANDS } from '../constants/worldData';
 import { INITIAL_LOYALTY } from '../constants/gameData';
-import type { GameTab, RegionId } from '../types';
+import type { GameTab, RegionId, DomesticAction } from '../types';
 
 export default function WarlordsGame() {
   const {
@@ -59,6 +62,8 @@ export default function WarlordsGame() {
   const [activeTab, setActiveTab] = useState<GameTab>('map');
   const [showRecruitPanel, setShowRecruitPanel] = useState(false);
   const [showPrisonerPanel, setShowPrisonerPanel] = useState(false);
+  const [showEndTurnModal, setShowEndTurnModal] = useState(false);
+  const { messages: toastMessages, showToast, removeToast } = useToast();
 
   // 로딩 (클라이언트 준비 전)
   if (!isClient) {
@@ -124,10 +129,31 @@ export default function WarlordsGame() {
     }
   };
 
-  const handleEndTurn = () => {
-    if (confirm(`턴 ${game.turn}을 종료하시겠습니까?`)) {
-      endTurn();
+  const handleExecuteDomestic = (regionId: RegionId, action: DomesticAction) => {
+    const command = DOMESTIC_COMMANDS.find(c => c.id === action);
+    const success = executeDomestic(regionId, action);
+
+    if (success && command) {
+      const messages: Record<DomesticAction, string> = {
+        develop_farm: '농업 개발 완료! 농업치 +5%',
+        develop_commerce: '상업 개발 완료! 상업치 +5%',
+        recruit: '징병 완료! 병력 증가',
+        train: '훈련 완료! 훈련도 상승'
+      };
+      showToast(messages[action], 'success');
+    } else if (!success) {
+      showToast('행동력 또는 자원이 부족합니다', 'error');
     }
+  };
+
+  const handleEndTurn = () => {
+    setShowEndTurnModal(true);
+  };
+
+  const confirmEndTurn = () => {
+    endTurn();
+    setShowEndTurnModal(false);
+    showToast(`턴 ${game.turn} 시작!`, 'info');
   };
 
   // 전투 화면
@@ -143,6 +169,9 @@ export default function WarlordsGame() {
 
   return (
     <div className="min-h-screen pb-20">
+      {/* 토스트 메시지 */}
+      <Toast messages={toastMessages} onRemove={removeToast} />
+
       {/* 자원 바 */}
       <ResourceBar
         resources={totalResources}
@@ -260,7 +289,7 @@ export default function WarlordsGame() {
               <DomesticPanel
                 region={selectedRegionData}
                 actionsRemaining={game.actionsRemaining}
-                onExecute={executeDomestic}
+                onExecute={handleExecuteDomestic}
                 onClose={() => selectRegion(null)}
               />
             )}
@@ -342,6 +371,7 @@ export default function WarlordsGame() {
           regionName={selectedRegionData.nameKo}
           freeGenerals={getFreeGeneralsInRegion(selectedRegionData.id)}
           regionGenerals={selectedRegionData.generals}
+          actionsRemaining={game.actionsRemaining}
           getGeneral={getGeneral}
           getLoyalty={(id) => game.generalLoyalty[id] ?? INITIAL_LOYALTY[id] ?? 60}
           onRecruit={(generalId, recruiterId) => recruitFreeGeneral(selectedRegionData.id, generalId, recruiterId)}
@@ -353,7 +383,7 @@ export default function WarlordsGame() {
       {showPrisonerPanel && (
         <PrisonerPanel
           prisoners={getPlayerPrisoners()}
-          playerGenerals={playerRegions.flatMap(r => 
+          playerGenerals={playerRegions.flatMap(r =>
             r.generals.map(g => ({ generalId: g, regionId: r.id }))
           )}
           getGeneral={getGeneral}
@@ -365,6 +395,17 @@ export default function WarlordsGame() {
           onClose={() => setShowPrisonerPanel(false)}
         />
       )}
+
+      {/* 턴 종료 확인 모달 */}
+      <ConfirmModal
+        isOpen={showEndTurnModal}
+        title="턴 종료"
+        message={`${game.year}년 ${SEASONS[game.season].nameKo} (턴 ${game.turn})을 종료하시겠습니까?\n\n다음 턴에 자원 수입이 발생합니다.`}
+        confirmText="턴 종료"
+        cancelText="취소"
+        onConfirm={confirmEndTurn}
+        onCancel={() => setShowEndTurnModal(false)}
+      />
 
     </div>
   );

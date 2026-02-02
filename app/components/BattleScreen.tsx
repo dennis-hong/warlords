@@ -242,13 +242,13 @@ export default function BattleScreen({ battleData, regions, onBattleEnd }: Battl
       let enemy = { ...prev.enemy };
       const logs: BattleLog[] = [];
 
-      const playerDmg = calculateDamage(player, enemy, GAME_CONFIG.CHARGE_DAMAGE_MULTIPLIER);
+      const playerDmg = calculateDamage(player, enemy, GAME_CONFIG.CHARGE_DAMAGE_MULTIPLIER, battleData.playerTraining || 50);
       enemy.troops = applyTroopDamage(enemy, playerDmg);
       logs.push({ round: prev.round, message: `⚔️ ${player.general.nameKo} 돌격! 적 ${playerDmg}명 피해!`, type: 'damage' });
 
       let enemyDmg = 0;
       if (enemyAction.action === 'charge') {
-        enemyDmg = calculateDamage(enemy, player, GAME_CONFIG.CHARGE_DAMAGE_MULTIPLIER);
+        enemyDmg = calculateDamage(enemy, player, GAME_CONFIG.CHARGE_DAMAGE_MULTIPLIER, battleData.enemyTraining || 50);
         player.troops = applyTroopDamage(player, enemyDmg);
         logs.push({ round: prev.round, message: `⚔️ ${enemy.general.nameKo} 반격! 아군 ${enemyDmg}명 피해!`, type: 'damage' });
         // 쌍방 충돌 애니메이션
@@ -298,7 +298,7 @@ export default function BattleScreen({ battleData, regions, onBattleEnd }: Battl
       logs.push({ round: prev.round, message: `🛡️ ${player.general.nameKo} 수비 태세!`, type: 'info' });
 
       if (enemyAction.action === 'charge') {
-        const enemyDmg = Math.round(calculateDamage(enemy, player) * GAME_CONFIG.DEFEND_DAMAGE_REDUCTION);
+        const enemyDmg = Math.round(calculateDamage(enemy, player, 1, battleData.enemyTraining || 50) * GAME_CONFIG.DEFEND_DAMAGE_REDUCTION);
         player.troops = applyTroopDamage(player, enemyDmg);
         logs.push({ round: prev.round, message: `⚔️ ${enemy.general.nameKo} 공격! (수비로 감소) 아군 ${enemyDmg}명 피해!`, type: 'damage' });
         playAnimation('enemyAttack', { player: enemyDmg });
@@ -341,7 +341,7 @@ export default function BattleScreen({ battleData, regions, onBattleEnd }: Battl
 
       const enemyAction = selectEnemyAction(enemy, player);
       if (enemyAction.action === 'charge') {
-        const enemyDamage = calculateDamage(enemy, player, GAME_CONFIG.CHARGE_DAMAGE_MULTIPLIER);
+        const enemyDamage = calculateDamage(enemy, player, GAME_CONFIG.CHARGE_DAMAGE_MULTIPLIER, battleData.enemyTraining || 50);
         player.troops = applyTroopDamage(player, enemyDamage);
         logs.push({ round: prev.round, message: `⚔️ ${enemy.general.nameKo} 돌격! 아군 ${enemyDamage}명 피해!`, type: 'damage' });
         player.morale = applyMoraleChange(player, MORALE_CHANGES.ROUND_LOSE);
