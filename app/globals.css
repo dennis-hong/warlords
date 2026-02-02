@@ -24,3 +24,135 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* ===== 전투 애니메이션 (AI 삼국지 통합) ===== */
+
+/* 병사 아이콘 */
+.soldier {
+  font-size: 1.2rem;
+  display: inline-block;
+  animation: soldierIdle 1s ease-in-out infinite;
+}
+.soldier.attacking {
+  animation: soldierAttack 0.3s ease;
+}
+.soldier.hit {
+  animation: soldierHit 0.3s ease;
+}
+.soldier.dead {
+  opacity: 0.3;
+  filter: grayscale(1);
+  animation: none;
+}
+
+@keyframes soldierIdle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+@keyframes soldierAttack {
+  0% { transform: translateX(0); }
+  50% { transform: translateX(30px); }
+  100% { transform: translateX(0); }
+}
+@keyframes soldierHit {
+  0%, 100% { transform: translateX(0); filter: brightness(1); }
+  25% { transform: translateX(-5px); filter: brightness(2); }
+  75% { transform: translateX(5px); filter: brightness(0.5); }
+}
+
+/* 일기토 애니메이션 */
+.duel-clash {
+  animation: duelClash 0.5s ease;
+}
+@keyframes duelClash {
+  0% { transform: scale(1); }
+  25% { transform: scale(1.2) rotate(-10deg); }
+  50% { transform: scale(0.9) rotate(10deg); }
+  75% { transform: scale(1.1) rotate(-5deg); }
+  100% { transform: scale(1) rotate(0); }
+}
+
+.duel-attack-left {
+  animation: duelAttackLeft 0.4s ease;
+}
+@keyframes duelAttackLeft {
+  0% { transform: translateX(0); }
+  50% { transform: translateX(50px) rotate(15deg); }
+  100% { transform: translateX(0); }
+}
+
+.duel-attack-right {
+  animation: duelAttackRight 0.4s ease;
+}
+@keyframes duelAttackRight {
+  0% { transform: translateX(0); }
+  50% { transform: translateX(-50px) rotate(-15deg); }
+  100% { transform: translateX(0); }
+}
+
+/* 충돌 이펙트 */
+.clash-effect {
+  animation: clashPop 0.5s ease forwards;
+}
+@keyframes clashPop {
+  0% { transform: scale(0); opacity: 1; }
+  50% { transform: scale(1.5); opacity: 1; }
+  100% { transform: scale(2); opacity: 0; }
+}
+
+/* 전투 로그 페이드인 */
+.battle-log-entry {
+  animation: logFadeIn 0.3s ease;
+}
+@keyframes logFadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* 승리 글로우 */
+.winner-glow {
+  animation: winnerGlow 2s ease-in-out infinite;
+}
+@keyframes winnerGlow {
+  0%, 100% { text-shadow: 0 0 20px rgba(251, 191, 36, 0.5); }
+  50% { text-shadow: 0 0 40px rgba(251, 191, 36, 1), 0 0 60px rgba(251, 191, 36, 0.5); }
+}
+
+/* 승리 바운스 */
+.winner-bounce {
+  animation: winnerBounce 0.5s ease;
+}
+@keyframes winnerBounce {
+  0% { transform: scale(0); }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+
+/* 피해량 팝업 */
+.damage-popup {
+  animation: damagePopup 1s ease forwards;
+}
+@keyframes damagePopup {
+  0% { opacity: 1; transform: translateY(0) scale(1); }
+  50% { opacity: 1; transform: translateY(-20px) scale(1.2); }
+  100% { opacity: 0; transform: translateY(-40px) scale(0.8); }
+}
+
+/* 병력바 펄스 (위험할 때) */
+.health-critical {
+  animation: healthPulse 0.5s ease-in-out infinite;
+}
+@keyframes healthPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+/* 라운드 카운터 */
+.round-indicator {
+  animation: roundPop 0.3s ease;
+}
+@keyframes roundPop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
