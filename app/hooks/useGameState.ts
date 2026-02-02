@@ -255,15 +255,60 @@ export function useGameState() {
         }
       });
 
-      return {
+      // 새로운 상태 (턴 이벤트 체크용)
+      const newTurn = prev.turn + 1;
+      const newState: GameState = {
         ...prev,
-        turn: prev.turn + 1,
+        turn: newTurn,
         season: nextSeason,
         year: nextYear,
         regions: newRegions,
         actionsRemaining: prev.maxActions,
         selectedRegion: null
       };
+
+      // 턴 시작 이벤트 체크 (인라인)
+      const checkCondition = (condition: EventCondition, state: GameState): boolean => {
+        switch (condition.type) {
+          case 'faction':
+            return state.selectedFaction === condition.factionId;
+          case 'turn':
+            return state.turn === condition.turn;
+          case 'turnMin':
+            return condition.turnMin !== undefined && state.turn >= condition.turnMin;
+          case 'turnMax':
+            return condition.turnMax !== undefined && state.turn <= condition.turnMax;
+          case 'general_free':
+            if (!condition.generalId) return false;
+            return state.freeGenerals.some(fg => fg.generalId === condition.generalId);
+          case 'has_general':
+            if (!condition.generalId) return false;
+            return Object.values(state.regions).some(
+              region => region.owner === state.playerFaction && 
+                        region.generals.includes(condition.generalId!)
+            );
+          case 'region_owner':
+            if (!condition.regionId) return false;
+            return state.regions[condition.regionId]?.owner === state.playerFaction;
+          default:
+            return true;
+        }
+      };
+
+      // turn_start 이벤트 찾기
+      const turnEvent = HISTORICAL_EVENTS
+        .filter(event => {
+          if (event.trigger !== 'turn_start') return false;
+          if (!event.isRepeatable && newState.triggeredEvents.includes(event.id)) return false;
+          return event.conditions.every(cond => checkCondition(cond, newState));
+        })
+        .sort((a, b) => b.priority - a.priority)[0];
+
+      if (turnEvent) {
+        return { ...newState, activeEvent: turnEvent };
+      }
+
+      return newState;
     });
   }, []);
 
