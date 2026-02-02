@@ -9,13 +9,13 @@ export function BattleLog({ logs }: BattleLogProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const typeColors: Record<string, string> = {
-    info: 'text-gray-300',
-    damage: 'text-red-400',
-    morale: 'text-yellow-400',
-    stratagem: 'text-purple-400',
-    duel: 'text-orange-400',
-    victory: 'text-green-400',
-    defeat: 'text-red-500'
+    info: 'text-silk/80',
+    damage: 'text-crimson-light',
+    morale: 'text-gold-light',
+    stratagem: 'text-bronze',
+    duel: 'text-gold',
+    victory: 'text-jade-light',
+    defeat: 'text-crimson'
   };
 
   // 자동 스크롤
@@ -26,15 +26,19 @@ export function BattleLog({ logs }: BattleLogProps) {
   }, [logs]);
 
   return (
-    <div ref={scrollRef} className="bg-gray-900/80 rounded-xl p-4 h-48 overflow-y-auto">
-      <div className="text-sm font-bold mb-2 text-gray-400">📜 전투 기록</div>
-      <div className="space-y-1 text-sm">
+    <div ref={scrollRef} className="dynasty-card rounded-xl p-4 h-48 overflow-y-auto">
+      <div className="text-sm font-bold mb-3 text-gold flex items-center gap-2">
+        📜 전투 기록
+      </div>
+      <div className="space-y-1.5 text-sm">
         {logs.map((log, index) => (
           <div 
             key={index} 
-            className={`battle-log-entry ${typeColors[log.type] || 'text-gray-300'}`}
+            className={`battle-log-entry ${typeColors[log.type] || 'text-silk/80'}`}
           >
-            {log.round > 0 && <span className="text-gray-500">[{log.round}] </span>}
+            {log.round > 0 && (
+              <span className="text-silk/40 mr-1">[{log.round}]</span>
+            )}
             {log.message}
           </div>
         ))}

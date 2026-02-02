@@ -82,15 +82,15 @@ export function MarchPanel({
           return (
             <div
               key={key}
-              className={`flex flex-col items-center flex-1 ${isActive ? 'opacity-100' : 'opacity-50'}`}
+              className={`flex flex-col items-center flex-1 transition-opacity ${isActive ? 'opacity-100' : 'opacity-50'}`}
             >
               <div
-                className={`w-10 h-10 rounded-full flex items-center justify-center text-lg
-                  ${isActive ? 'bg-yellow-500 text-black' : isPast ? 'bg-green-600 text-white' : 'bg-gray-700 text-gray-400'}`}
+                className={`w-10 h-10 rounded-full flex items-center justify-center text-lg shadow-lg
+                  ${isActive ? 'bg-gold text-wood' : isPast ? 'bg-jade text-silk' : 'dynasty-card text-silk/50'}`}
               >
                 {isPast ? '✓' : cfg.icon}
               </div>
-              <div className={`text-xs mt-1 ${isActive ? 'text-yellow-400' : 'text-gray-500'}`}>
+              <div className={`text-xs mt-1 font-medium ${isActive ? 'text-gold' : 'text-silk/40'}`}>
                 {cfg.title}
               </div>
             </div>
@@ -100,15 +100,15 @@ export function MarchPanel({
 
       {/* Step 1: 목표 선택 */}
       {march.step === 'target' && (
-        <div className="bg-gray-800 rounded-lg p-4 space-y-4">
+        <div className="dynasty-card rounded-lg p-4 space-y-4 animate-fade-in">
           <div className="flex items-center justify-between">
-            <h3 className="text-yellow-400 font-bold">🎯 목표 성 선택</h3>
-            <span className="text-sm text-gray-400">출발: {sourceRegion.nameKo}</span>
+            <h3 className="text-gold font-bold">🎯 목표 성 선택</h3>
+            <span className="text-sm text-silk/50">출발: {sourceRegion.nameKo}</span>
           </div>
 
           {adjacentEnemyRegions.length === 0 ? (
-            <div className="text-center text-gray-400 py-6">
-              <div className="text-3xl mb-2">🚫</div>
+            <div className="text-center text-silk/50 py-6">
+              <div className="text-4xl mb-2">🚫</div>
               <p>인접한 적 영토가 없습니다</p>
               <p className="text-sm mt-1">다른 지역에서 출진하세요</p>
             </div>
@@ -118,22 +118,22 @@ export function MarchPanel({
                 <button
                   key={region.id}
                   onClick={() => onSelectTarget(region.id)}
-                  className={`w-full p-3 rounded-lg border transition-all ${
+                  className={`w-full p-3 rounded-lg border-2 transition-all ${
                     march.targetRegion === region.id
-                      ? 'border-yellow-500 bg-yellow-500/20'
-                      : 'border-gray-600 bg-gray-700 hover:border-gray-500'
+                      ? 'border-gold war-card scale-[1.02]'
+                      : 'border-dynasty-light dynasty-card hover:border-crimson/50'
                   }`}
                 >
                   <div className="flex justify-between items-center">
                     <div className="text-left">
-                      <div className="font-bold text-white">{region.nameKo}</div>
-                      <div className="text-sm text-gray-400">
+                      <div className="font-bold text-silk">{region.nameKo}</div>
+                      <div className="text-sm text-silk/50">
                         {allRegions[region.id] && `소속: ${region.owner}`}
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="text-red-400">⚔️ {region.troops.toLocaleString()}</div>
-                      <div className="text-blue-400 text-sm">🏰 {region.defense}%</div>
+                      <div className="text-crimson-light font-medium">⚔️ {region.troops.toLocaleString()}</div>
+                      <div className="text-jade-light text-sm">🏰 {region.defense}%</div>
                     </div>
                   </div>
                 </button>
@@ -144,14 +144,14 @@ export function MarchPanel({
           <div className="flex gap-2 pt-2">
             <button
               onClick={onCancel}
-              className="flex-1 py-3 rounded-lg bg-gray-700 text-gray-300 hover:bg-gray-600 transition-colors"
+              className="btn-wood flex-1 py-3 rounded-lg"
             >
               취소
             </button>
             <button
               onClick={() => march.targetRegion && onSetStep('generals')}
               disabled={!march.targetRegion}
-              className="flex-1 py-3 rounded-lg bg-yellow-600 text-white font-bold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-yellow-500 transition-colors"
+              className="btn-gold flex-1 py-3 rounded-lg"
             >
               다음 →
             </button>
@@ -161,17 +161,17 @@ export function MarchPanel({
 
       {/* Step 2: 장수 편성 */}
       {march.step === 'generals' && (
-        <div className="bg-gray-800 rounded-lg p-4 space-y-4">
+        <div className="dynasty-card rounded-lg p-4 space-y-4 animate-fade-in">
           <div className="flex items-center justify-between">
-            <h3 className="text-yellow-400 font-bold">👥 장수 편성</h3>
-            <span className="text-sm text-gray-400">
+            <h3 className="text-gold font-bold">👥 장수 편성</h3>
+            <span className="text-sm text-silk/50">
               {march.units.length}/3 선택
             </span>
           </div>
 
           {availableGenerals.length === 0 ? (
-            <div className="text-center text-gray-400 py-6">
-              <div className="text-3xl mb-2">😢</div>
+            <div className="text-center text-silk/50 py-6">
+              <div className="text-4xl mb-2">😢</div>
               <p>출진 가능한 장수가 없습니다</p>
             </div>
           ) : (
@@ -184,10 +184,10 @@ export function MarchPanel({
                 return (
                   <div
                     key={general.id}
-                    className={`p-3 rounded-lg border transition-all ${
+                    className={`p-3 rounded-lg border-2 transition-all ${
                       isSelected
-                        ? 'border-yellow-500 bg-yellow-500/20'
-                        : 'border-gray-600 bg-gray-700'
+                        ? 'border-gold peace-card'
+                        : 'border-dynasty-light dynasty-card'
                     }`}
                   >
                     <div className="flex justify-between items-center">
@@ -197,11 +197,11 @@ export function MarchPanel({
                       >
                         <div className="text-2xl">{general.portrait}</div>
                         <div>
-                          <div className="font-bold text-white">
+                          <div className="font-bold text-silk">
                             {general.nameKo}
-                            {isCommander && <span className="ml-2 text-yellow-400">⭐ 주장</span>}
+                            {isCommander && <span className="ml-2 text-gold">⭐ 주장</span>}
                           </div>
-                          <div className="text-xs text-gray-400">
+                          <div className="text-xs text-silk/50">
                             武{general.might} 知{general.intellect} 政{general.politics} 魅{general.charisma}
                           </div>
                         </div>
@@ -209,7 +209,7 @@ export function MarchPanel({
                       {isSelected && !isCommander && (
                         <button
                           onClick={() => onSetCommander(general.id)}
-                          className="px-2 py-1 text-xs bg-gray-600 hover:bg-yellow-600 rounded transition-colors"
+                          className="btn-wood px-2 py-1 text-xs rounded"
                         >
                           주장 지정
                         </button>
@@ -224,14 +224,14 @@ export function MarchPanel({
           <div className="flex gap-2 pt-2">
             <button
               onClick={() => onSetStep('target')}
-              className="flex-1 py-3 rounded-lg bg-gray-700 text-gray-300 hover:bg-gray-600 transition-colors"
+              className="btn-wood flex-1 py-3 rounded-lg"
             >
               ← 이전
             </button>
             <button
               onClick={() => onSetStep('troops')}
               disabled={march.units.length === 0}
-              className="flex-1 py-3 rounded-lg bg-yellow-600 text-white font-bold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-yellow-500 transition-colors"
+              className="btn-gold flex-1 py-3 rounded-lg"
             >
               다음 →
             </button>
@@ -241,41 +241,41 @@ export function MarchPanel({
 
       {/* Step 3: 병력 배분 */}
       {march.step === 'troops' && (
-        <div className="bg-gray-800 rounded-lg p-4 space-y-4">
+        <div className="dynasty-card rounded-lg p-4 space-y-4 animate-fade-in">
           <div className="flex items-center justify-between">
-            <h3 className="text-yellow-400 font-bold">⚔️ 병력 편성</h3>
+            <h3 className="text-gold font-bold">⚔️ 병력 편성</h3>
           </div>
 
           {/* 병력 현황 바 */}
-          <div className="bg-gray-700 rounded-lg p-3 space-y-2">
+          <div className="silk-card rounded-lg p-3 space-y-2">
             <div className="flex justify-between text-sm">
-              <span className="text-gray-400">출발지 병력</span>
-              <span className="text-white">{sourceRegion.troops.toLocaleString()}</span>
+              <span className="text-dynasty-medium">출발지 병력</span>
+              <span className="text-dynasty-black font-medium">{sourceRegion.troops.toLocaleString()}</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-gray-400">최소 수비</span>
-              <span className="text-red-400">-{minDefenseTroops.toLocaleString()}</span>
+              <span className="text-dynasty-medium">최소 수비</span>
+              <span className="text-crimson font-medium">-{minDefenseTroops.toLocaleString()}</span>
             </div>
-            <div className="border-t border-gray-600 my-1"></div>
+            <div className="divider-gold my-2 opacity-30"></div>
             <div className="flex justify-between text-sm">
-              <span className="text-gray-400">가용 병력</span>
-              <span className="text-blue-400 font-bold">{availableTroops.toLocaleString()}</span>
+              <span className="text-dynasty-medium">가용 병력</span>
+              <span className="text-jade font-bold">{availableTroops.toLocaleString()}</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-gray-400">배분 완료</span>
-              <span className="text-green-400">-{totalAssignedTroops.toLocaleString()}</span>
+              <span className="text-dynasty-medium">배분 완료</span>
+              <span className="text-jade font-medium">-{totalAssignedTroops.toLocaleString()}</span>
             </div>
-            <div className="border-t border-gray-600 my-1"></div>
+            <div className="divider-gold my-2 opacity-30"></div>
             <div className="flex justify-between text-sm font-bold">
-              <span className="text-yellow-400">남은 가용</span>
-              <span className={remainingTroops >= 0 ? 'text-yellow-400' : 'text-red-400'}>
+              <span className="text-gold-dark">남은 가용</span>
+              <span className={remainingTroops >= 0 ? 'text-gold-dark' : 'text-crimson'}>
                 {remainingTroops.toLocaleString()}
               </span>
             </div>
             {/* 프로그레스 바 */}
-            <div className="h-2 bg-gray-600 rounded-full overflow-hidden">
+            <div className="progress-bar h-3">
               <div 
-                className={`h-full transition-all ${totalAssignedTroops > availableTroops ? 'bg-red-500' : 'bg-green-500'}`}
+                className={`progress-fill ${totalAssignedTroops > availableTroops ? 'crimson' : 'jade'}`}
                 style={{ width: `${Math.min(100, (totalAssignedTroops / availableTroops) * 100)}%` }}
               />
             </div>
@@ -290,14 +290,14 @@ export function MarchPanel({
               const maxForThisUnit = remainingTroops + unit.troops;
 
               return (
-                <div key={unit.generalId} className="bg-gray-700 rounded-lg p-3 space-y-3">
+                <div key={unit.generalId} className="peace-card rounded-lg p-3 space-y-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <span className="text-xl">{general.portrait}</span>
-                      <span className="font-bold text-white">{general.nameKo}</span>
-                      {unit.isCommander && <span className="text-yellow-400 text-sm">⭐</span>}
+                      <span className="font-bold text-dynasty-black">{general.nameKo}</span>
+                      {unit.isCommander && <span className="text-gold text-sm">⭐</span>}
                     </div>
-                    <span className="text-lg font-bold text-green-400">
+                    <span className="text-lg font-bold text-jade">
                       {unit.troops.toLocaleString()}
                     </span>
                   </div>
@@ -310,8 +310,8 @@ export function MarchPanel({
                         onClick={() => onAssignTroops(unit.generalId, unit.troops, type.id)}
                         className={`flex-1 py-2 rounded text-sm transition-colors ${
                           unit.troopType === type.id
-                            ? 'bg-yellow-600 text-white'
-                            : 'bg-gray-600 text-gray-300 hover:bg-gray-500'
+                            ? 'btn-gold'
+                            : 'btn-wood'
                         }`}
                       >
                         {type.icon} {type.name}
@@ -328,7 +328,7 @@ export function MarchPanel({
                       step={100}
                       value={unit.troops}
                       onChange={(e) => onAssignTroops(unit.generalId, Number(e.target.value), unit.troopType)}
-                      className="w-full h-3 bg-gray-600 rounded-lg appearance-none cursor-pointer accent-yellow-500"
+                      className="w-full h-3 bg-parchment-dark rounded-lg appearance-none cursor-pointer accent-gold"
                     />
                   </div>
 
@@ -336,19 +336,19 @@ export function MarchPanel({
                   <div className="flex gap-2">
                     <button
                       onClick={() => onAssignTroops(unit.generalId, 0, unit.troopType)}
-                      className="flex-1 py-1 text-xs bg-gray-600 hover:bg-gray-500 rounded transition-colors"
+                      className="btn-wood flex-1 py-1 text-xs rounded"
                     >
                       초기화
                     </button>
                     <button
                       onClick={() => onAssignTroops(unit.generalId, Math.floor(maxForThisUnit / 2), unit.troopType)}
-                      className="flex-1 py-1 text-xs bg-gray-600 hover:bg-gray-500 rounded transition-colors"
+                      className="btn-wood flex-1 py-1 text-xs rounded"
                     >
                       절반
                     </button>
                     <button
                       onClick={() => onAssignTroops(unit.generalId, maxForThisUnit, unit.troopType)}
-                      className="flex-1 py-1 text-xs bg-yellow-600 hover:bg-yellow-500 rounded transition-colors"
+                      className="btn-gold flex-1 py-1 text-xs rounded"
                     >
                       최대
                     </button>
@@ -361,14 +361,14 @@ export function MarchPanel({
           <div className="flex gap-2 pt-2">
             <button
               onClick={() => onSetStep('generals')}
-              className="flex-1 py-3 rounded-lg bg-gray-700 text-gray-300 hover:bg-gray-600 transition-colors"
+              className="btn-wood flex-1 py-3 rounded-lg"
             >
               ← 이전
             </button>
             <button
               onClick={() => onSetStep('confirm')}
               disabled={totalAssignedTroops === 0 || totalAssignedTroops > availableTroops}
-              className="flex-1 py-3 rounded-lg bg-yellow-600 text-white font-bold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-yellow-500 transition-colors"
+              className="btn-gold flex-1 py-3 rounded-lg"
             >
               다음 →
             </button>
@@ -378,67 +378,67 @@ export function MarchPanel({
 
       {/* Step 4: 최종 확인 */}
       {march.step === 'confirm' && targetRegion && (
-        <div className="bg-gray-800 rounded-lg p-4 space-y-4">
-          <h3 className="text-yellow-400 font-bold text-center">⚔️ 출진 확인</h3>
+        <div className="dynasty-card rounded-lg p-4 space-y-4 animate-fade-in">
+          <h3 className="text-gold font-bold text-center text-xl title-glow">⚔️ 출진 확인</h3>
 
           {/* 목표 */}
-          <div className="bg-red-900/30 border border-red-700 rounded-lg p-3">
-            <div className="text-sm text-red-300 mb-1">🎯 목표</div>
+          <div className="war-card rounded-lg p-3">
+            <div className="text-sm text-crimson-light mb-1">🎯 목표</div>
             <div className="flex justify-between items-center">
-              <span className="font-bold text-white text-lg">{targetRegion.nameKo}</span>
+              <span className="font-bold text-silk text-lg">{targetRegion.nameKo}</span>
               <div className="text-right">
-                <div className="text-red-400">⚔️ {targetRegion.troops.toLocaleString()}</div>
+                <div className="text-crimson-light font-bold">⚔️ {targetRegion.troops.toLocaleString()}</div>
               </div>
             </div>
           </div>
 
           {/* 아군 편성 */}
-          <div className="bg-green-900/30 border border-green-700 rounded-lg p-3">
-            <div className="text-sm text-green-300 mb-2">🏴 아군 편성</div>
+          <div className="peace-card rounded-lg p-3">
+            <div className="text-sm text-jade-light mb-2">🏴 아군 편성</div>
             {march.units.map(unit => {
               const general = GENERALS[unit.generalId];
               if (!general) return null;
               const troopType = TROOP_TYPES.find(t => t.id === unit.troopType);
               return (
-                <div key={unit.generalId} className="flex justify-between items-center py-1 border-b border-green-700/50 last:border-0">
+                <div key={unit.generalId} className="flex justify-between items-center py-1 border-b border-jade/30 last:border-0">
                   <div className="flex items-center gap-2">
                     <span>{general.portrait}</span>
-                    <span className="text-white">
+                    <span className="text-silk">
                       {general.nameKo}
-                      {unit.isCommander && <span className="text-yellow-400 ml-1">⭐</span>}
+                      {unit.isCommander && <span className="text-gold ml-1">⭐</span>}
                     </span>
                   </div>
-                  <div className="text-green-300 text-sm">
+                  <div className="text-jade-light text-sm font-medium">
                     {troopType?.icon} {unit.troops.toLocaleString()}
                   </div>
                 </div>
               );
             })}
-            <div className="flex justify-between items-center pt-2 mt-2 border-t border-green-700">
-              <span className="text-green-300">총 병력</span>
-              <span className="font-bold text-white">{totalAssignedTroops.toLocaleString()}</span>
+            <div className="flex justify-between items-center pt-2 mt-2 border-t border-jade/50">
+              <span className="text-jade-light">총 병력</span>
+              <span className="font-bold text-silk">{totalAssignedTroops.toLocaleString()}</span>
             </div>
           </div>
 
           {/* 소모 자원 */}
-          <div className="bg-gray-700 rounded-lg p-3">
+          <div className="silk-card rounded-lg p-3">
             <div className="flex justify-between items-center">
-              <span className="text-gray-300">🌾 필요 식량</span>
-              <span className={sourceRegion.food >= march.foodRequired ? 'text-green-400' : 'text-red-400'}>
+              <span className="text-dynasty-medium">🌾 필요 식량</span>
+              <span className={sourceRegion.food >= march.foodRequired ? 'text-jade font-bold' : 'text-crimson font-bold'}>
                 {march.foodRequired.toLocaleString()} / {sourceRegion.food.toLocaleString()}
               </span>
             </div>
           </div>
 
           {/* 전력 비교 */}
-          <div className="bg-gray-700 rounded-lg p-3 text-center">
-            <div className="text-sm text-gray-400 mb-1">⚖️ 전력 비교</div>
+          <div className="dynasty-card rounded-lg p-3 text-center border border-gold/30">
+            <div className="text-sm text-silk/60 mb-1">⚖️ 전력 비교</div>
             <div className="flex items-center justify-center gap-4">
-              <span className="text-green-400 font-bold">{totalAssignedTroops.toLocaleString()}</span>
-              <span className="text-gray-500">vs</span>
-              <span className="text-red-400 font-bold">{targetRegion.troops.toLocaleString()}</span>
+              <span className="text-jade-light font-bold text-xl">{totalAssignedTroops.toLocaleString()}</span>
+              <span className="text-gold font-bold">vs</span>
+              <span className="text-crimson-light font-bold text-xl">{targetRegion.troops.toLocaleString()}</span>
             </div>
-            <div className="text-xs text-gray-500 mt-1">
+            <div className="text-xs text-silk/50 mt-2">
               {totalAssignedTroops > targetRegion.troops
                 ? '✨ 아군 우세'
                 : totalAssignedTroops < targetRegion.troops
@@ -450,14 +450,14 @@ export function MarchPanel({
           <div className="flex gap-2 pt-2">
             <button
               onClick={() => onSetStep('troops')}
-              className="flex-1 py-3 rounded-lg bg-gray-700 text-gray-300 hover:bg-gray-600 transition-colors"
+              className="btn-wood flex-1 py-3 rounded-lg"
             >
               ← 이전
             </button>
             <button
               onClick={onConfirm}
               disabled={sourceRegion.food < march.foodRequired}
-              className="flex-1 py-3 rounded-lg bg-red-600 text-white font-bold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-red-500 transition-colors"
+              className="btn-war flex-1 py-3 rounded-lg text-lg animate-pulse-crimson"
             >
               ⚔️ 출진!
             </button>

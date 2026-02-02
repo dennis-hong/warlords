@@ -33,10 +33,10 @@ export function UnitCard({ unit, isPlayer = false, animState = 'idle', damageDis
   const isCritical = troopPercentage < 30;
   
   return (
-    <div className={`rounded-xl p-4 ${isPlayer ? 'bg-blue-900/50 border-blue-500' : 'bg-red-900/50 border-red-500'} border-2 relative`}>
+    <div className={`rounded-xl p-4 ${isPlayer ? 'peace-card' : 'war-card'} relative animate-scale-in`}>
       {/* 피해량 팝업 */}
       {damageDisplay && damageDisplay > 0 && (
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-2 text-red-400 font-bold text-lg damage-popup">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-2 text-crimson-light font-bold text-lg damage-popup">
           -{damageDisplay}
         </div>
       )}
@@ -47,8 +47,8 @@ export function UnitCard({ unit, isPlayer = false, animState = 'idle', damageDis
           {unit.general.portrait}
         </span>
         <div>
-          <div className="text-lg font-bold">{unit.general.nameKo}</div>
-          <div className="text-sm text-gray-400">{unit.general.name}</div>
+          <div className="text-lg font-bold text-silk">{unit.general.nameKo}</div>
+          <div className="text-sm text-silk/50">{unit.general.name}</div>
         </div>
       </div>
       
@@ -57,35 +57,35 @@ export function UnitCard({ unit, isPlayer = false, animState = 'idle', damageDis
       
       {/* 능력치 */}
       <div className="grid grid-cols-4 gap-1 text-xs mb-3">
-        <div className="text-center">
-          <div className="text-red-400">무력</div>
-          <div className="font-bold">{unit.general.might}</div>
+        <div className="stat-badge might text-center">
+          <div className="text-crimson-light">武</div>
+          <div className="font-bold text-silk">{unit.general.might}</div>
         </div>
-        <div className="text-center">
-          <div className="text-blue-400">지력</div>
-          <div className="font-bold">{unit.general.intellect}</div>
+        <div className="stat-badge intellect text-center">
+          <div className="text-blue-400">知</div>
+          <div className="font-bold text-silk">{unit.general.intellect}</div>
         </div>
-        <div className="text-center">
-          <div className="text-green-400">정치</div>
-          <div className="font-bold">{unit.general.politics}</div>
+        <div className="stat-badge politics text-center">
+          <div className="text-jade-light">政</div>
+          <div className="font-bold text-silk">{unit.general.politics}</div>
         </div>
-        <div className="text-center">
-          <div className="text-yellow-400">매력</div>
-          <div className="font-bold">{unit.general.charisma}</div>
+        <div className="stat-badge charisma text-center">
+          <div className="text-gold-light">魅</div>
+          <div className="font-bold text-silk">{unit.general.charisma}</div>
         </div>
       </div>
       
       {/* 병력 */}
       <div className="mb-2">
         <div className="flex justify-between text-xs mb-1">
-          <span className="text-gray-400">병력</span>
-          <span className={`font-bold ${isCritical ? 'text-red-400' : ''}`}>
+          <span className="text-silk/60">병력</span>
+          <span className={`font-bold ${isCritical ? 'text-crimson-light' : 'text-silk'}`}>
             {unit.troops.toLocaleString()} / {unit.maxTroops.toLocaleString()}
           </span>
         </div>
-        <div className="h-3 bg-gray-700 rounded-full overflow-hidden">
+        <div className="progress-bar h-3">
           <div
-            className={`h-full ${isPlayer ? 'bg-blue-500' : 'bg-red-500'} transition-all duration-300 ${isCritical ? 'health-critical' : ''}`}
+            className={`progress-fill ${isPlayer ? 'jade' : 'crimson'} ${isCritical ? 'health-critical' : ''}`}
             style={{ width: `${troopPercentage}%` }}
           />
         </div>

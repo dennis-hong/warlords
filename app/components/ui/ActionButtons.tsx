@@ -27,35 +27,35 @@ export function ActionButtons({
   return (
     <div className="space-y-3">
       {/* 메인 액션 */}
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-2 gap-3">
         <button
           onClick={onCharge}
           disabled={disabled}
-          className="bg-red-600 hover:bg-red-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-bold py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"
+          className="btn-war py-4 px-4 rounded-lg flex items-center justify-center gap-2 text-lg"
         >
           ⚔️ 돌격
         </button>
         <button
           onClick={onDefend}
           disabled={disabled}
-          className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-bold py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"
+          className="btn-peace py-4 px-4 rounded-lg flex items-center justify-center gap-2 text-lg"
         >
           🛡️ 수비
         </button>
       </div>
 
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-2 gap-3">
         <button
           onClick={() => setShowStratagems(!showStratagems)}
           disabled={disabled || availableStratagems.length === 0}
-          className="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-bold py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"
+          className="btn-bronze py-4 px-4 rounded-lg flex items-center justify-center gap-2 text-lg"
         >
           🧠 계략 ({availableStratagems.length})
         </button>
         <button
           onClick={onDuel}
           disabled={disabled}
-          className="bg-orange-600 hover:bg-orange-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-bold py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"
+          className="btn-gold py-4 px-4 rounded-lg flex items-center justify-center gap-2 text-lg"
         >
           👊 일기토
         </button>
@@ -63,8 +63,11 @@ export function ActionButtons({
 
       {/* 계략 선택 */}
       {showStratagems && availableStratagems.length > 0 && (
-        <div className="bg-gray-800 rounded-lg p-3 space-y-2">
-          <div className="text-sm text-gray-400 mb-2">사용 가능한 계략:</div>
+        <div className="dynasty-card rounded-lg p-4 space-y-2 animate-fade-in">
+          <div className="text-sm text-silk/60 mb-2 flex items-center gap-2">
+            <span>🧠</span>
+            사용 가능한 계략:
+          </div>
           {availableStratagems.map((s) => (
             <button
               key={s.id}
@@ -72,10 +75,10 @@ export function ActionButtons({
                 onStratagem(s.id);
                 setShowStratagems(false);
               }}
-              className="w-full text-left bg-purple-800/50 hover:bg-purple-700/50 p-2 rounded-lg transition-colors"
+              className="w-full text-left bg-bronze/20 hover:bg-bronze/30 p-3 rounded-lg transition-colors border border-bronze/30"
             >
-              <div className="font-bold">{s.nameKo} ({s.name})</div>
-              <div className="text-xs text-gray-400">지력 {s.requiredIntellect}+ | {s.effect}</div>
+              <div className="font-bold text-gold">{s.nameKo} <span className="text-silk/50 text-sm">({s.name})</span></div>
+              <div className="text-xs text-silk/60 mt-1">지력 {s.requiredIntellect}+ | {s.effect}</div>
             </button>
           ))}
         </div>

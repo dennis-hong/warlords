@@ -462,18 +462,20 @@ export default function BattleScreen({ battleData, regions, onBattleEnd }: Battl
   const targetRegion = regions[battleData.enemyRegionId];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900 p-4">
+    <div className="min-h-screen p-4">
       {/* 헤더 */}
-      <header className="text-center mb-6">
-        <h1 className="text-2xl font-bold text-yellow-400 mb-1">
+      <header className="text-center mb-6 animate-fade-in">
+        <h1 className="text-2xl font-bold text-gold mb-2 title-fancy">
           ⚔️ {targetRegion?.nameKo} 공략전 ⚔️
         </h1>
         <div className="flex items-center justify-center gap-4">
-          <div className={`text-gray-400 round-indicator`} key={battle.round}>
-            라운드 <span className="text-xl font-bold text-yellow-300">{battle.round}</span> / {battle.maxRounds}
+          <div className="dynasty-card px-4 py-2 rounded-lg">
+            <span className="text-silk/60 text-sm">라운드</span>
+            <span className="text-2xl font-bold text-gold ml-2 round-indicator" key={battle.round}>{battle.round}</span>
+            <span className="text-silk/40 text-sm"> / {battle.maxRounds}</span>
           </div>
           {autoPlay && (
-            <span className="bg-red-600 text-white text-xs px-2 py-1 rounded-full font-bold animate-pulse">
+            <span className="bg-crimson text-silk text-xs px-3 py-1 rounded-full font-bold animate-pulse shadow-lg">
               🔴 LIVE
             </span>
           )}
@@ -484,10 +486,10 @@ export default function BattleScreen({ battleData, regions, onBattleEnd }: Battl
       <div className="flex justify-center gap-2 mb-4">
         <button
           onClick={() => setAutoPlay(!autoPlay)}
-          className={`px-3 py-1 rounded text-sm font-bold transition ${
+          className={`px-4 py-2 rounded-lg text-sm font-bold transition ${
             autoPlay 
-              ? 'bg-red-600 hover:bg-red-700 text-white' 
-              : 'bg-green-600 hover:bg-green-700 text-white'
+              ? 'btn-war' 
+              : 'btn-peace'
           }`}
         >
           {autoPlay ? '⏸️ 멈춤' : '▶️ 자동 진행'}
@@ -497,10 +499,10 @@ export default function BattleScreen({ battleData, regions, onBattleEnd }: Battl
             <button
               key={speed}
               onClick={() => setPlaySpeed(speed)}
-              className={`px-2 py-1 rounded text-xs font-bold transition ${
+              className={`px-3 py-2 rounded-lg text-sm font-bold transition ${
                 playSpeed === speed 
-                  ? 'bg-yellow-500 text-black' 
-                  : 'bg-gray-600 text-white hover:bg-gray-500'
+                  ? 'btn-gold' 
+                  : 'btn-wood'
               }`}
             >
               {speed}x
@@ -533,7 +535,7 @@ export default function BattleScreen({ battleData, regions, onBattleEnd }: Battl
 
       {/* VS 표시 */}
       <div className="text-center mb-4">
-        <span className={`text-2xl font-bold text-yellow-400 ${showClash ? 'duel-clash' : ''}`}>
+        <span className={`text-2xl font-bold text-gold ${showClash ? 'duel-clash' : ''}`}>
           ⚡ VS ⚡
         </span>
       </div>
@@ -564,39 +566,38 @@ export default function BattleScreen({ battleData, regions, onBattleEnd }: Battl
         )}
 
         {isGameOver && (
-          <div className="text-center">
+          <div className="dynasty-card rounded-xl p-6 text-center animate-scale-in">
             <div className={`text-4xl font-bold mb-4 winner-bounce ${
-              battle.phase === 'victory' ? 'text-green-400 winner-glow' : 'text-red-400'
+              battle.phase === 'victory' ? 'text-jade-light winner-glow' : 'text-crimson-light'
             }`}>
               {battle.phase === 'victory' ? '🎉 승리!' : '💀 패배...'}
             </div>
-            <div className="text-gray-400 mb-4">
+            <div className="text-silk/70 mb-4">
               {battle.phase === 'victory'
                 ? `${targetRegion?.nameKo}을(를) 점령합니다!`
                 : '아군이 퇴각합니다...'
               }
             </div>
-            <div className="text-sm text-gray-500">
-              <div className="mb-2">
-                ⚔️ 아군 피해: {(initialTroops.player - battle.player.troops).toLocaleString()}명
-              </div>
-              <div className="mb-2">
-                💀 적군 피해: {(initialTroops.enemy - battle.enemy.troops).toLocaleString()}명
+            <div className="divider-gold my-4"></div>
+            <div className="text-sm text-silk/60 space-y-2">
+              <div className="flex justify-center gap-6">
+                <span>⚔️ 아군 피해: <span className="text-jade-light font-bold">{(initialTroops.player - battle.player.troops).toLocaleString()}명</span></span>
+                <span>💀 적군 피해: <span className="text-crimson-light font-bold">{(initialTroops.enemy - battle.enemy.troops).toLocaleString()}명</span></span>
               </div>
               
               {/* 장수 운명 표시 */}
               {generalDeaths.player && (
-                <div className="mt-2 text-red-400">
+                <div className="text-crimson-light font-bold mt-3">
                   💀 {battle.player.general.nameKo} 전사!
                 </div>
               )}
               {generalDeaths.enemy && (
-                <div className="mt-2 text-green-400">
+                <div className="text-jade-light font-bold mt-3">
                   💀 {battle.enemy.general.nameKo} 전사!
                 </div>
               )}
               
-              <div className="text-gray-600 mt-4">
+              <div className="text-silk/30 mt-4">
                 잠시 후 맵으로 돌아갑니다...
               </div>
             </div>
@@ -606,7 +607,7 @@ export default function BattleScreen({ battleData, regions, onBattleEnd }: Battl
 
       {/* 도움말 */}
       {!isGameOver && battle.phase === 'selection' && (
-        <div className="text-center text-xs text-gray-500 mt-4">
+        <div className="text-center text-xs text-silk/40 mt-4 space-y-1">
           <p>💡 사기가 0이 되면 패주합니다!</p>
           <p>👊 일기토로 적 사기를 크게 떨어뜨릴 수 있습니다</p>
         </div>
