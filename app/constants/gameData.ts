@@ -996,8 +996,9 @@ export const INITIAL_FREE_GENERALS: FreeGeneral[] = [
   { generalId: 'xuzhu', location: 'ye' as RegionId, recruitDifficulty: 15 },
   { generalId: 'yujin', location: 'ye' as RegionId, recruitDifficulty: 10 },
   
-  // 형주 - 와룡강의 제갈량!
+  // 형주 - 와룡강의 제갈량과 봉추 방통!
   { generalId: 'zhugeliang', location: 'jingzhou' as RegionId, recruitDifficulty: 99 }, // 삼고초려 이벤트로만 영입 가능
+  { generalId: 'pangtong', location: 'jingzhou' as RegionId, recruitDifficulty: 85 }, // 봉추 영입 이벤트 추천
   { generalId: 'weiyan', location: 'jingzhou' as RegionId, recruitDifficulty: 15 },
   { generalId: 'soldier2', location: 'jingzhou' as RegionId, recruitDifficulty: 0 },
   

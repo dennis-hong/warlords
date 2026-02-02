@@ -377,6 +377,214 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     ],
     isRepeatable: false,
     priority: 100
+  },
+
+  // ============================================
+  // 11. 봉추 방통 영입 - 와룡봉추
+  // ============================================
+  {
+    id: 'fengchu_recruitment',
+    name: '臥龍鳳雛',
+    nameKo: '와룡봉추',
+    description: `서서가 말했다.
+
+"와룡 제갈량과 봉추 방통,
+이 둘 중 하나만 얻어도
+천하를 얻을 수 있습니다."
+
+추한 외모에 오만한 성격,
+그러나 그 지략은 제갈량에 버금간다.
+
+봉추 방통이 당신의 문을 두드렸다.`,
+    image: '🦅',
+    trigger: 'turn_start',
+    conditions: [
+      { type: 'faction', factionId: 'liubei' },
+      { type: 'general_free', generalId: 'pangtong' },
+      { type: 'turnMin', turnMin: 5 }
+    ],
+    choices: [
+      {
+        id: 'recruit_pangtong',
+        text: '"선생의 재주를 들었소. 함께 대업을 이루시지요!"',
+        effects: [
+          { type: 'add_general', generalId: 'pangtong', targetType: 'player' },
+          { type: 'set_loyalty', generalId: 'pangtong', value: 85 },
+          { type: 'message', message: '방통이 합류했습니다! "군사(軍師)로서 힘을 다하겠습니다."' }
+        ]
+      },
+      {
+        id: 'reject_pangtong',
+        text: '"외모가 너무... 다음 기회에 오시오."',
+        effects: [
+          { type: 'message', message: '방통이 떠났습니다. 후회하지 마십시오...' }
+        ]
+      }
+    ],
+    isRepeatable: false,
+    priority: 85
+  },
+
+  // ============================================
+  // 12. 관도대전 - 조조의 결전
+  // ============================================
+  {
+    id: 'guandu',
+    name: '官渡之戰',
+    nameKo: '관도대전',
+    description: `원소의 대군이 남하했다!
+70만 대군 vs 7만.
+10배의 병력 차이.
+
+허유가 투항해왔다.
+"원소의 군량이 오소에 있습니다!"
+
+지금이야말로 운명을 건 결전의 때!`,
+    image: '⚔️',
+    trigger: 'battle_start',
+    conditions: [
+      { type: 'faction', factionId: 'caocao' },
+      { type: 'custom', customCheck: 'guandu_battle_conditions' }
+    ],
+    choices: [
+      {
+        id: 'raid_wuchao',
+        text: '"오소의 군량을 불태워라!" (기습 성공)',
+        effects: [
+          { type: 'add_morale', targetType: 'player', value: 40 },
+          { type: 'battle_bonus', targetType: 'player', value: 15 },
+          { type: 'message', message: '오소 급습 성공! 원소군의 사기가 무너집니다!' }
+        ]
+      }
+    ],
+    isRepeatable: false,
+    priority: 92
+  },
+
+  // ============================================
+  // 13. 오호대장군 - 유비의 다섯 호랑이
+  // ============================================
+  {
+    id: 'five_tiger_generals',
+    name: '五虎大將軍',
+    nameKo: '오호대장군',
+    description: `한중왕 유비가 다섯 호랑이 장수를 임명했다.
+
+🐅 관우 - 전장군
+🐅 장비 - 우장군  
+🐅 조운 - 좌장군
+🐅 마초 - 후장군
+🐅 황충 - 후장군
+
+"이 다섯 장수와 함께라면,
+천하를 호령할 수 있으리라!"`,
+    image: '🐅',
+    trigger: 'turn_start',
+    conditions: [
+      { type: 'faction', factionId: 'liubei' },
+      { type: 'has_general', generalId: 'guanyu' },
+      { type: 'has_general', generalId: 'zhangfei' },
+      { type: 'has_general', generalId: 'zhaoyun' },
+      { type: 'turnMin', turnMin: 10 }
+    ],
+    choices: [
+      {
+        id: 'appoint_five_tigers',
+        text: '"오호대장군을 임명하노라!"',
+        effects: [
+          { type: 'add_loyalty', generalId: 'guanyu', value: 10 },
+          { type: 'add_loyalty', generalId: 'zhangfei', value: 10 },
+          { type: 'add_loyalty', generalId: 'zhaoyun', value: 10 },
+          { type: 'battle_bonus', generalId: 'guanyu', value: 3 },
+          { type: 'battle_bonus', generalId: 'zhangfei', value: 3 },
+          { type: 'battle_bonus', generalId: 'zhaoyun', value: 3 },
+          { type: 'message', message: '오호대장군 임명! 충성도와 전투력이 상승합니다!' }
+        ]
+      }
+    ],
+    isRepeatable: false,
+    priority: 80
+  },
+
+  // ============================================
+  // 14. 연환계 - 적벽대전 준비
+  // ============================================
+  {
+    id: 'chain_stratagem',
+    name: '連環計',
+    nameKo: '연환계',
+    description: `방통이 조조에게 진언했다.
+
+"북방 군사들이 배멀미로 고생합니다.
+전선을 쇠사슬로 연결하면
+흔들림이 줄어들 것입니다."
+
+조조는 크게 기뻐하며
+모든 전선을 쇠사슬로 연결했다.
+
+하지만 이것이 바로... 연환계!`,
+    image: '⛓️',
+    trigger: 'turn_start',
+    conditions: [
+      { type: 'faction', factionId: 'sunquan' },
+      { type: 'has_general', generalId: 'zhouyu' },
+      { type: 'turnMin', turnMin: 8 }
+    ],
+    choices: [
+      {
+        id: 'execute_chain',
+        text: '"연환계 성공! 화공의 준비가 끝났다!"',
+        effects: [
+          { type: 'add_morale', targetType: 'player', value: 20 },
+          { type: 'message', message: '조조군의 전선이 연결되었습니다. 화공의 때가 무르익습니다...' }
+        ]
+      }
+    ],
+    isRepeatable: false,
+    priority: 78
+  },
+
+  // ============================================
+  // 15. 여포의 배신 - 동탁 암살
+  // ============================================
+  {
+    id: 'lvbu_betrayal',
+    name: '呂布弑董',
+    nameKo: '여포의 배신',
+    description: `왕윤의 미인계가 성공했다.
+
+초선을 사이에 두고
+동탁과 여포의 사이가 틀어졌다.
+
+"의부를 죽인 자가 또 의부를 죽이는가!"
+
+여포가 동탁을 향해 방천화극을 들었다!`,
+    image: '🗡️',
+    trigger: 'turn_start',
+    conditions: [
+      { type: 'faction', factionId: 'dongzhuo' },
+      { type: 'has_general', generalId: 'lvbu' },
+      { type: 'turnMin', turnMin: 6 }
+    ],
+    choices: [
+      {
+        id: 'survive_betrayal',
+        text: '"이 배은망덕한 놈!" (여포 이탈, 동탁 생존)',
+        effects: [
+          { type: 'add_morale', targetType: 'player', value: -30 },
+          { type: 'message', message: '여포가 배신하고 떠났습니다! 사기가 크게 하락합니다.' }
+        ]
+      },
+      {
+        id: 'accept_fate',
+        text: '"내 운명이 여기까지인가..." (게임 오버)',
+        effects: [
+          { type: 'message', message: '동탁이 여포의 손에 죽었습니다. 폭군의 최후.' }
+        ]
+      }
+    ],
+    isRepeatable: false,
+    priority: 88
   }
 ];
 
