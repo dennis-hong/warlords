@@ -19,3 +19,4 @@ export { Toast, useToast } from './Toast';
 export { ConfirmModal } from './ConfirmModal';
 // 이벤트 시스템
 export { EventModal } from './EventModal';
+export { default as EventLog } from './EventLog';

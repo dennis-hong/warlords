@@ -14,7 +14,8 @@ import {
   Toast,
   useToast,
   ConfirmModal,
-  EventModal
+  EventModal,
+  EventLog
 } from './ui';
 import AdvisorPanel from './ui/AdvisorPanel';
 import BattleScreen from './BattleScreen';
@@ -71,6 +72,7 @@ export default function WarlordsGame() {
   const [showPrisonerPanel, setShowPrisonerPanel] = useState(false);
   const [showEndTurnModal, setShowEndTurnModal] = useState(false);
   const [showAdvisorPanel, setShowAdvisorPanel] = useState(false);
+  const [showEventLog, setShowEventLog] = useState(false);
   const { messages: toastMessages, showToast, removeToast } = useToast();
 
   // 전략 조언 세션 (game이 있을 때만)
@@ -233,26 +235,48 @@ export default function WarlordsGame() {
         year={game.year}
       />
 
-      {/* 책사 조언 플로팅 버튼 */}
-      {advisorSession && (
+      {/* 플로팅 버튼 영역 */}
+      <div className="fixed right-4 top-20 z-40 flex flex-col gap-2">
+        {/* 책사 조언 버튼 */}
+        {advisorSession && (
+          <button
+            onClick={() => setShowAdvisorPanel(true)}
+            className="w-14 h-14 rounded-full bg-gradient-to-br from-amber-700 to-amber-900 border-2 border-amber-500 shadow-lg hover:scale-110 transition-transform flex items-center justify-center group"
+            title="책사에게 조언을 구하기"
+          >
+            <span className="text-2xl">{advisorSession.strategist.portrait}</span>
+            {/* 긴급 알림 뱃지 */}
+            {advisorSession.advice.some(a => a.priority === 'critical') && (
+              <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full text-white text-xs flex items-center justify-center animate-pulse">
+                !
+              </span>
+            )}
+            {/* 호버 텍스트 */}
+            <span className="absolute right-16 bg-stone-900/90 text-amber-200 px-2 py-1 rounded text-sm whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
+              책사의 조언
+            </span>
+          </button>
+        )}
+
+        {/* 역사 기록 버튼 */}
         <button
-          onClick={() => setShowAdvisorPanel(true)}
-          className="fixed right-4 top-20 z-40 w-14 h-14 rounded-full bg-gradient-to-br from-amber-700 to-amber-900 border-2 border-amber-500 shadow-lg hover:scale-110 transition-transform flex items-center justify-center group"
-          title="책사에게 조언을 구하기"
+          onClick={() => setShowEventLog(true)}
+          className="w-14 h-14 rounded-full bg-gradient-to-br from-stone-700 to-stone-900 border-2 border-amber-700 shadow-lg hover:scale-110 transition-transform flex items-center justify-center group"
+          title="역사 기록 보기"
         >
-          <span className="text-2xl">{advisorSession.strategist.portrait}</span>
-          {/* 긴급 알림 뱃지 */}
-          {advisorSession.advice.some(a => a.priority === 'critical') && (
-            <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full text-white text-xs flex items-center justify-center animate-pulse">
-              !
+          <span className="text-2xl">📜</span>
+          {/* 이벤트 개수 뱃지 */}
+          {game.triggeredEvents.length > 0 && (
+            <span className="absolute -top-1 -right-1 w-5 h-5 bg-amber-600 rounded-full text-white text-xs flex items-center justify-center">
+              {game.triggeredEvents.length}
             </span>
           )}
           {/* 호버 텍스트 */}
           <span className="absolute right-16 bg-stone-900/90 text-amber-200 px-2 py-1 rounded text-sm whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
-            책사의 조언
+            역사 기록
           </span>
         </button>
-      )}
+      </div>
 
       {/* 메인 컨텐츠 */}
       <div className="p-4">
@@ -528,6 +552,15 @@ export default function WarlordsGame() {
                 showToast('해당 화면으로 이동합니다', 'info');
             }
           }}
+        />
+      )}
+
+      {/* 역사 기록 패널 */}
+      {showEventLog && (
+        <EventLog
+          triggeredEvents={game.triggeredEvents}
+          currentTurn={game.turn}
+          onClose={() => setShowEventLog(false)}
         />
       )}
 
