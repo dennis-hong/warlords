@@ -103,7 +103,7 @@ export interface GeneralFate {
 // ============================================
 
 // 세력 ID
-export type FactionId = 'player' | 'caocao' | 'sunquan' | 'dongzhuo' | 'yuanshao' | 'liubiao' | 'liuzhang' | 'gongsunzan' | 'rebels';
+export type FactionId = 'player' | 'liubei' | 'caocao' | 'sunquan' | 'dongzhuo' | 'yuanshao' | 'liubiao' | 'liuzhang' | 'gongsunzan' | 'rebels';
 
 // 세력 정보
 export interface Faction {

@@ -7,7 +7,7 @@ import type { FactionId } from '../types';
 
 // 플레이어가 선택 가능한 세력 ID 목록 (9개)
 const PLAYABLE_FACTIONS: FactionId[] = [
-  'player',     // 유비 (촉)
+  'liubei',     // 유비 (촉)
   'caocao',     // 조조 (위)
   'sunquan',    // 손권 (오)
   'yuanshao',   // 원소

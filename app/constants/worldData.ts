@@ -16,8 +16,8 @@ export interface FactionDetail {
 }
 
 export const FACTION_DETAILS: Record<FactionId, FactionDetail> = {
-  player: {
-    id: 'player',
+  liubei: {
+    id: 'liubei',
     displayName: '촉 (蜀)',
     rulerName: '유비',
     rulerId: 'liubei',
@@ -33,6 +33,20 @@ export const FACTION_DETAILS: Record<FactionId, FactionDetail> = {
       '의형제의 높은 충성도'
     ],
     keyGenerals: ['guanyu', 'zhangfei', 'zhaoyun', 'zhugeliang']
+  },
+  // player는 실제 플레이어가 선택한 세력을 나타내므로 FACTION_DETAILS에서 제외
+  player: {
+    id: 'player',
+    displayName: '플레이어',
+    rulerName: '',
+    rulerId: '',
+    capital: '',
+    difficulty: 0,
+    emoji: '👤',
+    color: '#ffffff',
+    slogan: '',
+    features: [],
+    keyGenerals: []
   },
   caocao: {
     id: 'caocao',
@@ -220,7 +234,7 @@ export const REGIONS: Record<RegionId, Region> = {
     nameKo: '성도',
     description: '유비의 본거지',
     adjacent: ['yizhou'],
-    owner: 'player',
+    owner: 'liubei',
     gold: 6000,
     food: 15000,
     population: 45000,
@@ -332,6 +346,13 @@ export const REGIONS: Record<RegionId, Region> = {
 export const FACTIONS: Record<FactionId, Faction> = {
   player: {
     id: 'player',
+    name: 'Player',
+    nameKo: '플레이어',
+    color: '#22c55e',  // 선택한 세력 색상으로 변경됨
+    ruler: ''
+  },
+  liubei: {
+    id: 'liubei',
     name: '劉備',
     nameKo: '유비',
     color: '#22c55e',  // green
