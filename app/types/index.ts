@@ -1,4 +1,14 @@
 // ============================================
+// 기본 타입 (다른 타입에서 참조)
+// ============================================
+
+// 세력 ID
+export type FactionId = 'player' | 'liubei' | 'caocao' | 'sunquan' | 'dongzhuo' | 'yuanshao' | 'liubiao' | 'liuzhang' | 'gongsunzan' | 'rebels';
+
+// 지역 ID
+export type RegionId = 'luoyang' | 'xuchang' | 'chengdu' | 'jianye' | 'changan' | 'ye' | 'jingzhou' | 'yizhou' | 'youzhou';
+
+// ============================================
 // 장수 시스템
 // ============================================
 
@@ -27,6 +37,71 @@ export interface FreeGeneral {
   generalId: string;
   location: RegionId;
   recruitDifficulty: number; // 등용 난이도 보정 (0~50)
+}
+
+// 장수 사망/포로 결과
+export interface GeneralFate {
+  generalId: string;
+  fate: 'alive' | 'dead' | 'captured' | 'escaped';
+  message?: string;
+}
+
+// ============================================
+// 역사 이벤트 시스템 (GameState 전에 정의 필요)
+// ============================================
+
+export type EventTrigger = 
+  | 'game_start'           // 게임 시작 시
+  | 'turn_start'           // 턴 시작 시
+  | 'turn_end'             // 턴 종료 시
+  | 'region_captured'      // 지역 점령 시
+  | 'battle_start'         // 전투 시작 시
+  | 'battle_end'           // 전투 종료 시
+  | 'general_recruited'    // 장수 등용 시
+  | 'general_captured'     // 장수 포로 시
+  | 'general_died';        // 장수 사망 시
+
+export interface EventCondition {
+  type: 'faction' | 'turn' | 'turnMin' | 'turnMax' | 'region_owner' | 'has_general' | 'general_free' | 'general_in_region' | 'troops_ratio' | 'custom';
+  factionId?: FactionId;
+  turn?: number;
+  turnMin?: number;
+  turnMax?: number;
+  regionId?: RegionId;
+  generalId?: string;
+  ratio?: number;        // 병력 비율 (적 대비)
+  customCheck?: string;  // 커스텀 조건 함수명
+}
+
+export interface EventEffect {
+  type: 'add_general' | 'remove_general' | 'add_troops' | 'add_gold' | 'add_food' | 
+        'set_loyalty' | 'add_loyalty' | 'add_morale' | 'set_relation' | 'unlock_stratagem' |
+        'battle_bonus' | 'message';
+  targetType?: 'player' | 'faction' | 'general' | 'region';
+  targetId?: string;
+  value?: number;
+  generalId?: string;
+  regionId?: RegionId;
+  message?: string;
+}
+
+export interface EventChoice {
+  id: string;
+  text: string;
+  effects: EventEffect[];
+}
+
+export interface HistoricalEvent {
+  id: string;
+  name: string;
+  nameKo: string;
+  description: string;
+  image?: string;         // 이모지 or 이미지
+  trigger: EventTrigger;
+  conditions: EventCondition[];
+  choices: EventChoice[];
+  isRepeatable: boolean;  // 반복 가능 여부
+  priority: number;       // 우선순위 (높을수록 먼저)
 }
 
 // ============================================
@@ -91,19 +166,9 @@ export interface DuelHealth {
   enemy: number;
 }
 
-// 장수 사망/포로 결과
-export interface GeneralFate {
-  generalId: string;
-  fate: 'alive' | 'dead' | 'captured' | 'escaped';
-  message?: string;
-}
-
 // ============================================
 // 지역 & 세력 & 내정 시스템
 // ============================================
-
-// 세력 ID
-export type FactionId = 'player' | 'liubei' | 'caocao' | 'sunquan' | 'dongzhuo' | 'yuanshao' | 'liubiao' | 'liuzhang' | 'gongsunzan' | 'rebels';
 
 // 세력 정보
 export interface Faction {
@@ -113,9 +178,6 @@ export interface Faction {
   color: string;     // 맵 표시용 색상
   ruler: string;     // 군주 장수 ID
 }
-
-// 지역 ID
-export type RegionId = 'luoyang' | 'xuchang' | 'chengdu' | 'jianye' | 'changan' | 'ye' | 'jingzhou' | 'yizhou' | 'youzhou';
 
 // 지역 정보
 export interface Region {
@@ -161,12 +223,16 @@ export interface DomesticCommand {
   statRequired: 'politics' | 'might' | 'charisma';
 }
 
+// ============================================
 // 게임 상태
+// ============================================
+
 export interface GameState {
   turn: number;
   season: 'spring' | 'summer' | 'fall' | 'winter';
   year: number;
   playerFaction: FactionId;
+  selectedFaction: FactionId;      // 선택한 원래 세력 (이벤트 조건용)
   regions: Record<RegionId, Region>;
   factions: Record<FactionId, Faction>;
   selectedRegion: RegionId | null;
@@ -182,12 +248,16 @@ export interface GameState {
   freeGenerals: FreeGeneral[];     // 재야 장수 목록
   deadGenerals: string[];          // 사망한 장수 ID 목록
   generalLoyalty: Record<string, number>; // 장수별 충성도 (장수 ID -> 충성도)
+  // 이벤트 시스템
+  triggeredEvents: string[];       // 이미 발생한 이벤트 ID 목록
+  activeEvent: HistoricalEvent | null;  // 현재 표시 중인 이벤트
+  battleBonuses: Record<string, number>; // 장수별 전투 보너스 (이벤트로 획득)
 }
 
 // 탭 종류
 export type GameTab = 'map' | 'domestic' | 'military' | 'diplomacy';
 
-// 게임 단계 (구 GameContext용)
+// 게임 단계
 export type GamePhase = 'title' | 'faction_select' | 'playing' | 'battle' | 'game_over';
 
 // ============================================
