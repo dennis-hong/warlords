@@ -646,5 +646,366 @@ export const MORALE_CHANGES = {
   DUEL_LOSE: -40,
   STRATAGEM_SUCCESS: 10,
   GENERAL_DEATH: -50,
-  ENEMY_GENERAL_DEATH: 30
+  ENEMY_GENERAL_DEATH: 30,
+  COMMANDER_DEATH: -70
 };
+
+// ============================================
+// 장수 사망/포로 확률
+// ============================================
+
+export const FATE_CONFIG = {
+  DUEL_DEATH_CHANCE: 10,           // 일기토 HP 0 시 사망 확률 (%)
+  DUEL_DEATH_CHANCE_PRISONER: 5,   // 포로인 경우 사망 확률 (%)
+  BATTLE_CAPTURE_CHANCE: 40,       // 전투 패배 시 포로 확률 (%)
+  COMMANDER_DEATH_CHANCE: 15,      // 전투 패배 시 주장 사망 확률 (%)
+  ESCAPE_CHANCE: 30,               // 포로 탈출 확률 (%)
+  BASE_RECRUIT_SUCCESS: 50,        // 기본 등용 성공률 (%)
+};
+
+// ============================================
+// 장수 초기 충성도
+// ============================================
+
+export const INITIAL_LOYALTY: Record<string, number> = {
+  // 위 - 조조에게 충성 높음
+  caocao: 100,
+  xiaohoudun: 95,
+  xiahouyuan: 90,
+  zhangliao: 80,
+  xuhuang: 75,
+  simayi: 70,
+  xunyu: 90,
+  guojia: 85,
+
+  // 촉 - 유비에게 충성 높음
+  liubei: 100,
+  guanyu: 100,  // 관우는 절대 충성
+  zhangfei: 100, // 장비도 절대 충성
+  zhaoyun: 95,
+  zhugeliang: 95,
+  machao: 70,
+  huangzhong: 80,
+  pangtong: 85,
+
+  // 오 - 손권에게 충성 높음
+  sunquan: 100,
+  zhouyu: 95,
+  luxun: 85,
+  ganning: 75,
+  taishici: 80,
+  lvmeng: 85,
+  huanggai: 90,
+  zhoutai: 85,
+
+  // 원소군
+  yuanshao: 100,
+  yanliang: 70,
+  wenchou: 70,
+  zhanghe: 65,
+  gaolan: 60,
+  tianfeng: 80,
+
+  // 동탁군
+  dongzhuo: 100,
+  lvbu: 30,  // 여포는 충성도 낮음 (삼성가노)
+  liru: 75,
+  huaxiong: 65,
+  zhangji: 60,
+
+  // 유표군
+  liubiao: 100,
+  huangzu: 70,
+  caimao: 65,
+  wenpin: 75,
+
+  // 유장군
+  liuzhang: 100,
+  yanyan: 85,
+  zhangren: 75,
+  huangquan: 70,
+
+  // 공손찬군
+  gongsunzan: 100,
+  zhaoyunYoung: 60,  // 조운은 충성도 낮아서 영입 가능
+  tianyujing: 70,
+
+  // 황건적
+  zhangjiao: 100,
+  zhangbao: 90,
+  zhangliang: 90,
+  bocai: 65,
+  zhangmancheng: 60
+};
+
+// ============================================
+// 재야 장수 데이터 (초기 배치)
+// ============================================
+
+import type { FreeGeneral, RegionId } from '../types';
+
+// 재야 장수 - 초기에는 어느 세력에도 속하지 않음
+export const UNAFFILIATED_GENERALS: Record<string, import('../types').General> = {
+  // 촉 미등장
+  weiyan: {
+    id: 'weiyan',
+    name: '魏延',
+    nameKo: '위연',
+    might: 90,
+    intellect: 72,
+    politics: 45,
+    charisma: 55,
+    loyalty: 60,
+    portrait: '😈'
+  },
+  jiangwei: {
+    id: 'jiangwei',
+    name: '姜維',
+    nameKo: '강유',
+    might: 88,
+    intellect: 90,
+    politics: 78,
+    charisma: 80,
+    loyalty: 85,
+    portrait: '🎖️'
+  },
+  fazheng: {
+    id: 'fazheng',
+    name: '法正',
+    nameKo: '법정',
+    might: 45,
+    intellect: 92,
+    politics: 88,
+    charisma: 65,
+    loyalty: 70,
+    portrait: '📜'
+  },
+
+  // 위 미등장
+  dianwei: {
+    id: 'dianwei',
+    name: '典韋',
+    nameKo: '전위',
+    might: 95,
+    intellect: 25,
+    politics: 15,
+    charisma: 50,
+    loyalty: 85,
+    portrait: '💪'
+  },
+  xuzhu: {
+    id: 'xuzhu',
+    name: '許褚',
+    nameKo: '허저',
+    might: 92,
+    intellect: 30,
+    politics: 20,
+    charisma: 55,
+    loyalty: 80,
+    portrait: '🐻'
+  },
+  yujin: {
+    id: 'yujin',
+    name: '于禁',
+    nameKo: '우금',
+    might: 80,
+    intellect: 68,
+    politics: 55,
+    charisma: 60,
+    loyalty: 75,
+    portrait: '⚔️'
+  },
+  jiaxu: {
+    id: 'jiaxu',
+    name: '賈詡',
+    nameKo: '가후',
+    might: 38,
+    intellect: 96,
+    politics: 85,
+    charisma: 55,
+    loyalty: 50,  // 여러 주군을 섬김
+    portrait: '🦊'
+  },
+
+  // 오 미등장
+  dingfeng: {
+    id: 'dingfeng',
+    name: '丁奉',
+    nameKo: '정봉',
+    might: 82,
+    intellect: 65,
+    politics: 52,
+    charisma: 60,
+    loyalty: 75,
+    portrait: '⚔️'
+  },
+  chengpu: {
+    id: 'chengpu',
+    name: '程普',
+    nameKo: '정보',
+    might: 80,
+    intellect: 70,
+    politics: 62,
+    charisma: 72,
+    loyalty: 85,
+    portrait: '🛡️'
+  },
+
+  // 기타 군벌
+  gongsun: {
+    id: 'gongsun',
+    name: '公孫度',
+    nameKo: '공손도',
+    might: 72,
+    intellect: 68,
+    politics: 75,
+    charisma: 65,
+    loyalty: 70,
+    portrait: '🏰'
+  },
+  zhangxiu: {
+    id: 'zhangxiu',
+    name: '張繡',
+    nameKo: '장수',
+    might: 85,
+    intellect: 52,
+    politics: 48,
+    charisma: 55,
+    loyalty: 55,
+    portrait: '⚔️'
+  },
+  
+  // 명사/학자
+  shuijing: {
+    id: 'shuijing',
+    name: '司馬徽',
+    nameKo: '수경선생',
+    might: 25,
+    intellect: 95,
+    politics: 90,
+    charisma: 88,
+    loyalty: 40, // 벼슬에 관심 없음
+    portrait: '🎓'
+  },
+  xushu: {
+    id: 'xushu',
+    name: '徐庶',
+    nameKo: '서서',
+    might: 65,
+    intellect: 92,
+    politics: 82,
+    charisma: 78,
+    loyalty: 75,
+    portrait: '📚'
+  },
+
+  // 여장수
+  zhurong: {
+    id: 'zhurong',
+    name: '祝融',
+    nameKo: '축융부인',
+    might: 85,
+    intellect: 55,
+    politics: 42,
+    charisma: 70,
+    loyalty: 60,
+    portrait: '🔥'
+  },
+  
+  // 무명 장수 (장수 풀 확보용)
+  soldier1: {
+    id: 'soldier1',
+    name: '張義',
+    nameKo: '장의',
+    might: 65,
+    intellect: 45,
+    politics: 35,
+    charisma: 50,
+    loyalty: 50,
+    portrait: '⚔️'
+  },
+  soldier2: {
+    id: 'soldier2',
+    name: '王平',
+    nameKo: '왕평',
+    might: 75,
+    intellect: 55,
+    politics: 45,
+    charisma: 55,
+    loyalty: 55,
+    portrait: '⚔️'
+  },
+  soldier3: {
+    id: 'soldier3',
+    name: '李典',
+    nameKo: '이전',
+    might: 78,
+    intellect: 62,
+    politics: 52,
+    charisma: 58,
+    loyalty: 60,
+    portrait: '⚔️'
+  },
+  soldier4: {
+    id: 'soldier4',
+    name: '馬謖',
+    nameKo: '마속',
+    might: 55,
+    intellect: 78,
+    politics: 65,
+    charisma: 62,
+    loyalty: 70,
+    portrait: '📚'
+  },
+  soldier5: {
+    id: 'soldier5',
+    name: '孫乾',
+    nameKo: '손건',
+    might: 45,
+    intellect: 70,
+    politics: 75,
+    charisma: 72,
+    loyalty: 65,
+    portrait: '📜'
+  }
+};
+
+// 초기 재야 장수 배치
+export const INITIAL_FREE_GENERALS: FreeGeneral[] = [
+  // 낙양 - 중앙이라 인재 많음
+  { generalId: 'xushu', location: 'luoyang' as RegionId, recruitDifficulty: 20 },
+  { generalId: 'shuijing', location: 'luoyang' as RegionId, recruitDifficulty: 40 },
+  
+  // 허창
+  { generalId: 'dianwei', location: 'xuchang' as RegionId, recruitDifficulty: 10 },
+  { generalId: 'jiaxu', location: 'xuchang' as RegionId, recruitDifficulty: 15 },
+  
+  // 성도
+  { generalId: 'fazheng', location: 'chengdu' as RegionId, recruitDifficulty: 15 },
+  { generalId: 'soldier4', location: 'chengdu' as RegionId, recruitDifficulty: 5 },
+  
+  // 건업
+  { generalId: 'chengpu', location: 'jianye' as RegionId, recruitDifficulty: 10 },
+  { generalId: 'dingfeng', location: 'jianye' as RegionId, recruitDifficulty: 5 },
+  
+  // 장안
+  { generalId: 'zhangxiu', location: 'changan' as RegionId, recruitDifficulty: 10 },
+  { generalId: 'soldier1', location: 'changan' as RegionId, recruitDifficulty: 0 },
+  
+  // 업
+  { generalId: 'xuzhu', location: 'ye' as RegionId, recruitDifficulty: 15 },
+  { generalId: 'yujin', location: 'ye' as RegionId, recruitDifficulty: 10 },
+  
+  // 형주
+  { generalId: 'weiyan', location: 'jingzhou' as RegionId, recruitDifficulty: 15 },
+  { generalId: 'soldier2', location: 'jingzhou' as RegionId, recruitDifficulty: 0 },
+  
+  // 익주
+  { generalId: 'jiangwei', location: 'yizhou' as RegionId, recruitDifficulty: 20 },
+  { generalId: 'zhurong', location: 'yizhou' as RegionId, recruitDifficulty: 25 },
+  { generalId: 'soldier3', location: 'yizhou' as RegionId, recruitDifficulty: 5 },
+  
+  // 유주
+  { generalId: 'gongsun', location: 'youzhou' as RegionId, recruitDifficulty: 15 },
+  { generalId: 'soldier5', location: 'youzhou' as RegionId, recruitDifficulty: 0 }
+];

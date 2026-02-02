@@ -10,7 +10,23 @@ export interface General {
   intellect: number;  // 지력
   politics: number;   // 정치
   charisma: number;   // 매력
+  loyalty?: number;   // 충성도 (0~100) - optional, INITIAL_LOYALTY에서 관리
   portrait?: string;  // 이모지 or 이미지
+}
+
+// 포로 정보
+export interface Prisoner {
+  generalId: string;
+  capturedTurn: number;
+  capturedBy: FactionId;
+  location: RegionId;
+}
+
+// 재야 장수 정보
+export interface FreeGeneral {
+  generalId: string;
+  location: RegionId;
+  recruitDifficulty: number; // 등용 난이도 보정 (0~50)
 }
 
 // ============================================
@@ -67,6 +83,19 @@ export interface BattleResult {
   playerTroopsLost: number;
   enemyTroopsLost: number;
   rounds: number;
+}
+
+// 일기토 HP 상태
+export interface DuelHealth {
+  player: number;
+  enemy: number;
+}
+
+// 장수 사망/포로 결과
+export interface GeneralFate {
+  generalId: string;
+  fate: 'alive' | 'dead' | 'captured' | 'escaped';
+  message?: string;
 }
 
 // ============================================
@@ -142,11 +171,16 @@ export interface GameState {
   selectedRegion: RegionId | null;
   actionsRemaining: number;
   maxActions: number;
-  phase: 'map' | 'domestic' | 'military' | 'battle';
+  phase: 'map' | 'domestic' | 'military' | 'battle' | 'recruit' | 'prisoner';
   // 출진 상태
   march: MarchState | null;
   // 전투 데이터
   battleData: BattleInitData | null;
+  // 장수 시스템
+  prisoners: Prisoner[];           // 포로 목록
+  freeGenerals: FreeGeneral[];     // 재야 장수 목록
+  deadGenerals: string[];          // 사망한 장수 ID 목록
+  generalLoyalty: Record<string, number>; // 장수별 충성도 (장수 ID -> 충성도)
 }
 
 // 탭 종류
@@ -189,6 +223,9 @@ export interface BattleOutcome {
   winner: 'player' | 'enemy';
   playerTroopsLost: number;
   enemyTroopsLost: number;
-  capturedGenerals: string[];
+  capturedGenerals: string[];      // 잡은 적 포로
   conqueredRegion: boolean;
+  // 장수 운명
+  playerGeneralFates: GeneralFate[];  // 아군 장수들의 운명
+  enemyGeneralFates: GeneralFate[];   // 적 장수들의 운명
 }

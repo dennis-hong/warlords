@@ -1,5 +1,185 @@
 import type { Region, RegionId, Faction, FactionId, DomesticCommand } from '../types';
 
+// 세력 상세 정보 (타이틀/세력 선택용)
+export interface FactionDetail {
+  id: FactionId;
+  displayName: string;       // 표시용 이름 (예: "촉 (蜀)")
+  rulerName: string;         // 군주 이름
+  rulerId: string;           // 군주 장수 ID
+  capital: string;           // 본거지 이름
+  difficulty: number;        // 난이도 (1~5)
+  emoji: string;             // 세력 이모지
+  color: string;             // 세력 색상
+  slogan: string;            // 슬로건/한 줄 설명
+  features: string[];        // 특징 (배열)
+  keyGenerals: string[];     // 주요 장수 ID
+}
+
+export const FACTION_DETAILS: Record<FactionId, FactionDetail> = {
+  player: {
+    id: 'player',
+    displayName: '촉 (蜀)',
+    rulerName: '유비',
+    rulerId: 'liubei',
+    capital: '성도',
+    difficulty: 3,
+    emoji: '🐉',
+    color: '#22c55e',
+    slogan: '인덕으로 천하를 품으라',
+    features: [
+      '오호대장군 보유 (관우, 장비, 조운, 마초, 황충)',
+      '제갈량의 뛰어난 지략',
+      '초기 영토는 좁지만 인재 풍부',
+      '의형제의 높은 충성도'
+    ],
+    keyGenerals: ['guanyu', 'zhangfei', 'zhaoyun', 'zhugeliang']
+  },
+  caocao: {
+    id: 'caocao',
+    displayName: '위 (魏)',
+    rulerName: '조조',
+    rulerId: 'caocao',
+    capital: '허창',
+    difficulty: 2,
+    emoji: '🦅',
+    color: '#3b82f6',
+    slogan: '천하를 호령할 패업의 시작',
+    features: [
+      '최대 세력 - 넓은 영토와 풍부한 자원',
+      '다양한 인재 보유 (문관, 무장 균형)',
+      '초보자 추천 세력',
+      '사마의, 순욱 등 명참모'
+    ],
+    keyGenerals: ['xiaohoudun', 'zhangliao', 'simayi', 'xunyu']
+  },
+  sunquan: {
+    id: 'sunquan',
+    displayName: '오 (吳)',
+    rulerName: '손권',
+    rulerId: 'sunquan',
+    capital: '건업',
+    difficulty: 3,
+    emoji: '🐯',
+    color: '#ef4444',
+    slogan: '강동의 호랑이, 바다를 제패하라',
+    features: [
+      '수군 최강 - 수상전 보너스',
+      '방어에 유리한 지형',
+      '주유, 육손 등 뛰어난 지략가',
+      '상업 발달로 부유함'
+    ],
+    keyGenerals: ['zhouyu', 'luxun', 'ganning', 'taishici']
+  },
+  yuanshao: {
+    id: 'yuanshao',
+    displayName: '원소',
+    rulerName: '원소',
+    rulerId: 'yuanshao',
+    capital: '업',
+    difficulty: 2,
+    emoji: '🦁',
+    color: '#a855f7',
+    slogan: '사세삼공의 명문가 위엄',
+    features: [
+      '초기 병력 최다 보유',
+      '명문가 출신으로 외교 유리',
+      '넓은 북방 영토',
+      '인재는 많으나 조조와 경쟁 필수'
+    ],
+    keyGenerals: ['yuanshao']
+  },
+  dongzhuo: {
+    id: 'dongzhuo',
+    displayName: '동탁',
+    rulerName: '동탁',
+    rulerId: 'dongzhuo',
+    capital: '장안',
+    difficulty: 4,
+    emoji: '👹',
+    color: '#6b7280',
+    slogan: '천하를 혼란에 빠뜨린 폭군',
+    features: [
+      '여포 보유 - 최강 무력',
+      '초기 외교 극히 불리 (반동탁 연합)',
+      '폭정으로 민심 낮음',
+      '고난이도 플레이어용'
+    ],
+    keyGenerals: ['lvbu']
+  },
+  liubiao: {
+    id: 'liubiao',
+    displayName: '유표',
+    rulerName: '유표',
+    rulerId: 'liubiao',
+    capital: '형주',
+    difficulty: 3,
+    emoji: '🎋',
+    color: '#f97316',
+    slogan: '형주를 지키며 때를 기다려라',
+    features: [
+      '중앙에 위치 - 교통의 요지',
+      '사방이 적 - 외교 중요',
+      '비옥한 형주 - 식량 풍부',
+      '유비에게 넘어갈 운명?'
+    ],
+    keyGenerals: ['liubiao']
+  },
+  liuzhang: {
+    id: 'liuzhang',
+    displayName: '유장',
+    rulerName: '유장',
+    rulerId: 'liuzhang',
+    capital: '익주',
+    difficulty: 4,
+    emoji: '🏔️',
+    color: '#84cc16',
+    slogan: '험준한 촉 땅을 지켜라',
+    features: [
+      '험난한 지형 - 방어 유리',
+      '인재 부족이 치명적',
+      '고립된 위치 - 확장 어려움',
+      '천연 요새 촉 땅'
+    ],
+    keyGenerals: ['liuzhang']
+  },
+  gongsunzan: {
+    id: 'gongsunzan',
+    displayName: '공손찬',
+    rulerName: '공손찬',
+    rulerId: 'gongsunzan',
+    capital: '유주',
+    difficulty: 4,
+    emoji: '🐎',
+    color: '#06b6d4',
+    slogan: '백마장군의 북방 질주',
+    features: [
+      '기병 특화 - 백마의주',
+      '조운 영입 가능 (재야)',
+      '변방에 고립된 위치',
+      '원소와의 경쟁 필수'
+    ],
+    keyGenerals: ['gongsunzan']
+  },
+  rebels: {
+    id: 'rebels',
+    displayName: '황건적',
+    rulerName: '장각',
+    rulerId: 'zhangjiao',
+    capital: '낙양',
+    difficulty: 5,
+    emoji: '🌾',
+    color: '#eab308',
+    slogan: '창천이사 황천당립!',
+    features: [
+      '최고 난이도 - 사방이 적',
+      '모든 세력이 적대적',
+      '황건 병사 특수 능력',
+      '오직 강자만을 위한 도전'
+    ],
+    keyGenerals: ['zhangjiao']
+  }
+};
+
 // 9개 지역 데이터
 export const REGIONS: Record<RegionId, Region> = {
   luoyang: {

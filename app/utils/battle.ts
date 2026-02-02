@@ -1,5 +1,5 @@
-import type { BattleUnit, DuelChoice, Stratagem } from '../types';
-import { GAME_CONFIG, TROOP_ADVANTAGE, STRATAGEMS } from '../constants/gameData';
+import type { BattleUnit, DuelChoice, Stratagem, GeneralFate, General } from '../types';
+import { GAME_CONFIG, TROOP_ADVANTAGE, STRATAGEMS, FATE_CONFIG, INITIAL_LOYALTY } from '../constants/gameData';
 
 // 랜덤 범위 값
 export function random(min: number, max: number): number {
@@ -121,6 +121,111 @@ export function selectEnemyAction(enemy: BattleUnit, player: BattleUnit): {
 export function selectEnemyDuelChoice(): DuelChoice {
   const choices: DuelChoice[] = ['power', 'counter', 'special'];
   return choices[Math.floor(Math.random() * choices.length)];
+}
+
+// ============================================
+// 장수 사망/포로 판정
+// ============================================
+
+// 일기토 사망 판정 (HP가 0이 된 경우)
+export function checkDuelDeath(general: General, isPrisoner: boolean = false): GeneralFate {
+  const deathChance = isPrisoner 
+    ? FATE_CONFIG.DUEL_DEATH_CHANCE_PRISONER 
+    : FATE_CONFIG.DUEL_DEATH_CHANCE;
+  
+  const roll = Math.random() * 100;
+  
+  if (roll < deathChance) {
+    return {
+      generalId: general.id,
+      fate: 'dead',
+      message: `💀 ${general.nameKo}이(가) 일기토에서 전사했습니다!`
+    };
+  }
+  
+  return {
+    generalId: general.id,
+    fate: 'alive',
+    message: `${general.nameKo}이(가) 부상을 입고 퇴각했습니다.`
+  };
+}
+
+// 전투 패배 시 장수 운명 결정
+export function determineBattleFate(
+  general: General, 
+  isCommander: boolean,
+  isLoser: boolean
+): GeneralFate {
+  if (!isLoser) {
+    // 승자 측은 안전
+    return { generalId: general.id, fate: 'alive' };
+  }
+  
+  // 패배 측 운명 판정
+  const roll = Math.random() * 100;
+  
+  // 주장은 사망 확률 있음
+  if (isCommander && roll < FATE_CONFIG.COMMANDER_DEATH_CHANCE) {
+    return {
+      generalId: general.id,
+      fate: 'dead',
+      message: `💀 주장 ${general.nameKo}이(가) 전사했습니다!`
+    };
+  }
+  
+  // 포로 판정
+  if (roll < FATE_CONFIG.BATTLE_CAPTURE_CHANCE) {
+    return {
+      generalId: general.id,
+      fate: 'captured',
+      message: `⛓️ ${general.nameKo}이(가) 포로로 잡혔습니다!`
+    };
+  }
+  
+  // 탈출 성공
+  return {
+    generalId: general.id,
+    fate: 'escaped',
+    message: `${general.nameKo}이(가) 퇴각에 성공했습니다.`
+  };
+}
+
+// 등용 성공률 계산
+export function calculateRecruitSuccess(
+  recruiterCharisma: number,
+  targetLoyalty: number,
+  recruitDifficulty: number = 0
+): number {
+  // 기본 50% + (매력 - 충성도) / 2 - 등용 난이도
+  const successRate = FATE_CONFIG.BASE_RECRUIT_SUCCESS 
+    + (recruiterCharisma - targetLoyalty) / 2 
+    - recruitDifficulty;
+  
+  // 최소 5%, 최대 95%
+  return Math.min(95, Math.max(5, successRate));
+}
+
+// 포로 등용 시도
+export function attemptRecruit(
+  recruiterCharisma: number,
+  targetLoyalty: number,
+  recruitDifficulty: number = 0
+): { success: boolean; newLoyalty: number } {
+  const successRate = calculateRecruitSuccess(recruiterCharisma, targetLoyalty, recruitDifficulty);
+  const roll = Math.random() * 100;
+  
+  if (roll < successRate) {
+    // 등용 성공 - 초기 충성도는 40~60 사이
+    const newLoyalty = 40 + Math.floor(Math.random() * 20);
+    return { success: true, newLoyalty };
+  }
+  
+  return { success: false, newLoyalty: targetLoyalty };
+}
+
+// 장수 초기 충성도 가져오기
+export function getInitialLoyalty(generalId: string): number {
+  return INITIAL_LOYALTY[generalId] ?? 60; // 기본값 60
 }
 
 // 계략 효과 적용

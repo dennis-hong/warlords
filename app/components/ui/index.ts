@@ -11,3 +11,6 @@ export { BottomTabs } from './BottomTabs';
 export { RegionList } from './RegionList';
 // 출진 시스템
 export { MarchPanel } from './MarchPanel';
+// 장수 시스템
+export { RecruitPanel } from './RecruitPanel';
+export { PrisonerPanel } from './PrisonerPanel';

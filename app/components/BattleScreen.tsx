@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import type { BattleInitData, BattleOutcome, BattleState, BattleUnit, BattleLog, DuelChoice, RegionId, Region } from '../types';
+import type { BattleInitData, BattleOutcome, BattleState, BattleUnit, BattleLog, DuelChoice, RegionId, Region, GeneralFate, DuelHealth } from '../types';
 import { GENERALS, GAME_CONFIG, MORALE_CHANGES } from '../constants/gameData';
 import {
   calculateDamage,
@@ -11,7 +11,9 @@ import {
   selectEnemyAction,
   selectEnemyDuelChoice,
   applyStratagem,
-  checkRout
+  checkRout,
+  determineBattleFate,
+  checkDuelDeath
 } from '../utils/battle';
 import { UnitCard, BattleLog as BattleLogPanel, ActionButtons, DuelPanel } from './ui';
 
@@ -77,6 +79,12 @@ export default function BattleScreen({ battleData, regions, onBattleEnd }: Battl
     player: battleData.playerUnits.reduce((sum, u) => sum + u.troops, 0),
     enemy: battleData.enemyTroops || regions[battleData.enemyRegionId]?.troops || 5000
   });
+
+  // 일기토 HP 상태 (장수 생존 판정용)
+  const [duelHealth, setDuelHealth] = useState<DuelHealth>({ player: 100, enemy: 100 });
+  
+  // 장수 사망 기록
+  const [generalDeaths, setGeneralDeaths] = useState<{player: boolean, enemy: boolean}>({ player: false, enemy: false });
 
   // 애니메이션 상태
   const [playerAnim, setPlayerAnim] = useState<AnimState>('idle');
@@ -164,20 +172,65 @@ export default function BattleScreen({ battleData, regions, onBattleEnd }: Battl
   // 전투 결과 처리
   useEffect(() => {
     if (battle.phase === 'victory' || battle.phase === 'defeat') {
+      const isPlayerWinner = battle.phase === 'victory';
+      
+      // 플레이어 장수들의 운명 결정
+      const playerGeneralFates: GeneralFate[] = battleData.playerUnits.map(unit => {
+        // 일기토에서 죽은 경우
+        if (generalDeaths.player && unit.isCommander) {
+          return {
+            generalId: unit.generalId,
+            fate: 'dead' as const,
+            message: `💀 ${GENERALS[unit.generalId]?.nameKo || unit.generalId}이(가) 전사했습니다!`
+          };
+        }
+        // 패배한 경우 포로/탈출 판정
+        if (!isPlayerWinner) {
+          const general = GENERALS[unit.generalId];
+          if (general) {
+            return determineBattleFate(general, unit.isCommander, true);
+          }
+        }
+        return { generalId: unit.generalId, fate: 'alive' as const };
+      });
+
+      // 적 장수들의 운명 결정
+      const enemyGeneralFates: GeneralFate[] = battleData.enemyGeneralIds.map((genId, idx) => {
+        // 일기토에서 죽은 경우 (첫 번째 장수가 주장)
+        if (generalDeaths.enemy && idx === 0) {
+          return {
+            generalId: genId,
+            fate: 'dead' as const,
+            message: `💀 ${GENERALS[genId]?.nameKo || genId}이(가) 전사했습니다!`
+          };
+        }
+        // 패배한 경우 포로/탈출 판정
+        if (isPlayerWinner) {
+          const general = GENERALS[genId];
+          if (general) {
+            return determineBattleFate(general, idx === 0, true);
+          }
+        }
+        return { generalId: genId, fate: 'alive' as const };
+      });
+
       const outcome: BattleOutcome = {
-        winner: battle.phase === 'victory' ? 'player' : 'enemy',
+        winner: isPlayerWinner ? 'player' : 'enemy',
         playerTroopsLost: initialTroops.player - battle.player.troops,
         enemyTroopsLost: initialTroops.enemy - battle.enemy.troops,
-        capturedGenerals: [],
-        conqueredRegion: battle.phase === 'victory'
+        capturedGenerals: enemyGeneralFates.filter(f => f.fate === 'captured').map(f => f.generalId),
+        conqueredRegion: isPlayerWinner,
+        playerGeneralFates,
+        enemyGeneralFates
       };
+      
       // 약간의 딜레이 후 결과 전달
       const timer = setTimeout(() => {
         onBattleEnd(outcome);
       }, 2000);
       return () => clearTimeout(timer);
     }
-  }, [battle.phase, battle.player.troops, battle.enemy.troops, initialTroops, onBattleEnd]);
+  }, [battle.phase, battle.player.troops, battle.enemy.troops, initialTroops, onBattleEnd, battleData, generalDeaths]);
 
   // 돌격
   const charge = useCallback(() => {
@@ -343,17 +396,52 @@ export default function BattleScreen({ battleData, regions, onBattleEnd }: Battl
         type: 'duel'
       });
 
+      // HP 감소 처리
+      let newPlayerHp = duelHealth.player;
+      let newEnemyHp = duelHealth.enemy;
+
       if (result.winner === 'player') {
         enemy.morale = applyMoraleChange(enemy, MORALE_CHANGES.DUEL_LOSE);
         player.morale = applyMoraleChange(player, MORALE_CHANGES.DUEL_WIN);
-        logs.push({ round: prev.round, message: `🎉 ${player.general.nameKo} 일기토 승리! 적 사기 대폭 하락!`, type: 'duel' });
+        newEnemyHp = Math.max(0, duelHealth.enemy - result.damage);
+        logs.push({ round: prev.round, message: `🎉 ${player.general.nameKo} 일기토 승리! 적 사기 대폭 하락! (적 HP: ${newEnemyHp})`, type: 'duel' });
+        
+        // 적 장수 HP 0 체크 - 사망 판정
+        if (newEnemyHp <= 0) {
+          const deathCheck = checkDuelDeath(enemy.general, false);
+          if (deathCheck.fate === 'dead') {
+            logs.push({ round: prev.round, message: deathCheck.message!, type: 'duel' });
+            enemy.morale = applyMoraleChange(enemy, MORALE_CHANGES.GENERAL_DEATH);
+            player.morale = applyMoraleChange(player, MORALE_CHANGES.ENEMY_GENERAL_DEATH);
+            setGeneralDeaths(prev => ({ ...prev, enemy: true }));
+          } else {
+            logs.push({ round: prev.round, message: `⚠️ ${enemy.general.nameKo}이(가) 부상으로 퇴각!`, type: 'duel' });
+          }
+        }
       } else if (result.winner === 'enemy') {
         player.morale = applyMoraleChange(player, MORALE_CHANGES.DUEL_LOSE);
         enemy.morale = applyMoraleChange(enemy, MORALE_CHANGES.DUEL_WIN);
-        logs.push({ round: prev.round, message: `💀 ${enemy.general.nameKo} 일기토 승리! 아군 사기 대폭 하락!`, type: 'duel' });
+        newPlayerHp = Math.max(0, duelHealth.player - result.damage);
+        logs.push({ round: prev.round, message: `💀 ${enemy.general.nameKo} 일기토 승리! 아군 사기 대폭 하락! (아군 HP: ${newPlayerHp})`, type: 'duel' });
+        
+        // 아군 장수 HP 0 체크 - 사망 판정
+        if (newPlayerHp <= 0) {
+          const deathCheck = checkDuelDeath(player.general, false);
+          if (deathCheck.fate === 'dead') {
+            logs.push({ round: prev.round, message: deathCheck.message!, type: 'duel' });
+            player.morale = applyMoraleChange(player, MORALE_CHANGES.GENERAL_DEATH);
+            enemy.morale = applyMoraleChange(enemy, MORALE_CHANGES.ENEMY_GENERAL_DEATH);
+            setGeneralDeaths(prev => ({ ...prev, player: true }));
+          } else {
+            logs.push({ round: prev.round, message: `⚠️ ${player.general.nameKo}이(가) 부상으로 퇴각!`, type: 'duel' });
+          }
+        }
       } else {
         logs.push({ round: prev.round, message: `⚖️ 일기토 무승부!`, type: 'duel' });
       }
+
+      // HP 상태 업데이트
+      setDuelHealth({ player: newPlayerHp, enemy: newEnemyHp });
 
       const newRound = prev.round + 1;
       const battleEnd = checkBattleEnd(player, enemy, newRound, prev.maxRounds);
@@ -368,7 +456,7 @@ export default function BattleScreen({ battleData, regions, onBattleEnd }: Battl
         duelInProgress: undefined
       };
     });
-  }, [checkBattleEnd, playAnimation]);
+  }, [checkBattleEnd, playAnimation, duelHealth]);
 
   const isGameOver = battle.phase === 'victory' || battle.phase === 'defeat';
   const targetRegion = regions[battleData.enemyRegionId];
@@ -495,6 +583,19 @@ export default function BattleScreen({ battleData, regions, onBattleEnd }: Battl
               <div className="mb-2">
                 💀 적군 피해: {(initialTroops.enemy - battle.enemy.troops).toLocaleString()}명
               </div>
+              
+              {/* 장수 운명 표시 */}
+              {generalDeaths.player && (
+                <div className="mt-2 text-red-400">
+                  💀 {battle.player.general.nameKo} 전사!
+                </div>
+              )}
+              {generalDeaths.enemy && (
+                <div className="mt-2 text-green-400">
+                  💀 {battle.enemy.general.nameKo} 전사!
+                </div>
+              )}
+              
               <div className="text-gray-600 mt-4">
                 잠시 후 맵으로 돌아갑니다...
               </div>
