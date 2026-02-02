@@ -517,13 +517,52 @@ export function useGameState() {
         }
       };
 
-      return {
+      // 새로운 상태 (전투 이벤트 체크용)
+      const newState: GameState = {
         ...prev,
         regions: newRegions,
         battleData,
         phase: 'battle',
         march: null
       };
+
+      // 전투 시작 이벤트 체크 (인라인)
+      const checkBattleCondition = (condition: EventCondition, state: GameState): boolean => {
+        switch (condition.type) {
+          case 'faction':
+            return state.selectedFaction === condition.factionId;
+          case 'has_general':
+            if (!condition.generalId) return false;
+            // 출진 중인 장수 체크
+            return state.battleData?.playerUnits.some(u => u.generalId === condition.generalId) || false;
+          case 'troops_ratio':
+            // 아군이 적의 일정 비율 이하인지 체크
+            if (!state.battleData || !condition.ratio) return false;
+            const playerTroops = state.battleData.playerUnits.reduce((sum, u) => sum + u.troops, 0);
+            const enemyTroops = state.battleData.enemyTroops;
+            return (playerTroops / enemyTroops) <= condition.ratio;
+          case 'custom':
+            // 커스텀 조건은 아직 미구현
+            return false;
+          default:
+            return true;
+        }
+      };
+
+      // battle_start 이벤트 찾기
+      const battleEvent = HISTORICAL_EVENTS
+        .filter(event => {
+          if (event.trigger !== 'battle_start') return false;
+          if (!event.isRepeatable && newState.triggeredEvents.includes(event.id)) return false;
+          return event.conditions.every(cond => checkBattleCondition(cond, newState));
+        })
+        .sort((a, b) => b.priority - a.priority)[0];
+
+      if (battleEvent) {
+        return { ...newState, activeEvent: battleEvent };
+      }
+
+      return newState;
     });
   }, []);
 

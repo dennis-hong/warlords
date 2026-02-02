@@ -169,14 +169,26 @@ export default function WarlordsGame() {
     setActiveTab(isVictory ? 'domestic' : 'map');
   };
 
-  // 전투 화면
+  // 전투 화면 (이벤트 모달 포함)
   if (game.phase === 'battle' && game.battleData) {
     return (
-      <BattleScreen
-        battleData={game.battleData}
-        regions={game.regions}
-        onBattleEnd={handleBattleEnd}
-      />
+      <>
+        {/* 전투 시작 이벤트 모달 */}
+        {game.activeEvent && (
+          <EventModal
+            event={game.activeEvent}
+            onChoice={handleEventChoice}
+          />
+        )}
+        {/* 이벤트가 없거나 처리 후 전투 화면 */}
+        {!game.activeEvent && (
+          <BattleScreen
+            battleData={game.battleData}
+            regions={game.regions}
+            onBattleEnd={handleBattleEnd}
+          />
+        )}
+      </>
     );
   }
 
