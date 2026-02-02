@@ -808,7 +808,7 @@ export function useGameState() {
           generals: [...newRegions[regionId].generals, generalId]
         };
 
-        return {
+        let newState: GameState = {
           ...prev,
           regions: newRegions,
           freeGenerals: prev.freeGenerals.filter(fg => fg.generalId !== generalId),
@@ -818,6 +818,37 @@ export function useGameState() {
           },
           actionsRemaining: prev.actionsRemaining - 1
         };
+
+        // general_recruited 이벤트 체크 (예: 적토마)
+        const checkRecruitCondition = (condition: EventCondition, state: GameState): boolean => {
+          switch (condition.type) {
+            case 'faction':
+              return state.selectedFaction === condition.factionId;
+            case 'has_general':
+              // 방금 등용한 장수가 조건에 맞는지 체크
+              if (condition.generalId === generalId) return true;
+              // 또는 이미 보유한 장수인지
+              return Object.values(state.regions)
+                .filter(r => r.owner === state.playerFaction)
+                .some(r => r.generals.includes(condition.generalId!));
+            default:
+              return true;
+          }
+        };
+
+        const recruitEvent = HISTORICAL_EVENTS
+          .filter(event => {
+            if (event.trigger !== 'general_recruited') return false;
+            if (!event.isRepeatable && newState.triggeredEvents.includes(event.id)) return false;
+            return event.conditions.every(cond => checkRecruitCondition(cond, newState));
+          })
+          .sort((a, b) => b.priority - a.priority)[0];
+
+        if (recruitEvent) {
+          newState = { ...newState, activeEvent: recruitEvent };
+        }
+
+        return newState;
       } else {
         // 등용 실패
         return {
