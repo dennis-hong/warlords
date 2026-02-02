@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useGameState } from '../hooks/useGameState';
 import {
   ResourceBar,
@@ -16,12 +16,14 @@ import {
   ConfirmModal,
   EventModal
 } from './ui';
+import AdvisorPanel from './ui/AdvisorPanel';
 import BattleScreen from './BattleScreen';
 import BattleResultScreen from './BattleResultScreen';
 import TitleScreen from './TitleScreen';
 import FactionSelectScreen from './FactionSelectScreen';
 import { SEASONS, DOMESTIC_COMMANDS } from '../constants/worldData';
 import { INITIAL_LOYALTY } from '../constants/gameData';
+import { getAdvisorSession } from '../advisor';
 import type { GameTab, RegionId, DomesticAction } from '../types';
 
 export default function WarlordsGame() {
@@ -68,7 +70,14 @@ export default function WarlordsGame() {
   const [showRecruitPanel, setShowRecruitPanel] = useState(false);
   const [showPrisonerPanel, setShowPrisonerPanel] = useState(false);
   const [showEndTurnModal, setShowEndTurnModal] = useState(false);
+  const [showAdvisorPanel, setShowAdvisorPanel] = useState(false);
   const { messages: toastMessages, showToast, removeToast } = useToast();
+
+  // 전략 조언 세션 (game이 있을 때만)
+  const advisorSession = useMemo(() => {
+    if (!game) return null;
+    return getAdvisorSession(game);
+  }, [game?.turn, game?.playerFaction, game?.regions]);
 
   // 로딩 (클라이언트 준비 전)
   if (!isClient) {
@@ -223,6 +232,27 @@ export default function WarlordsGame() {
         seasonIcon={season.icon}
         year={game.year}
       />
+
+      {/* 책사 조언 플로팅 버튼 */}
+      {advisorSession && (
+        <button
+          onClick={() => setShowAdvisorPanel(true)}
+          className="fixed right-4 top-20 z-40 w-14 h-14 rounded-full bg-gradient-to-br from-amber-700 to-amber-900 border-2 border-amber-500 shadow-lg hover:scale-110 transition-transform flex items-center justify-center group"
+          title="책사에게 조언을 구하기"
+        >
+          <span className="text-2xl">{advisorSession.strategist.portrait}</span>
+          {/* 긴급 알림 뱃지 */}
+          {advisorSession.advice.some(a => a.priority === 'critical') && (
+            <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full text-white text-xs flex items-center justify-center animate-pulse">
+              !
+            </span>
+          )}
+          {/* 호버 텍스트 */}
+          <span className="absolute right-16 bg-stone-900/90 text-amber-200 px-2 py-1 rounded text-sm whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
+            책사의 조언
+          </span>
+        </button>
+      )}
 
       {/* 메인 컨텐츠 */}
       <div className="p-4">
@@ -455,6 +485,14 @@ export default function WarlordsGame() {
         <EventModal
           event={game.activeEvent}
           onChoice={handleEventChoice}
+        />
+      )}
+
+      {/* 책사 조언 패널 */}
+      {showAdvisorPanel && advisorSession && (
+        <AdvisorPanel
+          session={advisorSession}
+          onClose={() => setShowAdvisorPanel(false)}
         />
       )}
 
