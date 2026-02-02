@@ -696,12 +696,48 @@ export function useGameState() {
       // 패배: 출발 지역 선택
       const targetRegion = conqueredRegionId || sourceRegionId;
 
-      return {
+      // 새로운 상태
+      const newState: GameState = {
         ...prev,
         battleResult: null,
         selectedRegion: targetRegion,
-        phase: 'map'  // UI 탭은 WarlordsGame에서 activeTab으로 처리
+        phase: 'map'
       };
+
+      // 점령 성공 시 region_captured 이벤트 체크
+      if (conqueredRegionId) {
+        const checkCaptureCondition = (condition: EventCondition, state: GameState): boolean => {
+          switch (condition.type) {
+            case 'faction':
+              return state.selectedFaction === condition.factionId;
+            case 'region_owner':
+              if (!condition.regionId) return false;
+              return state.regions[condition.regionId]?.owner === state.playerFaction;
+            default:
+              return true;
+          }
+        };
+
+        // region_captured 이벤트 찾기
+        const captureEvent = HISTORICAL_EVENTS
+          .filter(event => {
+            if (event.trigger !== 'region_captured') return false;
+            if (!event.isRepeatable && newState.triggeredEvents.includes(event.id)) return false;
+            // region_owner 조건이 방금 점령한 지역과 일치하는지 체크
+            const hasRegionCondition = event.conditions.some(
+              c => c.type === 'region_owner' && c.regionId === conqueredRegionId
+            );
+            if (!hasRegionCondition) return false;
+            return event.conditions.every(cond => checkCaptureCondition(cond, newState));
+          })
+          .sort((a, b) => b.priority - a.priority)[0];
+
+        if (captureEvent) {
+          return { ...newState, activeEvent: captureEvent };
+        }
+      }
+
+      return newState;
     });
   }, []);
 
