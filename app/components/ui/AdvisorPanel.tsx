@@ -6,6 +6,7 @@ import type { AdvisorSession, Advice, AdviceCategory, AdvicePriority } from '../
 interface AdvisorPanelProps {
   session: AdvisorSession;
   onClose: () => void;
+  onActionClick?: (actionType: string, targetRegion?: string, targetGeneral?: string) => void;
 }
 
 // 카테고리 아이콘
@@ -42,7 +43,13 @@ const PRIORITY_LABELS: Record<AdvicePriority, string> = {
   low: '참고'
 };
 
-function AdviceCard({ advice }: { advice: Advice }) {
+function AdviceCard({ 
+  advice, 
+  onActionClick 
+}: { 
+  advice: Advice;
+  onActionClick?: (actionType: string, targetRegion?: string, targetGeneral?: string) => void;
+}) {
   const [expanded, setExpanded] = useState(advice.priority === 'critical');
 
   return (
@@ -76,16 +83,29 @@ function AdviceCard({ advice }: { advice: Advice }) {
             💭 {advice.reasoning}
           </p>
           {advice.actionable && (
-            <div className="mt-2 text-xs text-amber-400">
-              📌 제안: {
-                advice.actionable.type === 'attack' ? `${advice.actionable.targetRegion} 공격` :
-                advice.actionable.type === 'defend' ? `${advice.actionable.targetRegion} 방어 강화` :
-                advice.actionable.type === 'develop' ? '개발 명령 실행' :
-                advice.actionable.type === 'recruit' ? '등용 시도' :
-                advice.actionable.type === 'train' ? '훈련 강화' :
-                '검토 필요'
-              }
-            </div>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onActionClick?.(
+                  advice.actionable!.type,
+                  advice.actionable!.targetRegion,
+                  advice.actionable!.targetGeneral
+                );
+              }}
+              className="mt-2 w-full text-left px-3 py-2 bg-amber-800/50 hover:bg-amber-700/50 rounded transition-colors text-sm"
+            >
+              <span className="text-amber-300">📌 바로가기: </span>
+              <span className="text-amber-100">
+                {
+                  advice.actionable.type === 'attack' ? `${advice.actionable.targetRegion} 공격 준비` :
+                  advice.actionable.type === 'defend' ? `${advice.actionable.targetRegion} 방어 확인` :
+                  advice.actionable.type === 'develop' ? '내정 화면으로' :
+                  advice.actionable.type === 'recruit' ? '등용 화면으로' :
+                  advice.actionable.type === 'train' ? '훈련 화면으로' :
+                  '검토하기'
+                }
+              </span>
+            </button>
           )}
         </div>
       )}
@@ -98,7 +118,7 @@ function AdviceCard({ advice }: { advice: Advice }) {
   );
 }
 
-export default function AdvisorPanel({ session, onClose }: AdvisorPanelProps) {
+export default function AdvisorPanel({ session, onClose, onActionClick }: AdvisorPanelProps) {
   const { strategist, advice, situation } = session;
   const [selectedCategory, setSelectedCategory] = useState<AdviceCategory | 'all'>('all');
 
@@ -185,7 +205,7 @@ export default function AdvisorPanel({ session, onClose }: AdvisorPanelProps) {
             </div>
           ) : (
             filteredAdvice.map(a => (
-              <AdviceCard key={a.id} advice={a} />
+              <AdviceCard key={a.id} advice={a} onActionClick={onActionClick} />
             ))
           )}
         </div>

@@ -493,6 +493,41 @@ export default function WarlordsGame() {
         <AdvisorPanel
           session={advisorSession}
           onClose={() => setShowAdvisorPanel(false)}
+          onActionClick={(actionType, targetRegion) => {
+            // 조언에 따른 화면 이동
+            setShowAdvisorPanel(false);
+            
+            if (targetRegion) {
+              // 지역이 있으면 해당 지역 선택
+              selectRegion(targetRegion as RegionId);
+            }
+            
+            // 액션 타입에 따라 탭 이동
+            switch (actionType) {
+              case 'attack':
+                setActiveTab('military');
+                showToast('출진 준비 화면으로 이동합니다', 'info');
+                break;
+              case 'defend':
+              case 'develop':
+              case 'train':
+                setActiveTab('domestic');
+                showToast('내정 화면으로 이동합니다', 'info');
+                break;
+              case 'recruit':
+                if (targetRegion) {
+                  setActiveTab('domestic');
+                  setShowRecruitPanel(true);
+                  showToast('등용 화면을 엽니다', 'info');
+                } else {
+                  setActiveTab('domestic');
+                  showToast('등용할 지역을 선택하세요', 'info');
+                }
+                break;
+              default:
+                showToast('해당 화면으로 이동합니다', 'info');
+            }
+          }}
         />
       )}
 
