@@ -803,9 +803,12 @@ export function useGameState() {
       if (result.success) {
         // 등용 성공
         const newRegions = { ...prev.regions };
+        const oldGenerals = newRegions[regionId].generals;
+        const newGenerals = [...oldGenerals, generalId];
+        console.log('[DEBUG] 등용 성공:', { regionId, generalId, oldGenerals, newGenerals });
         newRegions[regionId] = {
           ...newRegions[regionId],
-          generals: [...newRegions[regionId].generals, generalId]
+          generals: newGenerals
         };
 
         let newState: GameState = {

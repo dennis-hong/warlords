@@ -10,6 +10,7 @@ interface DomesticPanelProps {
 }
 
 export function DomesticPanel({ region, actionsRemaining, onExecute, onClose }: DomesticPanelProps) {
+  console.log('[DEBUG] DomesticPanel:', { regionId: region.id, generals: region.generals });
   const generals = region.generals
     .map(id => GENERALS[id])
     .filter(Boolean);
