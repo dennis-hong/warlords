@@ -1011,3 +1011,23 @@ export const INITIAL_FREE_GENERALS: FreeGeneral[] = [
   { generalId: 'gongsun', location: 'youzhou' as RegionId, recruitDifficulty: 15 },
   { generalId: 'soldier5', location: 'youzhou' as RegionId, recruitDifficulty: 0 }
 ];
+
+
+// ============================================
+// 장수 조회 헬퍼 함수
+// ============================================
+
+/**
+ * 모든 장수 데이터에서 장수를 찾습니다.
+ * GENERALS와 UNAFFILIATED_GENERALS 둘 다 검색합니다.
+ */
+export function findGeneral(generalId: string): import("../types").General | null {
+  return GENERALS[generalId] || UNAFFILIATED_GENERALS[generalId] || null;
+}
+
+/**
+ * 장수가 존재하는지 확인합니다.
+ */
+export function hasGeneral(generalId: string): boolean {
+  return generalId in GENERALS || generalId in UNAFFILIATED_GENERALS;
+}

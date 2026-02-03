@@ -1,19 +1,18 @@
-import type { Region, RegionId, DomesticAction } from '../../types';
+import type { Region, RegionId, DomesticAction, General } from '../../types';
 import { DOMESTIC_COMMANDS } from '../../constants/worldData';
-import { GENERALS } from '../../constants/gameData';
 
 interface DomesticPanelProps {
   region: Region;
   actionsRemaining: number;
+  getGeneral: (id: string) => General | null;
   onExecute: (regionId: RegionId, action: DomesticAction) => void;
   onClose: () => void;
 }
 
-export function DomesticPanel({ region, actionsRemaining, onExecute, onClose }: DomesticPanelProps) {
-  console.log('[DEBUG] DomesticPanel:', { regionId: region.id, generals: region.generals });
+export function DomesticPanel({ region, actionsRemaining, getGeneral, onExecute, onClose }: DomesticPanelProps) {
   const generals = region.generals
-    .map(id => GENERALS[id])
-    .filter(Boolean);
+    .map(id => getGeneral(id))
+    .filter((g): g is General => g !== null);
 
   return (
     <div className="silk-card rounded-lg overflow-hidden animate-slide-up">
@@ -141,7 +140,7 @@ export function DomesticPanel({ region, actionsRemaining, onExecute, onClose }: 
       {/* 주둔 장수 - 디버그: raw IDs 표시 */}
       <div className="p-4 border-b-2 border-parchment-dark">
         <h3 className="text-sm font-medium text-dynasty-medium mb-2">
-          👤 주둔 장수 <span className="text-xs text-red-400">[DEBUG: {region.generals.join(', ') || 'empty'}]</span>
+          👤 주둔 장수
         </h3>
         {generals.length > 0 ? (
           <div className="flex flex-wrap gap-2">

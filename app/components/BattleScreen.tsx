@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import type { BattleInitData, BattleOutcome, BattleState, BattleUnit, BattleLog, DuelChoice, RegionId, Region, GeneralFate, DuelHealth } from '../types';
-import { GENERALS, GAME_CONFIG, MORALE_CHANGES } from '../constants/gameData';
+import { GENERALS, GAME_CONFIG, MORALE_CHANGES, findGeneral } from '../constants/gameData';
 import {
   calculateDamage,
   resolveDuel,
@@ -31,12 +31,12 @@ export default function BattleScreen({ battleData, regions, onBattleEnd }: Battl
   const initBattle = useCallback((): BattleState => {
     // 플레이어 주장 찾기
     const commanderUnit = battleData.playerUnits.find(u => u.isCommander) || battleData.playerUnits[0];
-    const commanderGeneral = GENERALS[commanderUnit.generalId];
+    const commanderGeneral = findGeneral(commanderUnit.generalId) || GENERALS.xiaohoudun;
     const totalPlayerTroops = battleData.playerUnits.reduce((sum, u) => sum + u.troops, 0);
 
     // 적 장수 (첫 번째 또는 기본)
     const enemyGeneralId = battleData.enemyGeneralIds[0] || 'xiaohoudun';
-    const enemyGeneral = GENERALS[enemyGeneralId] || GENERALS.xiaohoudun;
+    const enemyGeneral = findGeneral(enemyGeneralId) || GENERALS.xiaohoudun;
 
     // 적 병력
     const enemyTroops = battleData.enemyTroops || regions[battleData.enemyRegionId]?.troops || 5000;
@@ -176,40 +176,36 @@ export default function BattleScreen({ battleData, regions, onBattleEnd }: Battl
       
       // 플레이어 장수들의 운명 결정
       const playerGeneralFates: GeneralFate[] = battleData.playerUnits.map(unit => {
+        const general = findGeneral(unit.generalId);
         // 일기토에서 죽은 경우
         if (generalDeaths.player && unit.isCommander) {
           return {
             generalId: unit.generalId,
             fate: 'dead' as const,
-            message: `💀 ${GENERALS[unit.generalId]?.nameKo || unit.generalId}이(가) 전사했습니다!`
+            message: `💀 ${general?.nameKo || unit.generalId}이(가) 전사했습니다!`
           };
         }
         // 패배한 경우 포로/탈출 판정
-        if (!isPlayerWinner) {
-          const general = GENERALS[unit.generalId];
-          if (general) {
-            return determineBattleFate(general, unit.isCommander, true);
-          }
+        if (!isPlayerWinner && general) {
+          return determineBattleFate(general, unit.isCommander, true);
         }
         return { generalId: unit.generalId, fate: 'alive' as const };
       });
 
       // 적 장수들의 운명 결정
       const enemyGeneralFates: GeneralFate[] = battleData.enemyGeneralIds.map((genId, idx) => {
+        const general = findGeneral(genId);
         // 일기토에서 죽은 경우 (첫 번째 장수가 주장)
         if (generalDeaths.enemy && idx === 0) {
           return {
             generalId: genId,
             fate: 'dead' as const,
-            message: `💀 ${GENERALS[genId]?.nameKo || genId}이(가) 전사했습니다!`
+            message: `💀 ${general?.nameKo || genId}이(가) 전사했습니다!`
           };
         }
         // 패배한 경우 포로/탈출 판정
-        if (isPlayerWinner) {
-          const general = GENERALS[genId];
-          if (general) {
-            return determineBattleFate(general, idx === 0, true);
-          }
+        if (isPlayerWinner && general) {
+          return determineBattleFate(general, idx === 0, true);
         }
         return { generalId: genId, fate: 'alive' as const };
       });

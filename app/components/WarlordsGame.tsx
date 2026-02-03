@@ -378,6 +378,7 @@ export default function WarlordsGame() {
                 <RegionList
                   regions={playerRegions}
                   selectedRegion={game.selectedRegion}
+                  getGeneral={getGeneral}
                   onSelectRegion={handleSelectRegion}
                 />
               </>
@@ -386,6 +387,7 @@ export default function WarlordsGame() {
               <DomesticPanel
                 region={selectedRegionData}
                 actionsRemaining={game.actionsRemaining}
+                getGeneral={getGeneral}
                 onExecute={handleExecuteDomestic}
                 onClose={() => selectRegion(null)}
               />
@@ -429,6 +431,7 @@ export default function WarlordsGame() {
                 playerRegions={playerRegions}
                 allRegions={game.regions}
                 selectedSourceRegion={selectedRegionData && isPlayerRegion ? selectedRegionData : null}
+                getGeneral={getGeneral}
                 onSelectTarget={selectMarchTarget}
                 onToggleGeneral={toggleMarchGeneral}
                 onSetCommander={setCommander}

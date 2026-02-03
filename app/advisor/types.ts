@@ -30,6 +30,9 @@ export interface Advice {
   };
 }
 
+// 책사 성격 타입
+export type PersonalityType = 'aggressive' | 'cautious' | 'balanced' | 'cunning';
+
 // 책사 캐릭터
 export interface Strategist {
   id: string;
@@ -40,6 +43,12 @@ export interface Strategist {
   specialty: AdviceCategory[];
   greeting: string;       // 인사말
   catchphrase: string;    // 특유의 말투/어미
+  personality: PersonalityType;  // 성격 유형
+  speechStyle: {          // 말투 스타일
+    emphasis: string[];   // 자주 강조하는 표현
+    endings: string[];    // 문장 끝맺음
+    exclamations: string[]; // 감탄사
+  };
 }
 
 // 조언 세션

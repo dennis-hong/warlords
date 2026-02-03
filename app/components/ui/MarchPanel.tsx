@@ -2,13 +2,13 @@
 
 import { useState } from 'react';
 import type { MarchState, MarchStep, Region, RegionId, TroopType, General } from '../../types';
-import { GENERALS } from '../../constants/gameData';
 
 interface MarchPanelProps {
   march: MarchState;
   playerRegions: Region[];
   allRegions: Record<RegionId, Region>;
   selectedSourceRegion: Region | null;
+  getGeneral: (id: string) => General | null;
   onSelectTarget: (regionId: RegionId) => void;
   onToggleGeneral: (generalId: string, isCommander?: boolean) => void;
   onSetCommander: (generalId: string) => void;
@@ -36,6 +36,7 @@ export function MarchPanel({
   playerRegions,
   allRegions,
   selectedSourceRegion,
+  getGeneral,
   onSelectTarget,
   onToggleGeneral,
   onSetCommander,
@@ -55,8 +56,8 @@ export function MarchPanel({
 
   // 출발 지역의 장수 목록
   const availableGenerals = sourceRegion.generals
-    .map(id => GENERALS[id])
-    .filter(Boolean) as General[];
+    .map(id => getGeneral(id))
+    .filter((g): g is General => g !== null);
 
   // 가용 병력 (출발 지역 병력 - 최소 수비 병력)
   const minDefenseTroops = 1000;
@@ -283,7 +284,7 @@ export function MarchPanel({
 
           <div className="space-y-4">
             {march.units.map(unit => {
-              const general = GENERALS[unit.generalId];
+              const general = getGeneral(unit.generalId);
               if (!general) return null;
               
               // 이 장수가 사용 가능한 최대 병력 = 남은 가용 + 현재 배분량
@@ -410,7 +411,7 @@ export function MarchPanel({
           <div className="peace-card rounded-lg p-3">
             <div className="text-sm text-jade-light mb-2">🏴 아군 편성</div>
             {march.units.map(unit => {
-              const general = GENERALS[unit.generalId];
+              const general = getGeneral(unit.generalId);
               if (!general) return null;
               const troopType = TROOP_TYPES.find(t => t.id === unit.troopType);
               return (

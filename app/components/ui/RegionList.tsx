@@ -1,13 +1,13 @@
-import type { Region, RegionId } from '../../types';
-import { GENERALS } from '../../constants/gameData';
+import type { Region, RegionId, General } from '../../types';
 
 interface RegionListProps {
   regions: Region[];
   selectedRegion: RegionId | null;
+  getGeneral: (id: string) => General | null;
   onSelectRegion: (regionId: RegionId) => void;
 }
 
-export function RegionList({ regions, selectedRegion, onSelectRegion }: RegionListProps) {
+export function RegionList({ regions, selectedRegion, getGeneral, onSelectRegion }: RegionListProps) {
   if (regions.length === 0) {
     return (
       <div className="text-center text-silk/50 py-8 dynasty-card rounded-lg">
@@ -21,8 +21,8 @@ export function RegionList({ regions, selectedRegion, onSelectRegion }: RegionLi
     <div className="space-y-2">
       {regions.map((region, idx) => {
         const generals = region.generals
-          .map(id => GENERALS[id])
-          .filter(Boolean);
+          .map(id => getGeneral(id))
+          .filter((g): g is General => g !== null);
         const isSelected = selectedRegion === region.id;
 
         return (
