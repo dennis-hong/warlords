@@ -1,11 +1,13 @@
 import type { BattleUnit } from '../../types';
 import { MoraleBar } from './MoraleBar';
+import { useState, useEffect, useRef } from 'react';
 
 interface UnitCardProps {
   unit: BattleUnit;
   isPlayer?: boolean;
   animState?: 'idle' | 'attacking' | 'hit' | 'dead';
   damageDisplay?: number | null;
+  isCritical?: boolean;
 }
 
 // 병사 아이콘 컴포넌트
@@ -28,22 +30,62 @@ function SoldierIcon({ isPlayer, animState = 'idle', count }: { isPlayer: boolea
   );
 }
 
-export function UnitCard({ unit, isPlayer = false, animState = 'idle', damageDisplay }: UnitCardProps) {
+export function UnitCard({ unit, isPlayer = false, animState = 'idle', damageDisplay, isCritical: isCriticalDamage }: UnitCardProps) {
   const troopPercentage = (unit.troops / unit.maxTroops) * 100;
-  const isCritical = troopPercentage < 30;
+  const isLowHealth = troopPercentage < 30;
+  
+  // 이전 병력 추적 (병력 변화 애니메이션용)
+  const prevTroopsRef = useRef(unit.troops);
+  const [troopChange, setTroopChange] = useState<'none' | 'decrease' | 'increase'>('none');
+  
+  useEffect(() => {
+    if (unit.troops < prevTroopsRef.current) {
+      setTroopChange('decrease');
+    } else if (unit.troops > prevTroopsRef.current) {
+      setTroopChange('increase');
+    }
+    prevTroopsRef.current = unit.troops;
+    
+    // 애니메이션 후 리셋
+    const timer = setTimeout(() => setTroopChange('none'), 800);
+    return () => clearTimeout(timer);
+  }, [unit.troops]);
+
+  // 초상화 애니메이션 클래스
+  const portraitAnimClass = animState === 'attacking' 
+    ? 'portrait-attack' 
+    : animState === 'hit' 
+      ? 'portrait-hurt' 
+      : animState === 'idle' && !damageDisplay 
+        ? 'portrait-ready' 
+        : '';
+  
+  // 병력 바 애니메이션 클래스
+  const troopBarAnimClass = troopChange === 'decrease' 
+    ? 'troop-decrease' 
+    : troopChange === 'increase' 
+      ? 'troop-increase' 
+      : '';
   
   return (
-    <div className={`rounded-xl p-4 ${isPlayer ? 'peace-card' : 'war-card'} relative animate-scale-in`}>
-      {/* 피해량 팝업 */}
+    <div className={`rounded-xl p-4 ${isPlayer ? 'peace-card' : 'war-card'} relative`}>
+      {/* 피해량 팝업 - 크리티컬 강화 */}
       {damageDisplay && damageDisplay > 0 && (
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-2 text-crimson-light font-bold text-lg damage-popup">
-          -{damageDisplay}
+        <div className={`absolute top-0 left-1/2 -translate-x-1/2 -translate-y-2 font-bold z-20 ${
+          isCriticalDamage 
+            ? 'damage-critical text-2xl' 
+            : damageDisplay >= 1000 
+              ? 'damage-popup-large text-crimson-light' 
+              : 'damage-popup text-lg text-crimson-light'
+        }`}>
+          -{damageDisplay.toLocaleString()}
+          {isCriticalDamage && <span className="ml-1 text-xs">💥</span>}
         </div>
       )}
       
       {/* 장수 정보 */}
       <div className="flex items-center gap-3 mb-3">
-        <span className={`text-4xl ${animState === 'attacking' ? 'duel-attack-left' : animState === 'hit' ? 'duel-attack-right' : ''}`}>
+        <span className={`text-4xl ${portraitAnimClass}`}>
           {unit.general.portrait}
         </span>
         <div>
@@ -79,13 +121,15 @@ export function UnitCard({ unit, isPlayer = false, animState = 'idle', damageDis
       <div className="mb-2">
         <div className="flex justify-between text-xs mb-1">
           <span className="text-silk/60">병력</span>
-          <span className={`font-bold ${isCritical ? 'text-crimson-light' : 'text-silk'}`}>
+          <span className={`font-bold transition-colors duration-300 ${
+            isLowHealth ? 'text-crimson-light animate-pulse' : 'text-silk'
+          }`}>
             {unit.troops.toLocaleString()} / {unit.maxTroops.toLocaleString()}
           </span>
         </div>
-        <div className="progress-bar h-3">
+        <div className="progress-bar h-3 overflow-hidden">
           <div
-            className={`progress-fill ${isPlayer ? 'jade' : 'crimson'} ${isCritical ? 'health-critical' : ''}`}
+            className={`progress-fill troop-bar-animate ${isPlayer ? 'jade' : 'crimson'} ${isLowHealth ? 'health-critical' : ''} ${troopBarAnimClass}`}
             style={{ width: `${troopPercentage}%` }}
           />
         </div>

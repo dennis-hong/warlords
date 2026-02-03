@@ -520,6 +520,468 @@ body {
   100% { transform: scale(1); }
 }
 
+/* ===== 전투 시작 연출 ===== */
+.battle-intro {
+  animation: battleIntro 1.5s ease-out forwards;
+}
+@keyframes battleIntro {
+  0% { 
+    opacity: 0; 
+    transform: scale(1.5);
+    filter: brightness(3);
+  }
+  30% {
+    opacity: 1;
+    filter: brightness(1.5);
+  }
+  100% { 
+    opacity: 1; 
+    transform: scale(1);
+    filter: brightness(1);
+  }
+}
+
+/* 양측 카드 진입 애니메이션 */
+.unit-enter-left {
+  animation: unitEnterLeft 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+@keyframes unitEnterLeft {
+  0% { 
+    opacity: 0; 
+    transform: translateX(-100px) scale(0.8) rotate(-10deg);
+  }
+  60% {
+    transform: translateX(10px) scale(1.05);
+  }
+  100% { 
+    opacity: 1; 
+    transform: translateX(0) scale(1) rotate(0);
+  }
+}
+
+.unit-enter-right {
+  animation: unitEnterRight 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  animation-delay: 0.2s;
+  opacity: 0;
+}
+@keyframes unitEnterRight {
+  0% { 
+    opacity: 0; 
+    transform: translateX(100px) scale(0.8) rotate(10deg);
+  }
+  60% {
+    transform: translateX(-10px) scale(1.05);
+  }
+  100% { 
+    opacity: 1; 
+    transform: translateX(0) scale(1) rotate(0);
+  }
+}
+
+/* 전장 분위기 배경 */
+.battle-atmosphere {
+  position: relative;
+}
+.battle-atmosphere::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(ellipse at center, transparent 0%, rgba(139, 0, 0, 0.1) 100%);
+  pointer-events: none;
+  z-index: -1;
+  animation: battleFog 8s ease-in-out infinite;
+}
+@keyframes battleFog {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 0.8; }
+}
+
+/* ===== 강화된 데미지 표시 ===== */
+.damage-popup-large {
+  animation: damagePopupLarge 1.2s ease-out forwards;
+  font-size: 1.5rem;
+  font-weight: bold;
+  text-shadow: 
+    2px 2px 0 rgba(0, 0, 0, 0.8),
+    0 0 10px currentColor;
+}
+@keyframes damagePopupLarge {
+  0% { 
+    opacity: 1; 
+    transform: translateY(0) scale(0.5) rotate(-5deg); 
+  }
+  20% {
+    transform: translateY(-10px) scale(1.4) rotate(5deg);
+  }
+  40% {
+    transform: translateY(-20px) scale(1.2) rotate(-3deg);
+  }
+  100% { 
+    opacity: 0; 
+    transform: translateY(-60px) scale(0.6) rotate(0); 
+  }
+}
+
+/* 크리티컬 데미지 (큰 피해) */
+.damage-critical {
+  animation: damageCritical 1.5s ease-out forwards;
+  color: #ffd700 !important;
+  font-size: 2rem !important;
+}
+@keyframes damageCritical {
+  0% { 
+    opacity: 1; 
+    transform: translateY(0) scale(0.3) rotate(-15deg);
+    filter: brightness(3);
+  }
+  15% {
+    transform: translateY(-15px) scale(2) rotate(10deg);
+    filter: brightness(2);
+  }
+  30% {
+    transform: translateY(-25px) scale(1.5) rotate(-5deg);
+  }
+  100% { 
+    opacity: 0; 
+    transform: translateY(-80px) scale(0.5) rotate(0);
+    filter: brightness(1);
+  }
+}
+
+/* 화면 흔들림 */
+.screen-shake {
+  animation: screenShake 0.5s ease-out;
+}
+@keyframes screenShake {
+  0%, 100% { transform: translateX(0); }
+  10% { transform: translateX(-8px) rotate(-1deg); }
+  20% { transform: translateX(8px) rotate(1deg); }
+  30% { transform: translateX(-6px); }
+  40% { transform: translateX(6px); }
+  50% { transform: translateX(-4px); }
+  60% { transform: translateX(4px); }
+  70% { transform: translateX(-2px); }
+  80% { transform: translateX(2px); }
+}
+
+/* 강한 흔들림 */
+.screen-shake-strong {
+  animation: screenShakeStrong 0.6s ease-out;
+}
+@keyframes screenShakeStrong {
+  0%, 100% { transform: translate(0); }
+  10% { transform: translate(-15px, -5px) rotate(-3deg); }
+  20% { transform: translate(15px, 5px) rotate(3deg); }
+  30% { transform: translate(-10px, 3px) rotate(-2deg); }
+  40% { transform: translate(10px, -3px) rotate(2deg); }
+  50% { transform: translate(-5px, 2px); }
+  60% { transform: translate(5px, -2px); }
+}
+
+/* ===== 액션별 이펙트 ===== */
+
+/* 돌격 이펙트 */
+.charge-effect {
+  animation: chargeEffect 0.6s ease-out;
+}
+@keyframes chargeEffect {
+  0% { 
+    transform: scale(1); 
+    filter: brightness(1);
+  }
+  30% { 
+    transform: scale(1.1) translateX(20px); 
+    filter: brightness(1.3);
+  }
+  60% {
+    transform: scale(0.95) translateX(-5px);
+  }
+  100% { 
+    transform: scale(1) translateX(0); 
+    filter: brightness(1);
+  }
+}
+
+/* 수비 이펙트 */
+.defend-effect {
+  animation: defendEffect 0.5s ease-out;
+}
+@keyframes defendEffect {
+  0% { 
+    box-shadow: 0 0 0 rgba(13, 77, 77, 0);
+  }
+  50% { 
+    box-shadow: 0 0 30px rgba(13, 77, 77, 0.8), inset 0 0 20px rgba(13, 77, 77, 0.3);
+    border-color: var(--color-jade-light);
+  }
+  100% { 
+    box-shadow: 0 0 0 rgba(13, 77, 77, 0);
+  }
+}
+
+/* 계략 이펙트 */
+.stratagem-effect {
+  animation: stratagemEffect 0.8s ease;
+}
+@keyframes stratagemEffect {
+  0% { 
+    filter: hue-rotate(0deg) brightness(1);
+  }
+  25% {
+    filter: hue-rotate(90deg) brightness(1.5);
+  }
+  50% { 
+    filter: hue-rotate(180deg) brightness(2);
+  }
+  75% {
+    filter: hue-rotate(270deg) brightness(1.5);
+  }
+  100% { 
+    filter: hue-rotate(360deg) brightness(1);
+  }
+}
+
+/* 화공 이펙트 */
+.fire-effect {
+  animation: fireEffect 1s ease-out;
+}
+@keyframes fireEffect {
+  0% { 
+    filter: brightness(1);
+    transform: scale(1);
+  }
+  20% {
+    filter: brightness(1.5) sepia(0.5) saturate(3);
+    transform: scale(1.05);
+  }
+  50% { 
+    filter: brightness(2) sepia(1) saturate(5);
+    box-shadow: 0 0 50px rgba(255, 100, 0, 0.8);
+    transform: scale(1.1);
+  }
+  100% { 
+    filter: brightness(1);
+    transform: scale(1);
+  }
+}
+
+/* ===== 승패 연출 강화 ===== */
+
+/* 승리 파티클 배경 */
+.victory-celebration {
+  position: relative;
+  overflow: visible;
+}
+.victory-celebration::before,
+.victory-celebration::after {
+  content: '🎊';
+  position: absolute;
+  font-size: 3rem;
+  animation: confetti 2s ease-out infinite;
+  pointer-events: none;
+}
+.victory-celebration::before {
+  top: -20px;
+  left: 10%;
+  animation-delay: 0s;
+}
+.victory-celebration::after {
+  top: -20px;
+  right: 10%;
+  animation-delay: 0.5s;
+}
+@keyframes confetti {
+  0% { 
+    opacity: 1;
+    transform: translateY(0) rotate(0deg) scale(1);
+  }
+  50% {
+    opacity: 1;
+  }
+  100% { 
+    opacity: 0;
+    transform: translateY(100px) rotate(720deg) scale(0.5);
+  }
+}
+
+/* 승리 광선 */
+.victory-rays {
+  position: relative;
+}
+.victory-rays::before {
+  content: '';
+  position: absolute;
+  inset: -50%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    rgba(255, 215, 0, 0.3) 10deg,
+    transparent 20deg,
+    transparent 30deg,
+    rgba(255, 215, 0, 0.2) 40deg,
+    transparent 50deg
+  );
+  animation: victoryRays 4s linear infinite;
+  pointer-events: none;
+  z-index: -1;
+}
+@keyframes victoryRays {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* 패배 암전 */
+.defeat-overlay {
+  animation: defeatDarken 1s ease forwards;
+}
+@keyframes defeatDarken {
+  0% { 
+    filter: brightness(1) saturate(1);
+  }
+  100% { 
+    filter: brightness(0.6) saturate(0.5) sepia(0.3);
+  }
+}
+
+/* 패배 비네트 */
+.defeat-vignette::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(ellipse at center, transparent 20%, rgba(0, 0, 0, 0.7) 100%);
+  pointer-events: none;
+  animation: vignetteIn 1s ease forwards;
+  z-index: 1;
+}
+@keyframes vignetteIn {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+/* ===== 병력 바 애니메이션 강화 ===== */
+.troop-bar-animate {
+  transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+/* 병력 감소 시 깜빡임 */
+.troop-decrease {
+  animation: troopDecrease 0.8s ease;
+}
+@keyframes troopDecrease {
+  0%, 20% { 
+    filter: brightness(1); 
+  }
+  10% { 
+    filter: brightness(2);
+    background: linear-gradient(180deg, #ff6b6b 0%, #ff4757 100%) !important;
+  }
+  30% {
+    filter: brightness(0.8);
+  }
+  50% {
+    filter: brightness(1.3);
+  }
+  100% { 
+    filter: brightness(1); 
+  }
+}
+
+/* 병력 증가 시 (회복) */
+.troop-increase {
+  animation: troopIncrease 0.8s ease;
+}
+@keyframes troopIncrease {
+  0% { 
+    filter: brightness(1);
+  }
+  50% { 
+    filter: brightness(1.5);
+    box-shadow: 0 0 20px rgba(74, 222, 128, 0.8);
+  }
+  100% { 
+    filter: brightness(1);
+  }
+}
+
+/* 사기 변화 애니메이션 */
+.morale-change {
+  animation: moraleChange 0.6s ease;
+}
+@keyframes moraleChange {
+  0%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(1.2); }
+}
+
+/* ===== VS 표시 강화 ===== */
+.vs-pulse {
+  animation: vsPulse 1s ease-in-out infinite;
+}
+@keyframes vsPulse {
+  0%, 100% { 
+    transform: scale(1);
+    filter: brightness(1);
+  }
+  50% { 
+    transform: scale(1.15);
+    filter: brightness(1.5);
+    text-shadow: 0 0 30px rgba(255, 215, 0, 0.8);
+  }
+}
+
+/* 전투 격렬해질 때 */
+.vs-intense {
+  animation: vsIntense 0.3s ease-in-out infinite;
+}
+@keyframes vsIntense {
+  0%, 100% { 
+    transform: scale(1) rotate(0deg);
+    color: var(--color-gold);
+  }
+  25% { 
+    transform: scale(1.2) rotate(-5deg);
+    color: var(--color-crimson-light);
+  }
+  75% { 
+    transform: scale(1.2) rotate(5deg);
+    color: var(--color-crimson-light);
+  }
+}
+
+/* ===== 장수 초상화 효과 ===== */
+.portrait-ready {
+  animation: portraitReady 2s ease-in-out infinite;
+}
+@keyframes portraitReady {
+  0%, 100% { 
+    transform: scale(1);
+    filter: drop-shadow(0 0 5px rgba(201, 162, 39, 0.3));
+  }
+  50% { 
+    transform: scale(1.05);
+    filter: drop-shadow(0 0 15px rgba(201, 162, 39, 0.6));
+  }
+}
+
+.portrait-attack {
+  animation: portraitAttack 0.4s ease;
+}
+@keyframes portraitAttack {
+  0% { transform: scale(1) translateX(0); }
+  30% { transform: scale(1.2) translateX(15px); filter: brightness(1.5); }
+  100% { transform: scale(1) translateX(0); }
+}
+
+.portrait-hurt {
+  animation: portraitHurt 0.4s ease;
+}
+@keyframes portraitHurt {
+  0% { transform: scale(1); filter: brightness(1); }
+  30% { transform: scale(0.9); filter: brightness(2) sepia(1); }
+  60% { transform: scale(1.05); filter: brightness(0.7); }
+  100% { transform: scale(1); filter: brightness(1); }
+}
+
 /* ===== 배경 장식 ===== */
 .bg-dragon {
   position: absolute;

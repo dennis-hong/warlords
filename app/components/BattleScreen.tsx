@@ -20,6 +20,9 @@ import { UnitCard, BattleLog as BattleLogPanel, ActionButtons, DuelPanel } from 
 // 애니메이션 상태 타입
 type AnimState = 'idle' | 'attacking' | 'hit' | 'dead';
 
+// 액션 이펙트 타입
+type ActionEffect = 'none' | 'charge' | 'defend' | 'stratagem' | 'fire';
+
 interface BattleScreenProps {
   battleData: BattleInitData;
   regions: Record<RegionId, Region>;
@@ -92,19 +95,66 @@ export default function BattleScreen({ battleData, regions, onBattleEnd }: Battl
   const [playerDamage, setPlayerDamage] = useState<number | null>(null);
   const [enemyDamage, setEnemyDamage] = useState<number | null>(null);
   const [showClash, setShowClash] = useState(false);
+  
+  // 강화된 애니메이션 상태
+  const [showIntro, setShowIntro] = useState(true);
+  const [screenShake, setScreenShake] = useState<'none' | 'light' | 'strong'>('none');
+  const [playerEffect, setPlayerEffect] = useState<ActionEffect>('none');
+  const [enemyEffect, setEnemyEffect] = useState<ActionEffect>('none');
+  const [isCriticalDamage, setIsCriticalDamage] = useState(false);
+  const [vsIntense, setVsIntense] = useState(false);
 
   // 실시간 중계 모드
   const [autoPlay, setAutoPlay] = useState(false);
   const [playSpeed, setPlaySpeed] = useState(1); // 1x, 2x, 3x
   const autoPlayRef = useRef<NodeJS.Timeout | null>(null);
 
-  // 애니메이션 실행 함수
-  const playAnimation = useCallback((type: 'playerAttack' | 'enemyAttack' | 'clash' | 'duel', damage?: { player?: number; enemy?: number }) => {
+  // 인트로 애니메이션 종료
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowIntro(false);
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // 화면 흔들림 리셋
+  useEffect(() => {
+    if (screenShake !== 'none') {
+      const timer = setTimeout(() => setScreenShake('none'), 600);
+      return () => clearTimeout(timer);
+    }
+  }, [screenShake]);
+
+  // VS 인텐스 모드 (사기가 낮을 때)
+  useEffect(() => {
+    const isIntense = battle.player.morale < 30 || battle.enemy.morale < 30;
+    setVsIntense(isIntense);
+  }, [battle.player.morale, battle.enemy.morale]);
+
+  // 애니메이션 실행 함수 (강화)
+  const playAnimation = useCallback((
+    type: 'playerAttack' | 'enemyAttack' | 'clash' | 'duel',
+    damage?: { player?: number; enemy?: number },
+    action?: 'charge' | 'defend' | 'stratagem' | 'fire'
+  ) => {
+    // 크리티컬 데미지 판정 (2000 이상)
+    const isCritical = (damage?.player && damage.player >= 2000) || (damage?.enemy && damage.enemy >= 2000);
+    setIsCriticalDamage(isCritical || false);
+
+    // 화면 흔들림
+    if (type === 'clash' || type === 'duel' || isCritical) {
+      setScreenShake('strong');
+    } else if (type === 'playerAttack' || type === 'enemyAttack') {
+      setScreenShake('light');
+    }
+
     // 충돌 이펙트
     if (type === 'clash' || type === 'duel') {
       setShowClash(true);
       setPlayerAnim('attacking');
       setEnemyAnim('attacking');
+      setPlayerEffect('charge');
+      setEnemyEffect('charge');
       setTimeout(() => setShowClash(false), 500);
     }
 
@@ -112,12 +162,28 @@ export default function BattleScreen({ battleData, regions, onBattleEnd }: Battl
       setPlayerAnim('attacking');
       setEnemyAnim('hit');
       if (damage?.enemy) setEnemyDamage(damage.enemy);
+      
+      // 액션 이펙트
+      if (action === 'charge') setPlayerEffect('charge');
+      else if (action === 'defend') setPlayerEffect('defend');
+      else if (action === 'fire') {
+        setPlayerEffect('fire');
+        setEnemyEffect('fire');
+      }
+      else if (action === 'stratagem') setPlayerEffect('stratagem');
     }
 
     if (type === 'enemyAttack') {
       setEnemyAnim('attacking');
       setPlayerAnim('hit');
       if (damage?.player) setPlayerDamage(damage.player);
+      
+      if (action === 'charge') setEnemyEffect('charge');
+      else if (action === 'defend') setEnemyEffect('defend');
+      else if (action === 'fire') {
+        setEnemyEffect('fire');
+        setPlayerEffect('fire');
+      }
     }
 
     // 애니메이션 리셋
@@ -126,7 +192,10 @@ export default function BattleScreen({ battleData, regions, onBattleEnd }: Battl
       setEnemyAnim('idle');
       setPlayerDamage(null);
       setEnemyDamage(null);
-    }, 500);
+      setPlayerEffect('none');
+      setEnemyEffect('none');
+      setIsCriticalDamage(false);
+    }, 800);
   }, []);
 
   // 자동 진행 처리
@@ -248,10 +317,10 @@ export default function BattleScreen({ battleData, regions, onBattleEnd }: Battl
         player.troops = applyTroopDamage(player, enemyDmg);
         logs.push({ round: prev.round, message: `⚔️ ${enemy.general.nameKo} 반격! 아군 ${enemyDmg}명 피해!`, type: 'damage' });
         // 쌍방 충돌 애니메이션
-        playAnimation('clash', { player: enemyDmg, enemy: playerDmg });
+        playAnimation('clash', { player: enemyDmg, enemy: playerDmg }, 'charge');
       } else {
         // 플레이어만 공격
-        playAnimation('playerAttack', { enemy: playerDmg });
+        playAnimation('playerAttack', { enemy: playerDmg }, 'charge');
         if (enemyAction.action === 'defend') {
           logs.push({ round: prev.round, message: `🛡️ ${enemy.general.nameKo}이(가) 수비 태세!`, type: 'info' });
         } else if (enemyAction.action === 'stratagem' && enemyAction.stratagem) {
@@ -297,7 +366,8 @@ export default function BattleScreen({ battleData, regions, onBattleEnd }: Battl
         const enemyDmg = Math.round(calculateDamage(enemy, player, 1, battleData.enemyTraining || 50) * GAME_CONFIG.DEFEND_DAMAGE_REDUCTION);
         player.troops = applyTroopDamage(player, enemyDmg);
         logs.push({ round: prev.round, message: `⚔️ ${enemy.general.nameKo} 공격! (수비로 감소) 아군 ${enemyDmg}명 피해!`, type: 'damage' });
-        playAnimation('enemyAttack', { player: enemyDmg });
+        playAnimation('enemyAttack', { player: enemyDmg }, 'charge');
+        setPlayerEffect('defend'); // 수비 이펙트도 표시
       } else if (enemyAction.action === 'defend') {
         logs.push({ round: prev.round, message: `🛡️ ${enemy.general.nameKo}도 수비 태세! 교착 상태...`, type: 'info' });
       } else if (enemyAction.action === 'stratagem' && enemyAction.stratagem) {
@@ -323,6 +393,13 @@ export default function BattleScreen({ battleData, regions, onBattleEnd }: Battl
 
   // 계략
   const useStratagem = useCallback((stratagemId: string) => {
+    // 화공이면 특별 이펙트
+    if (stratagemId === 'fireAttack') {
+      playAnimation('playerAttack', { enemy: 0 }, 'fire');
+    } else {
+      playAnimation('playerAttack', { enemy: 0 }, 'stratagem');
+    }
+
     setBattle(prev => {
       if (prev.phase !== 'selection') return prev;
 
@@ -355,7 +432,7 @@ export default function BattleScreen({ battleData, regions, onBattleEnd }: Battl
         phase: battleEnd || 'selection'
       };
     });
-  }, [checkBattleEnd]);
+  }, [checkBattleEnd, playAnimation]);
 
   // 일기토 시작
   const startDuel = useCallback(() => {
@@ -455,10 +532,37 @@ export default function BattleScreen({ battleData, regions, onBattleEnd }: Battl
   }, [checkBattleEnd, playAnimation, duelHealth]);
 
   const isGameOver = battle.phase === 'victory' || battle.phase === 'defeat';
+  const isVictory = battle.phase === 'victory';
+  const isDefeat = battle.phase === 'defeat';
   const targetRegion = regions[battleData.enemyRegionId];
 
+  // 화면 흔들림 클래스
+  const shakeClass = screenShake === 'strong' ? 'screen-shake-strong' : screenShake === 'light' ? 'screen-shake' : '';
+  
+  // 액션 이펙트 클래스
+  const getEffectClass = (effect: ActionEffect) => {
+    switch (effect) {
+      case 'charge': return 'charge-effect';
+      case 'defend': return 'defend-effect';
+      case 'stratagem': return 'stratagem-effect';
+      case 'fire': return 'fire-effect';
+      default: return '';
+    }
+  };
+
   return (
-    <div className="min-h-screen p-4">
+    <div className={`min-h-screen p-4 battle-atmosphere ${shakeClass} ${isDefeat ? 'defeat-overlay defeat-vignette' : ''}`}>
+      {/* 전투 시작 인트로 오버레이 */}
+      {showIntro && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 battle-intro">
+          <div className="text-center">
+            <div className="text-6xl mb-4 animate-float">⚔️</div>
+            <h2 className="text-4xl font-bold text-gold title-glow mb-2">전투 개시!</h2>
+            <p className="text-xl text-silk/70">{targetRegion?.nameKo} 공략전</p>
+          </div>
+        </div>
+      )}
+
       {/* 헤더 */}
       <header className="text-center mb-6 animate-fade-in">
         <h1 className="text-2xl font-bold text-gold mb-2 title-fancy">
@@ -509,17 +613,23 @@ export default function BattleScreen({ battleData, regions, onBattleEnd }: Battl
 
       {/* 전투 유닛 */}
       <div className="grid grid-cols-2 gap-4 mb-4 relative">
-        <UnitCard 
-          unit={battle.player} 
-          isPlayer 
-          animState={playerAnim}
-          damageDisplay={playerDamage}
-        />
-        <UnitCard 
-          unit={battle.enemy} 
-          animState={enemyAnim}
-          damageDisplay={enemyDamage}
-        />
+        <div className={`unit-enter-left ${getEffectClass(playerEffect)}`}>
+          <UnitCard 
+            unit={battle.player} 
+            isPlayer 
+            animState={playerAnim}
+            damageDisplay={playerDamage}
+            isCritical={isCriticalDamage && playerDamage !== null}
+          />
+        </div>
+        <div className={`unit-enter-right ${getEffectClass(enemyEffect)}`}>
+          <UnitCard 
+            unit={battle.enemy} 
+            animState={enemyAnim}
+            damageDisplay={enemyDamage}
+            isCritical={isCriticalDamage && enemyDamage !== null}
+          />
+        </div>
         
         {/* 충돌 이펙트 */}
         {showClash && (
@@ -531,7 +641,7 @@ export default function BattleScreen({ battleData, regions, onBattleEnd }: Battl
 
       {/* VS 표시 */}
       <div className="text-center mb-4">
-        <span className={`text-2xl font-bold text-gold ${showClash ? 'duel-clash' : ''}`}>
+        <span className={`text-2xl font-bold text-gold ${showClash ? 'duel-clash' : vsIntense ? 'vs-intense' : 'vs-pulse'}`}>
           ⚡ VS ⚡
         </span>
       </div>
@@ -562,38 +672,57 @@ export default function BattleScreen({ battleData, regions, onBattleEnd }: Battl
         )}
 
         {isGameOver && (
-          <div className="dynasty-card rounded-xl p-6 text-center animate-scale-in">
-            <div className={`text-4xl font-bold mb-4 winner-bounce ${
-              battle.phase === 'victory' ? 'text-jade-light winner-glow' : 'text-crimson-light'
+          <div className={`dynasty-card rounded-xl p-6 text-center animate-scale-in relative overflow-hidden ${
+            isVictory ? 'victory-celebration victory-rays' : ''
+          }`}>
+            {/* 승리 시 추가 파티클 */}
+            {isVictory && (
+              <>
+                <div className="absolute top-0 left-1/4 text-3xl" style={{ animation: 'confetti 2s ease-out 0.2s infinite' }}>🎊</div>
+                <div className="absolute top-0 right-1/4 text-3xl" style={{ animation: 'confetti 2s ease-out 0.7s infinite' }}>🎉</div>
+                <div className="absolute top-0 left-1/3 text-2xl" style={{ animation: 'confetti 2s ease-out 1s infinite' }}>✨</div>
+                <div className="absolute top-0 right-1/3 text-2xl" style={{ animation: 'confetti 2s ease-out 0.4s infinite' }}>🌟</div>
+              </>
+            )}
+            
+            <div className={`text-5xl font-bold mb-4 winner-bounce relative z-10 ${
+              isVictory ? 'text-jade-light winner-glow' : 'text-crimson-light'
             }`}>
-              {battle.phase === 'victory' ? '🎉 승리!' : '💀 패배...'}
+              {isVictory ? '🎉 대승리! 🎉' : '💀 패배...'}
             </div>
-            <div className="text-silk/70 mb-4">
-              {battle.phase === 'victory'
+            <div className={`text-lg mb-4 relative z-10 ${isVictory ? 'text-gold' : 'text-silk/70'}`}>
+              {isVictory
                 ? `${targetRegion?.nameKo}을(를) 점령합니다!`
                 : '아군이 퇴각합니다...'
               }
             </div>
-            <div className="divider-gold my-4"></div>
-            <div className="text-sm text-silk/60 space-y-2">
+            <div className="divider-gold my-4 relative z-10"></div>
+            <div className="text-sm text-silk/60 space-y-2 relative z-10">
               <div className="flex justify-center gap-6">
-                <span>⚔️ 아군 피해: <span className="text-jade-light font-bold">{(initialTroops.player - battle.player.troops).toLocaleString()}명</span></span>
-                <span>💀 적군 피해: <span className="text-crimson-light font-bold">{(initialTroops.enemy - battle.enemy.troops).toLocaleString()}명</span></span>
+                <div className="bg-jade/20 px-4 py-2 rounded-lg">
+                  <span className="block text-xs text-silk/50">아군 피해</span>
+                  <span className="text-jade-light font-bold text-lg">{(initialTroops.player - battle.player.troops).toLocaleString()}명</span>
+                </div>
+                <div className="bg-crimson/20 px-4 py-2 rounded-lg">
+                  <span className="block text-xs text-silk/50">적군 피해</span>
+                  <span className="text-crimson-light font-bold text-lg">{(initialTroops.enemy - battle.enemy.troops).toLocaleString()}명</span>
+                </div>
               </div>
               
               {/* 장수 운명 표시 */}
               {generalDeaths.player && (
-                <div className="text-crimson-light font-bold mt-3">
+                <div className="text-crimson-light font-bold mt-3 animate-pulse">
                   💀 {battle.player.general.nameKo} 전사!
                 </div>
               )}
               {generalDeaths.enemy && (
-                <div className="text-jade-light font-bold mt-3">
-                  💀 {battle.enemy.general.nameKo} 전사!
+                <div className="text-jade-light font-bold mt-3 animate-pulse">
+                  ⚔️ {battle.enemy.general.nameKo} 격파!
                 </div>
               )}
               
-              <div className="text-silk/30 mt-4">
+              <div className="text-silk/30 mt-4 flex items-center justify-center gap-2">
+                <span className="inline-block w-2 h-2 bg-gold rounded-full animate-pulse"></span>
                 잠시 후 맵으로 돌아갑니다...
               </div>
             </div>
