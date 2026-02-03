@@ -67,7 +67,12 @@ export default function WarlordsGame() {
     // 이벤트 시스템
     handleEventChoice,
     // 외교 시스템
-    declareWar
+    declareWar,
+    proposeAlliance,
+    proposeTruce,
+    handleAIProposal,
+    getPendingProposals,
+    breakAlliance
   } = useGameState();
 
   const [activeTab, setActiveTab] = useState<GameTab>('map');
@@ -456,6 +461,12 @@ export default function WarlordsGame() {
                 declareWar(faction);
                 showToast(`${game.factions[faction]?.nameKo || faction}에게 선전포고!`, 'info');
               }}
+              onProposeAlliance={proposeAlliance}
+              onProposeTruce={proposeTruce}
+              onBreakAlliance={breakAlliance}
+              onHandleProposal={handleAIProposal}
+              pendingProposals={getPendingProposals()}
+              onShowToast={showToast}
             />
           </div>
         )}

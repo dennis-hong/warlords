@@ -6,12 +6,22 @@ import type {
   MarchState, MarchStep, MarchUnit, BattleInitData, BattleOutcome, TroopType,
   Prisoner, FreeGeneral, GeneralFate, FactionId, GamePhase,
   HistoricalEvent, EventTrigger, EventChoice, EventEffect, EventCondition,
-  BattleResultData
+  BattleResultData, DiplomaticProposal, DiplomaticRelation, DiplomaticRelationType
 } from '../types';
 import { REGIONS, FACTIONS, DOMESTIC_COMMANDS, FACTION_DETAILS } from '../constants/worldData';
 import { GENERALS, INITIAL_FREE_GENERALS, INITIAL_LOYALTY, UNAFFILIATED_GENERALS } from '../constants/gameData';
 import { HISTORICAL_EVENTS } from '../constants/events';
 import { attemptRecruit, getInitialLoyalty } from '../utils/battle';
+import {
+  analyzeFactions,
+  decideAIDiplomacy,
+  shouldAcceptProposal,
+  processAItoAIDiplomacy,
+  decideAIWarDeclaration,
+  getProposalMessage,
+  getDiplomacyResultMessage,
+  getRelationBetween
+} from '../utils/aiDiplomacy';
 
 // 세력 선택에 따른 초기 상태 생성
 const createInitialState = (selectedFaction: FactionId = 'player'): GameState => {
@@ -260,7 +270,7 @@ export function useGameState() {
 
       // 새로운 상태 (턴 이벤트 체크용)
       const newTurn = prev.turn + 1;
-      const newState: GameState = {
+      let newState: GameState = {
         ...prev,
         turn: newTurn,
         season: nextSeason,
@@ -268,6 +278,68 @@ export function useGameState() {
         regions: newRegions,
         actionsRemaining: prev.maxActions,
         selectedRegion: null
+      };
+
+      // ============================================
+      // AI 외교 처리
+      // ============================================
+      const analyses = analyzeFactions(newState);
+      
+      // 1. 외교 관계 만료 처리
+      const updatedRelations = newState.diplomaticRelations.filter(r => {
+        if (r.duration && r.startTurn) {
+          const elapsed = newTurn - r.startTurn;
+          return elapsed < r.duration;  // 아직 유효
+        }
+        return true;  // 기간 제한 없는 관계는 유지
+      });
+      newState = { ...newState, diplomaticRelations: updatedRelations };
+
+      // 2. AI 세력들의 외교 행동
+      const aiFactions = analyses
+        .filter(a => a.isAlive && a.factionId !== newState.playerFaction && a.factionId !== 'player')
+        .map(a => a.factionId);
+
+      const newProposals: DiplomaticProposal[] = [...newState.diplomaticProposals];
+      let aiRelationChanges: DiplomaticRelation[] = [];
+
+      for (const aiFaction of aiFactions) {
+        // AI가 플레이어에게 외교 제안
+        const proposal = decideAIDiplomacy(newState, aiFaction, analyses);
+        if (proposal) {
+          newProposals.push(proposal);
+        }
+
+        // AI 선전포고 결정
+        const warTarget = decideAIWarDeclaration(newState, aiFaction, analyses);
+        if (warTarget) {
+          // 기존 관계 제거하고 적대 관계 추가
+          newState = {
+            ...newState,
+            diplomaticRelations: [
+              ...newState.diplomaticRelations.filter(r =>
+                !((r.faction1 === aiFaction && r.faction2 === warTarget) ||
+                  (r.faction1 === warTarget && r.faction2 === aiFaction))
+              ),
+              {
+                faction1: aiFaction,
+                faction2: warTarget,
+                type: 'hostile',
+                startTurn: newTurn
+              }
+            ]
+          };
+        }
+      }
+
+      // 3. AI끼리의 외교 (백그라운드)
+      const aiToAiRelations = processAItoAIDiplomacy(newState, analyses);
+      aiRelationChanges = [...aiRelationChanges, ...aiToAiRelations];
+
+      newState = {
+        ...newState,
+        diplomaticProposals: newProposals,
+        diplomaticRelations: [...newState.diplomaticRelations, ...aiRelationChanges]
       };
 
       // 턴 시작 이벤트 체크 (인라인)
@@ -1348,6 +1420,219 @@ export function useGameState() {
     return relation?.type || 'neutral';
   }, [game]);
 
+  // 동맹 제안
+  const proposeAlliance = useCallback((targetFaction: FactionId): { success: boolean; message: string } => {
+    if (!game) return { success: false, message: '게임이 로드되지 않았습니다.' };
+    if (game.actionsRemaining <= 0) return { success: false, message: '행동력이 부족합니다.' };
+
+    const currentRelation = getRelationWith(targetFaction);
+    if (currentRelation === 'alliance') {
+      return { success: false, message: '이미 동맹 관계입니다.' };
+    }
+    if (currentRelation === 'hostile') {
+      return { success: false, message: '전쟁 중에는 동맹을 제안할 수 없습니다.' };
+    }
+
+    // AI 응답 결정
+    const analyses = analyzeFactions(game);
+    const proposal: DiplomaticProposal = {
+      id: `proposal-${Date.now()}`,
+      from: game.playerFaction,
+      to: targetFaction,
+      type: 'alliance',
+      proposedTurn: game.turn,
+      status: 'pending'
+    };
+
+    const decision = shouldAcceptProposal(game, proposal, analyses);
+    const factionName = FACTIONS[targetFaction]?.nameKo || targetFaction;
+
+    setGame(prev => {
+      if (!prev) return prev;
+
+      if (decision.accept) {
+        // 수락: 동맹 관계 추가
+        const newRelations = prev.diplomaticRelations.filter(r =>
+          !((r.faction1 === prev.playerFaction && r.faction2 === targetFaction) ||
+            (r.faction1 === targetFaction && r.faction2 === prev.playerFaction))
+        );
+        newRelations.push({
+          faction1: prev.playerFaction,
+          faction2: targetFaction,
+          type: 'alliance',
+          startTurn: prev.turn
+        });
+        return {
+          ...prev,
+          diplomaticRelations: newRelations,
+          actionsRemaining: prev.actionsRemaining - 1
+        };
+      } else {
+        // 거절
+        return {
+          ...prev,
+          actionsRemaining: prev.actionsRemaining - 1
+        };
+      }
+    });
+
+    if (decision.accept) {
+      return { success: true, message: `🤝 ${factionName}이(가) 동맹을 수락했습니다!` };
+    } else {
+      return { success: false, message: `${factionName}이(가) 동맹 제안을 거절했습니다. (${decision.reason})` };
+    }
+  }, [game, getRelationWith]);
+
+  // 불가침 제안
+  const proposeTruce = useCallback((targetFaction: FactionId): { success: boolean; message: string } => {
+    if (!game) return { success: false, message: '게임이 로드되지 않았습니다.' };
+    if (game.actionsRemaining <= 0) return { success: false, message: '행동력이 부족합니다.' };
+
+    const currentRelation = getRelationWith(targetFaction);
+    if (currentRelation === 'alliance' || currentRelation === 'truce') {
+      return { success: false, message: '이미 우호적인 관계입니다.' };
+    }
+
+    // AI 응답 결정
+    const analyses = analyzeFactions(game);
+    const proposal: DiplomaticProposal = {
+      id: `proposal-${Date.now()}`,
+      from: game.playerFaction,
+      to: targetFaction,
+      type: 'truce',
+      proposedTurn: game.turn,
+      duration: 5,
+      status: 'pending'
+    };
+
+    const decision = shouldAcceptProposal(game, proposal, analyses);
+    const factionName = FACTIONS[targetFaction]?.nameKo || targetFaction;
+
+    setGame(prev => {
+      if (!prev) return prev;
+
+      if (decision.accept) {
+        // 수락: 불가침 관계 추가
+        const newRelations = prev.diplomaticRelations.filter(r =>
+          !((r.faction1 === prev.playerFaction && r.faction2 === targetFaction) ||
+            (r.faction1 === targetFaction && r.faction2 === prev.playerFaction))
+        );
+        newRelations.push({
+          faction1: prev.playerFaction,
+          faction2: targetFaction,
+          type: 'truce',
+          startTurn: prev.turn,
+          duration: 5
+        });
+        return {
+          ...prev,
+          diplomaticRelations: newRelations,
+          actionsRemaining: prev.actionsRemaining - 1
+        };
+      } else {
+        return {
+          ...prev,
+          actionsRemaining: prev.actionsRemaining - 1
+        };
+      }
+    });
+
+    if (decision.accept) {
+      return { success: true, message: `🕊️ ${factionName}이(가) 불가침 조약을 수락했습니다!` };
+    } else {
+      return { success: false, message: `${factionName}이(가) 불가침 제안을 거절했습니다. (${decision.reason})` };
+    }
+  }, [game, getRelationWith]);
+
+  // AI 외교 제안 처리 (수락/거절)
+  const handleAIProposal = useCallback((proposalId: string, accept: boolean): { success: boolean; message: string } => {
+    if (!game) return { success: false, message: '게임이 로드되지 않았습니다.' };
+
+    const proposal = game.diplomaticProposals.find(p => p.id === proposalId);
+    if (!proposal) return { success: false, message: '제안을 찾을 수 없습니다.' };
+
+    const factionName = FACTIONS[proposal.from]?.nameKo || proposal.from;
+
+    setGame(prev => {
+      if (!prev) return prev;
+
+      // 제안 목록에서 제거
+      const newProposals = prev.diplomaticProposals.filter(p => p.id !== proposalId);
+
+      if (accept) {
+        // 수락: 관계 추가
+        const newRelations = prev.diplomaticRelations.filter(r =>
+          !((r.faction1 === prev.playerFaction && r.faction2 === proposal.from) ||
+            (r.faction1 === proposal.from && r.faction2 === prev.playerFaction))
+        );
+        newRelations.push({
+          faction1: proposal.from,
+          faction2: prev.playerFaction,
+          type: proposal.type,
+          startTurn: prev.turn,
+          duration: proposal.duration
+        });
+        return {
+          ...prev,
+          diplomaticRelations: newRelations,
+          diplomaticProposals: newProposals
+        };
+      } else {
+        return {
+          ...prev,
+          diplomaticProposals: newProposals
+        };
+      }
+    });
+
+    if (accept) {
+      const typeNames: Record<string, string> = {
+        alliance: '동맹',
+        truce: '불가침 조약'
+      };
+      return { success: true, message: `🤝 ${factionName}과의 ${typeNames[proposal.type] || '조약'}을 수락했습니다!` };
+    } else {
+      return { success: true, message: `${factionName}의 제안을 거절했습니다.` };
+    }
+  }, [game]);
+
+  // 대기 중인 외교 제안 목록
+  const getPendingProposals = useCallback((): DiplomaticProposal[] => {
+    if (!game) return [];
+    return game.diplomaticProposals.filter(p => 
+      p.to === game.playerFaction && p.status === 'pending'
+    );
+  }, [game]);
+
+  // 동맹 파기
+  const breakAlliance = useCallback((targetFaction: FactionId): { success: boolean; message: string } => {
+    if (!game) return { success: false, message: '게임이 로드되지 않았습니다.' };
+
+    const currentRelation = getRelationWith(targetFaction);
+    if (currentRelation !== 'alliance') {
+      return { success: false, message: '동맹 관계가 아닙니다.' };
+    }
+
+    const factionName = FACTIONS[targetFaction]?.nameKo || targetFaction;
+
+    setGame(prev => {
+      if (!prev) return prev;
+
+      // 동맹 관계 제거
+      const newRelations = prev.diplomaticRelations.filter(r =>
+        !((r.faction1 === prev.playerFaction && r.faction2 === targetFaction) ||
+          (r.faction1 === targetFaction && r.faction2 === prev.playerFaction))
+      );
+
+      return {
+        ...prev,
+        diplomaticRelations: newRelations
+      };
+    });
+
+    return { success: true, message: `⚠️ ${factionName}과의 동맹을 파기했습니다.` };
+  }, [game, getRelationWith]);
+
   return {
     game,
     isClient,
@@ -1390,6 +1675,11 @@ export function useGameState() {
     closeEvent,
     // 외교 시스템
     declareWar,
-    getRelationWith
+    getRelationWith,
+    proposeAlliance,
+    proposeTruce,
+    handleAIProposal,
+    getPendingProposals,
+    breakAlliance
   };
 }
