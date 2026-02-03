@@ -22,6 +22,7 @@ import {
   getDiplomacyResultMessage,
   getRelationBetween
 } from '../utils/aiDiplomacy';
+import { processAllAITurns, processAIIncome, type AITurnLog } from '../utils/aiFaction';
 
 // 세력 선택에 따른 초기 상태 생성
 const createInitialState = (selectedFaction: FactionId = 'player'): GameState => {
@@ -341,6 +342,20 @@ export function useGameState() {
         diplomaticProposals: newProposals,
         diplomaticRelations: [...newState.diplomaticRelations, ...aiRelationChanges]
       };
+
+      // ============================================
+      // AI 세력 턴 처리
+      // ============================================
+      
+      // AI 수입 처리
+      newState = processAIIncome(newState);
+      
+      // AI 행동 처리 (내정, 군사)
+      const { newState: stateAfterAI, logs: aiLogs } = processAllAITurns(newState);
+      newState = stateAfterAI;
+      
+      // AI 턴 로그 저장 (나중에 UI에서 표시 가능)
+      // TODO: aiTurnLogs를 GameState에 추가하여 플레이어에게 알림 가능
 
       // 턴 시작 이벤트 체크 (인라인)
       const checkCondition = (condition: EventCondition, state: GameState): boolean => {

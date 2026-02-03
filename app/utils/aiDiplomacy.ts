@@ -14,7 +14,7 @@ import type {
 } from '../types';
 
 // 세력 분석 결과
-interface FactionAnalysis {
+export interface FactionAnalysis {
   factionId: FactionId;
   totalTroops: number;
   totalRegions: number;
