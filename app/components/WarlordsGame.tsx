@@ -519,6 +519,7 @@ export default function WarlordsGame() {
       {showAdvisorPanel && advisorSession && (
         <AdvisorPanel
           session={advisorSession}
+          gameState={game}
           onClose={() => setShowAdvisorPanel(false)}
           onActionClick={(actionType, targetRegion) => {
             // 조언에 따른 화면 이동

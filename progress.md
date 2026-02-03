@@ -37,6 +37,6 @@ Original prompt: 장수 등용/영입 성공 후 보유 장수 및 주둔 장수
 - [ ] 등용 후 출진 시 장수 선택 가능 확인
 
 ## TODOs for next agent
-- BattleScreen.tsx에도 같은 문제가 있을 수 있음 (GENERALS 직접 참조)
-- 포로 등용 시에도 같은 문제 있는지 확인 필요
-- 전투 중 장수 표시도 getGeneral 사용하도록 수정 고려
+- [x] BattleScreen.tsx GENERALS 직접 참조 → findGeneral() 사용으로 수정 완료
+- [ ] 포로 등용 시에도 같은 문제 있는지 확인 필요
+- [ ] PrisonerPanel.tsx 확인 필요
