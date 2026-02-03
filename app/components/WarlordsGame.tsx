@@ -65,7 +65,9 @@ export default function WarlordsGame() {
     executePrisoner,
     releasePrisoner,
     // 이벤트 시스템
-    handleEventChoice
+    handleEventChoice,
+    // 외교 시스템
+    declareWar
   } = useGameState();
 
   const [activeTab, setActiveTab] = useState<GameTab>('map');
@@ -448,7 +450,13 @@ export default function WarlordsGame() {
         {/* 외교 탭 */}
         {activeTab === 'diplomacy' && (
           <div className="animate-fade-in">
-            <DiplomacyPanel gameState={game} />
+            <DiplomacyPanel 
+              gameState={game} 
+              onDeclareWar={(faction) => {
+                declareWar(faction);
+                showToast(`${game.factions[faction]?.nameKo || faction}에게 선전포고!`, 'info');
+              }}
+            />
           </div>
         )}
       </div>

@@ -10,7 +10,6 @@ import type {
 
 interface DiplomacyPanelProps {
   gameState: GameState;
-  onPropose?: (targetFaction: FactionId, type: DiplomaticRelationType) => void;
   onDeclareWar?: (targetFaction: FactionId) => void;
 }
 
@@ -54,7 +53,7 @@ function getRelation(
   return relation?.type || 'neutral';
 }
 
-export default function DiplomacyPanel({ gameState, onPropose, onDeclareWar }: DiplomacyPanelProps) {
+export default function DiplomacyPanel({ gameState, onDeclareWar }: DiplomacyPanelProps) {
   const [selectedFaction, setSelectedFaction] = useState<FactionId | null>(null);
 
   // 생존한 세력 목록 (자신 제외)
@@ -153,11 +152,18 @@ export default function DiplomacyPanel({ gameState, onPropose, onDeclareWar }: D
               <span className="block text-xs">준비 중</span>
             </button>
             <button
-              disabled
-              className="p-2 text-sm bg-red-900/30 text-red-300/50 rounded border border-red-700/30 cursor-not-allowed"
+              onClick={() => onDeclareWar?.(selectedFactionData.id)}
+              disabled={!onDeclareWar || selectedFactionData.relation === 'hostile'}
+              className={`p-2 text-sm rounded border transition-all ${
+                selectedFactionData.relation === 'hostile'
+                  ? 'bg-red-900/30 text-red-300/50 border-red-700/30 cursor-not-allowed'
+                  : 'bg-red-900/50 text-red-200 border-red-600/50 hover:bg-red-800/50 hover:border-red-500'
+              }`}
             >
               ⚔️ 선전포고
-              <span className="block text-xs">준비 중</span>
+              {selectedFactionData.relation === 'hostile' && (
+                <span className="block text-xs">이미 전쟁 중</span>
+              )}
             </button>
           </div>
         </div>

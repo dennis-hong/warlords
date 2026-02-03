@@ -1299,6 +1299,55 @@ export function useGameState() {
     return state;
   }, [findTriggeredEvent]);
 
+  // ============================================
+  // 외교 시스템
+  // ============================================
+
+  // 선전포고
+  const declareWar = useCallback((targetFaction: FactionId) => {
+    setGame(prev => {
+      if (!prev) return prev;
+      
+      // 이미 적대 관계인지 확인
+      const existingRelation = prev.diplomaticRelations.find(r =>
+        (r.faction1 === prev.playerFaction && r.faction2 === targetFaction) ||
+        (r.faction1 === targetFaction && r.faction2 === prev.playerFaction)
+      );
+      
+      if (existingRelation?.type === 'hostile') {
+        return prev; // 이미 전쟁 중
+      }
+      
+      // 기존 관계 제거하고 적대 관계 추가
+      const newRelations = prev.diplomaticRelations.filter(r =>
+        !((r.faction1 === prev.playerFaction && r.faction2 === targetFaction) ||
+          (r.faction1 === targetFaction && r.faction2 === prev.playerFaction))
+      );
+      
+      newRelations.push({
+        faction1: prev.playerFaction,
+        faction2: targetFaction,
+        type: 'hostile',
+        startTurn: prev.turn
+      });
+      
+      return {
+        ...prev,
+        diplomaticRelations: newRelations
+      };
+    });
+  }, []);
+
+  // 두 세력 간의 관계 확인
+  const getRelationWith = useCallback((targetFaction: FactionId): string => {
+    if (!game) return 'neutral';
+    const relation = game.diplomaticRelations.find(r =>
+      (r.faction1 === game.playerFaction && r.faction2 === targetFaction) ||
+      (r.faction1 === targetFaction && r.faction2 === game.playerFaction)
+    );
+    return relation?.type || 'neutral';
+  }, [game]);
+
   return {
     game,
     isClient,
@@ -1338,6 +1387,9 @@ export function useGameState() {
     // 이벤트 시스템
     triggerEvent,
     handleEventChoice,
-    closeEvent
+    closeEvent,
+    // 외교 시스템
+    declareWar,
+    getRelationWith
   };
 }
