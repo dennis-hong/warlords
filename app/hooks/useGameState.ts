@@ -63,7 +63,9 @@ const createInitialState = (selectedFaction: FactionId = 'player'): GameState =>
     battleBonuses: {},
     // 외교 시스템
     diplomaticRelations: [],
-    diplomaticProposals: []
+    diplomaticProposals: [],
+    // AI 턴 로그
+    aiTurnLogs: []
   };
 };
 
@@ -354,8 +356,8 @@ export function useGameState() {
       const { newState: stateAfterAI, logs: aiLogs } = processAllAITurns(newState);
       newState = stateAfterAI;
       
-      // AI 턴 로그 저장 (나중에 UI에서 표시 가능)
-      // TODO: aiTurnLogs를 GameState에 추가하여 플레이어에게 알림 가능
+      // AI 턴 로그 저장
+      newState = { ...newState, aiTurnLogs: aiLogs };
 
       // 턴 시작 이벤트 체크 (인라인)
       const checkCondition = (condition: EventCondition, state: GameState): boolean => {

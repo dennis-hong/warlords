@@ -177,7 +177,21 @@ export default function WarlordsGame() {
   const confirmEndTurn = () => {
     endTurn();
     setShowEndTurnModal(false);
-    showToast(`턴 ${game.turn} 시작!`, 'info');
+    showToast(`턴 ${game.turn + 1} 시작!`, 'info');
+    
+    // AI 턴 로그 표시 (공격 행동만 알림)
+    setTimeout(() => {
+      if (game.aiTurnLogs && game.aiTurnLogs.length > 0) {
+        game.aiTurnLogs.forEach(log => {
+          const attackActions = log.actions.filter(a => a.includes('⚔️'));
+          if (attackActions.length > 0) {
+            attackActions.forEach(action => {
+              showToast(`${log.factionName}: ${action}`, 'info');
+            });
+          }
+        });
+      }
+    }, 500);  // 턴 시작 토스트 후 약간 딜레이
   };
 
   // 전투 결과 화면 닫기 핸들러

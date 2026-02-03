@@ -9,7 +9,8 @@ import type {
   FactionId, 
   RegionId,
   Region,
-  DiplomaticRelationType
+  DiplomaticRelationType,
+  AITurnLog
 } from '../types';
 import { GENERALS, UNAFFILIATED_GENERALS } from '../constants/gameData';
 import { getRelationBetween, analyzeFactions, type FactionAnalysis } from './aiDiplomacy';
@@ -28,13 +29,8 @@ export interface AIAction {
   message: string;
 }
 
-// AI 행동 로그 (플레이어에게 보여줄 정보)
-export interface AITurnLog {
-  turn: number;
-  factionId: FactionId;
-  factionName: string;
-  actions: string[];
-}
+// AITurnLog는 types/index.ts에서 정의됨 (재export)
+export type { AITurnLog };
 
 /**
  * AI 세력의 지역 우선순위 계산

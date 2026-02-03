@@ -265,6 +265,16 @@ export interface GameState {
   // 외교 시스템
   diplomaticRelations: DiplomaticRelation[];  // 세력간 외교 관계
   diplomaticProposals: DiplomaticProposal[];  // 대기 중인 외교 제안
+  // AI 턴 로그 (최근 턴의 AI 행동)
+  aiTurnLogs: AITurnLog[];
+}
+
+// AI 턴 로그
+export interface AITurnLog {
+  turn: number;
+  factionId: FactionId;
+  factionName: string;
+  actions: string[];
 }
 
 // 탭 종류
