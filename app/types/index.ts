@@ -262,6 +262,9 @@ export interface GameState {
   triggeredEvents: string[];       // 이미 발생한 이벤트 ID 목록
   activeEvent: HistoricalEvent | null;  // 현재 표시 중인 이벤트
   battleBonuses: Record<string, number>; // 장수별 전투 보너스 (이벤트로 획득)
+  // 외교 시스템
+  diplomaticRelations: DiplomaticRelation[];  // 세력간 외교 관계
+  diplomaticProposals: DiplomaticProposal[];  // 대기 중인 외교 제안
 }
 
 // 탭 종류
@@ -312,3 +315,53 @@ export interface BattleOutcome {
   playerGeneralFates: GeneralFate[];  // 아군 장수들의 운명
   enemyGeneralFates: GeneralFate[];   // 적 장수들의 운명
 }
+
+// ============================================
+// 외교 시스템
+// ============================================
+
+// 외교 관계 타입
+export type DiplomaticRelationType = 
+  | 'alliance'      // 동맹 (공동 방어, 영토 통과)
+  | 'truce'         // 불가침 (일정 턴 공격 금지)
+  | 'tribute'       // 조공 (한쪽이 다른 쪽에 자원 제공)
+  | 'hostile'       // 적대 (전쟁 중)
+  | 'neutral';      // 중립 (기본 상태)
+
+// 외교 관계
+export interface DiplomaticRelation {
+  faction1: FactionId;
+  faction2: FactionId;
+  type: DiplomaticRelationType;
+  startTurn: number;        // 관계 시작 턴
+  duration?: number;        // 지속 턴 수 (불가침의 경우)
+  tributeAmount?: {         // 조공액 (조공의 경우)
+    gold?: number;
+    food?: number;
+  };
+  tributeGiver?: FactionId; // 조공 제공자
+}
+
+// 외교 제안
+export interface DiplomaticProposal {
+  id: string;
+  from: FactionId;
+  to: FactionId;
+  type: DiplomaticRelationType;
+  proposedTurn: number;
+  duration?: number;
+  tributeAmount?: {
+    gold?: number;
+    food?: number;
+  };
+  status: 'pending' | 'accepted' | 'rejected' | 'expired';
+}
+
+// 외교 명령 타입
+export type DiplomaticAction = 
+  | 'propose_alliance'    // 동맹 제안
+  | 'propose_truce'       // 불가침 제안
+  | 'propose_tribute'     // 조공 제안
+  | 'declare_war'         // 선전포고
+  | 'break_alliance'      // 동맹 파기
+  | 'cancel_truce';       // 불가침 파기

@@ -49,7 +49,10 @@ const createInitialState = (selectedFaction: FactionId = 'player'): GameState =>
     // 이벤트 시스템
     triggeredEvents: [],
     activeEvent: null,
-    battleBonuses: {}
+    battleBonuses: {},
+    // 외교 시스템
+    diplomaticRelations: [],
+    diplomaticProposals: []
   };
 };
 

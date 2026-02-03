@@ -15,7 +15,8 @@ import {
   useToast,
   ConfirmModal,
   EventModal,
-  EventLog
+  EventLog,
+  DiplomacyPanel
 } from './ui';
 import AdvisorPanel from './ui/AdvisorPanel';
 import BattleScreen from './BattleScreen';
@@ -446,12 +447,8 @@ export default function WarlordsGame() {
 
         {/* 외교 탭 */}
         {activeTab === 'diplomacy' && (
-          <div className="space-y-4 animate-fade-in">
-            <h2 className="text-lg font-bold text-gold title-glow">🤝 외교</h2>
-            <div className="dynasty-card rounded-lg p-8 text-center">
-              <div className="text-5xl mb-4 animate-float">🚧</div>
-              <p className="text-silk/50">외교 시스템 준비 중...</p>
-            </div>
+          <div className="animate-fade-in">
+            <DiplomacyPanel gameState={game} />
           </div>
         )}
       </div>
