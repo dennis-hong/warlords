@@ -138,10 +138,12 @@ export function DomesticPanel({ region, actionsRemaining, onExecute, onClose }: 
         </div>
       </div>
 
-      {/* 주둔 장수 */}
-      {generals.length > 0 && (
-        <div className="p-4 border-b-2 border-parchment-dark">
-          <h3 className="text-sm font-medium text-dynasty-medium mb-2">👤 주둔 장수</h3>
+      {/* 주둔 장수 - 디버그: raw IDs 표시 */}
+      <div className="p-4 border-b-2 border-parchment-dark">
+        <h3 className="text-sm font-medium text-dynasty-medium mb-2">
+          👤 주둔 장수 <span className="text-xs text-red-400">[DEBUG: {region.generals.join(', ') || 'empty'}]</span>
+        </h3>
+        {generals.length > 0 ? (
           <div className="flex flex-wrap gap-2">
             {generals.map(g => (
               <div 
@@ -156,8 +158,10 @@ export function DomesticPanel({ region, actionsRemaining, onExecute, onClose }: 
               </div>
             ))}
           </div>
-        </div>
-      )}
+        ) : (
+          <p className="text-parchment/50 text-sm">주둔 장수가 없습니다</p>
+        )}
+      </div>
 
       {/* 내정 명령 */}
       <div className="p-4">
