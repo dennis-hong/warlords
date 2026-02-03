@@ -65,7 +65,9 @@ const createInitialState = (selectedFaction: FactionId = 'player'): GameState =>
     diplomaticRelations: [],
     diplomaticProposals: [],
     // AI 턴 로그
-    aiTurnLogs: []
+    aiTurnLogs: [],
+    // 게임 오버
+    gameOver: null
   };
 };
 
@@ -358,6 +360,38 @@ export function useGameState() {
       
       // AI 턴 로그 저장
       newState = { ...newState, aiTurnLogs: aiLogs };
+
+      // ============================================
+      // 게임 오버 체크
+      // ============================================
+      const playerRegionCount = Object.values(newState.regions)
+        .filter(r => r.owner === newState.playerFaction).length;
+      const totalRegions = Object.keys(newState.regions).length;
+
+      // 패배: 모든 영토 상실
+      if (playerRegionCount === 0) {
+        newState = {
+          ...newState,
+          gameOver: {
+            result: 'defeat',
+            message: '모든 영토를 잃었습니다...',
+            turn: newTurn,
+            year: nextYear
+          }
+        };
+      }
+      // 승리: 모든 영토 점령
+      else if (playerRegionCount === totalRegions) {
+        newState = {
+          ...newState,
+          gameOver: {
+            result: 'victory',
+            message: '천하를 통일했습니다!',
+            turn: newTurn,
+            year: nextYear
+          }
+        };
+      }
 
       // 턴 시작 이벤트 체크 (인라인)
       const checkCondition = (condition: EventCondition, state: GameState): boolean => {

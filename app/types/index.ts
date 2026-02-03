@@ -267,6 +267,16 @@ export interface GameState {
   diplomaticProposals: DiplomaticProposal[];  // 대기 중인 외교 제안
   // AI 턴 로그 (최근 턴의 AI 행동)
   aiTurnLogs: AITurnLog[];
+  // 게임 오버 상태
+  gameOver: GameOverState | null;
+}
+
+// 게임 오버 상태
+export interface GameOverState {
+  result: 'victory' | 'defeat';
+  message: string;
+  turn: number;
+  year: number;
 }
 
 // AI 턴 로그

@@ -23,6 +23,7 @@ import BattleScreen from './BattleScreen';
 import BattleResultScreen from './BattleResultScreen';
 import TitleScreen from './TitleScreen';
 import FactionSelectScreen from './FactionSelectScreen';
+import GameOverScreen from './GameOverScreen';
 import { SEASONS, DOMESTIC_COMMANDS } from '../constants/worldData';
 import { INITIAL_LOYALTY } from '../constants/gameData';
 import { getAdvisorSession } from '../advisor';
@@ -239,6 +240,18 @@ export default function WarlordsGame() {
         )}
         getGeneral={getGeneral}
         onClose={handleCloseBattleResult}
+      />
+    );
+  }
+
+  // 게임 오버 화면
+  if (game.gameOver) {
+    return (
+      <GameOverScreen
+        gameOver={game.gameOver}
+        selectedFaction={game.selectedFaction}
+        onNewGame={startNewGame}
+        onBackToTitle={backToTitle}
       />
     );
   }
