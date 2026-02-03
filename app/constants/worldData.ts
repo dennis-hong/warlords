@@ -245,7 +245,7 @@ export const REGIONS: Record<RegionId, Region> = {
     agriculture: 80,
     defense: 100,
     training: 60,
-    generals: ['guanyu', 'zhangfei', 'zhaoyun', 'zhugeliang']
+    generals: ['guanyu', 'zhangfei', 'zhaoyun']  // 제갈량은 삼고초려 이벤트로만 영입!
   },
   jianye: {
     id: 'jianye',
