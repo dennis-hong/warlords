@@ -17,7 +17,8 @@ import {
   EventModal,
   EventLog,
   DiplomacyPanel,
-  EnemyRegionPopup
+  EnemyRegionPopup,
+  TransferPanel
 } from './ui';
 import AdvisorPanel from './ui/AdvisorPanel';
 import BattleScreen from './BattleScreen';
@@ -68,6 +69,8 @@ export default function WarlordsGame() {
     releasePrisoner,
     // 이벤트 시스템
     handleEventChoice,
+    // 이동 시스템
+    transferResources,
     // 외교 시스템
     declareWar,
     proposeAlliance,
@@ -83,6 +86,7 @@ export default function WarlordsGame() {
   const [showEndTurnModal, setShowEndTurnModal] = useState(false);
   const [showAdvisorPanel, setShowAdvisorPanel] = useState(false);
   const [showEventLog, setShowEventLog] = useState(false);
+  const [showTransferPanel, setShowTransferPanel] = useState(false);
   const { messages: toastMessages, showToast, removeToast } = useToast();
 
   // 전략 조언 세션 (game이 있을 때만)
@@ -399,6 +403,13 @@ export default function WarlordsGame() {
                 )}
               </button>
               <button
+                onClick={() => setShowTransferPanel(true)}
+                disabled={playerRegions.length < 2}
+                className="btn-peace flex-1 min-h-[44px] py-2 px-3 rounded-lg text-sm active:scale-[0.97] transition-transform"
+              >
+                🚚 이동
+              </button>
+              <button
                 onClick={() => setShowPrisonerPanel(true)}
                 className="btn-bronze flex-1 min-h-[44px] py-2 px-3 rounded-lg text-sm active:scale-[0.97] transition-transform"
               >
@@ -542,6 +553,25 @@ export default function WarlordsGame() {
           onExecute={executePrisoner}
           onRelease={releasePrisoner}
           onClose={() => setShowPrisonerPanel(false)}
+        />
+      )}
+
+      {/* 이동 패널 */}
+      {showTransferPanel && (
+        <TransferPanel
+          playerRegions={playerRegions}
+          allRegions={game.regions}
+          initialSourceRegion={isPlayerRegion ? game.selectedRegion : null}
+          actionsRemaining={game.actionsRemaining}
+          getGeneral={getGeneral}
+          onTransfer={(params) => {
+            const result = transferResources(params);
+            if (result.success) {
+              showToast(result.message, 'success');
+            }
+            return result;
+          }}
+          onClose={() => setShowTransferPanel(false)}
         />
       )}
 

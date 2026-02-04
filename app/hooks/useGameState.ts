@@ -1655,6 +1655,99 @@ export function useGameState() {
     );
   }, [game]);
 
+  // ============================================
+  // 이동 시스템 (장수/병력/자원)
+  // ============================================
+  
+  const transferResources = useCallback((params: {
+    sourceRegion: RegionId;
+    destRegion: RegionId;
+    generals: string[];
+    troops: number;
+    gold: number;
+    food: number;
+  }): { success: boolean; message: string } => {
+    if (!game) return { success: false, message: '게임이 로드되지 않았습니다.' };
+    if (game.actionsRemaining <= 0) return { success: false, message: '행동력이 부족합니다.' };
+
+    const { sourceRegion, destRegion, generals, troops, gold, food } = params;
+    const source = game.regions[sourceRegion];
+    const dest = game.regions[destRegion];
+
+    if (!source || !dest) return { success: false, message: '지역을 찾을 수 없습니다.' };
+    if (source.owner !== game.playerFaction || dest.owner !== game.playerFaction) {
+      return { success: false, message: '자신의 영토 간에만 이동할 수 있습니다.' };
+    }
+    if (!source.adjacent.includes(destRegion)) {
+      return { success: false, message: '인접한 성끼리만 이동할 수 있습니다.' };
+    }
+
+    // 이동할 항목 검증
+    const hasItems = generals.length > 0 || troops > 0 || gold > 0 || food > 0;
+    if (!hasItems) return { success: false, message: '이동할 항목을 선택하세요.' };
+
+    if (troops > source.troops) return { success: false, message: '병력이 부족합니다.' };
+    if (gold > source.gold) return { success: false, message: '금이 부족합니다.' };
+    if (food > source.food) return { success: false, message: '식량이 부족합니다.' };
+
+    // 장수 검증
+    for (const gId of generals) {
+      if (!source.generals.includes(gId)) {
+        return { success: false, message: '해당 장수가 출발 성에 없습니다.' };
+      }
+    }
+
+    setGame(prev => {
+      if (!prev) return null;
+
+      const newRegions = { ...prev.regions };
+      const newSource = { ...newRegions[sourceRegion] };
+      const newDest = { ...newRegions[destRegion] };
+
+      // 장수 이동
+      if (generals.length > 0) {
+        newSource.generals = newSource.generals.filter(g => !generals.includes(g));
+        newDest.generals = [...newDest.generals, ...generals];
+      }
+
+      // 병력 이동
+      newSource.troops -= troops;
+      newDest.troops += troops;
+
+      // 금 이동
+      newSource.gold -= gold;
+      newDest.gold += gold;
+
+      // 식량 이동
+      newSource.food -= food;
+      newDest.food += food;
+
+      newRegions[sourceRegion] = newSource;
+      newRegions[destRegion] = newDest;
+
+      return {
+        ...prev,
+        regions: newRegions,
+        actionsRemaining: prev.actionsRemaining - 1,
+      };
+    });
+
+    // 이동 내용 요약
+    const parts: string[] = [];
+    if (generals.length > 0) {
+      const names = generals.map(id => getGeneral(id)?.nameKo || id).join(', ');
+      parts.push(`장수(${names})`);
+    }
+    if (troops > 0) parts.push(`병력 ${troops.toLocaleString()}`);
+    if (gold > 0) parts.push(`금 ${gold.toLocaleString()}`);
+    if (food > 0) parts.push(`식량 ${food.toLocaleString()}`);
+
+    return {
+      success: true,
+      message: `이동 완료! ${parts.join(', ')}`
+    };
+  }, [game, getGeneral]);
+
   // 동맹 파기
   const breakAlliance = useCallback((targetFaction: FactionId): { success: boolean; message: string } => {
     if (!game) return { success: false, message: '게임이 로드되지 않았습니다.' };
@@ -1724,6 +1817,8 @@ export function useGameState() {
     triggerEvent,
     handleEventChoice,
     closeEvent,
+    // 이동 시스템
+    transferResources,
     // 외교 시스템
     declareWar,
     getRelationWith,

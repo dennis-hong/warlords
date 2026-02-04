@@ -24,3 +24,6 @@ export { default as EventLog } from './EventLog';
 export { default as DiplomacyPanel } from './DiplomacyPanel';
 // 적 성 정보
 export { EnemyRegionPopup } from './EnemyRegionPopup';
+// 이동 시스템
+export { TransferPanel } from './TransferPanel';
+export type { TransferParams } from './TransferPanel';
