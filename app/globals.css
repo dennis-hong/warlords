@@ -1006,6 +1006,54 @@ body {
   padding-bottom: env(safe-area-inset-bottom, 0);
 }
 
+.safe-area-top {
+  padding-top: env(safe-area-inset-top, 0);
+}
+
+/* ===== 모바일 터치 최적화 ===== */
+@media (max-width: 480px) {
+  /* 스크롤바 얇게 */
+  ::-webkit-scrollbar {
+    width: 4px;
+  }
+  
+  /* range 슬라이더 터치 영역 확대 */
+  input[type="range"] {
+    height: 24px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent;
+  }
+  
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 24px;
+    height: 24px;
+    background: var(--color-gold);
+    border: 2px solid var(--color-wood);
+    border-radius: 50%;
+    cursor: pointer;
+  }
+  
+  input[type="range"]::-webkit-slider-runnable-track {
+    height: 6px;
+    background: var(--color-dynasty-light);
+    border-radius: 3px;
+  }
+}
+
+/* 터치 피드백 - 모든 인터랙티브 요소 */
+button, [role="button"] {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+/* 탭 바 터치 가이드 */
+.tab-item {
+  -webkit-tap-highlight-color: transparent;
+}
+
 /* ===== 탭 바 ===== */
 .tab-bar {
   background: linear-gradient(180deg, var(--color-dynasty-dark) 0%, var(--color-dynasty-black) 100%);

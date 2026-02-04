@@ -236,8 +236,8 @@ export default function AdvisorPanel({ session, gameState, onClose, onActionClic
   }, [gameState, strategist, aiQuestion]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-      <div className="bg-gradient-to-b from-amber-950 to-stone-900 rounded-xl border-2 border-amber-600 shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 sm:p-4">
+      <div className="bg-gradient-to-b from-amber-950 to-stone-900 sm:rounded-xl border-t-2 sm:border-2 border-amber-600 shadow-2xl w-full max-w-2xl max-h-[95vh] sm:max-h-[90vh] flex flex-col rounded-t-xl">
         
         {/* 헤더 - 책사 정보 */}
         <div className="p-4 border-b border-amber-700 bg-gradient-to-r from-amber-900/50 to-transparent">

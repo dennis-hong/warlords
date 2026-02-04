@@ -49,14 +49,14 @@ export function ConfirmModal({
         <div className="p-4 pt-0 flex gap-3">
           <button
             onClick={onCancel}
-            className="flex-1 py-2 px-4 rounded-lg bg-dynasty-medium/50 text-parchment/80
-                       hover:bg-dynasty-medium transition-colors font-medium"
+            className="flex-1 min-h-[48px] py-2.5 px-4 rounded-lg bg-dynasty-medium/50 text-parchment/80
+                       active:bg-dynasty-medium transition-colors font-medium active:scale-[0.97]"
           >
             {cancelText}
           </button>
           <button
             onClick={onConfirm}
-            className={`flex-1 py-2 px-4 rounded-lg font-medium transition-all active:scale-95
+            className={`flex-1 min-h-[48px] py-2.5 px-4 rounded-lg font-medium transition-all active:scale-[0.97]
               ${variant === 'danger'
                 ? 'btn-war'
                 : 'btn-peace'

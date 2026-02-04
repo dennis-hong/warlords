@@ -257,7 +257,7 @@ export default function WarlordsGame() {
   }
 
   return (
-    <div className="min-h-screen pb-20">
+    <div className="min-h-screen pb-[68px]">
       {/* 토스트 메시지 */}
       <Toast messages={toastMessages} onRemove={removeToast} />
 
@@ -270,60 +270,52 @@ export default function WarlordsGame() {
         year={game.year}
       />
 
-      {/* 플로팅 버튼 영역 */}
-      <div className="fixed right-4 top-20 z-40 flex flex-col gap-2">
+      {/* 플로팅 버튼 영역 - 우하단, 탭 바 위 */}
+      <div className="fixed right-3 bottom-[72px] z-40 flex flex-col gap-2">
         {/* 책사 조언 버튼 */}
         {advisorSession && (
           <button
             onClick={() => setShowAdvisorPanel(true)}
-            className="w-14 h-14 rounded-full bg-gradient-to-br from-amber-700 to-amber-900 border-2 border-amber-500 shadow-lg hover:scale-110 transition-transform flex items-center justify-center group"
+            className="w-11 h-11 rounded-full bg-gradient-to-br from-amber-700 to-amber-900 border-2 border-amber-500 shadow-lg active:scale-95 transition-transform flex items-center justify-center relative"
             title="책사에게 조언을 구하기"
           >
-            <span className="text-2xl">{advisorSession.strategist.portrait}</span>
-            {/* 긴급 알림 뱃지 */}
+            <span className="text-lg">{advisorSession.strategist.portrait}</span>
             {advisorSession.advice.some(a => a.priority === 'critical') && (
-              <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full text-white text-xs flex items-center justify-center animate-pulse">
+              <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-white text-[9px] flex items-center justify-center animate-pulse">
                 !
               </span>
             )}
-            {/* 호버 텍스트 */}
-            <span className="absolute right-16 bg-stone-900/90 text-amber-200 px-2 py-1 rounded text-sm whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
-              책사의 조언
-            </span>
           </button>
         )}
 
         {/* 역사 기록 버튼 */}
         <button
           onClick={() => setShowEventLog(true)}
-          className="w-14 h-14 rounded-full bg-gradient-to-br from-stone-700 to-stone-900 border-2 border-amber-700 shadow-lg hover:scale-110 transition-transform flex items-center justify-center group"
+          className="w-11 h-11 rounded-full bg-gradient-to-br from-stone-700 to-stone-900 border-2 border-amber-700 shadow-lg active:scale-95 transition-transform flex items-center justify-center relative"
           title="역사 기록 보기"
         >
-          <span className="text-2xl">📜</span>
-          {/* 이벤트 개수 뱃지 */}
+          <span className="text-lg">📜</span>
           {game.triggeredEvents.length > 0 && (
-            <span className="absolute -top-1 -right-1 w-5 h-5 bg-amber-600 rounded-full text-white text-xs flex items-center justify-center">
+            <span className="absolute -top-1 -right-1 w-4 h-4 bg-amber-600 rounded-full text-white text-[9px] flex items-center justify-center">
               {game.triggeredEvents.length}
             </span>
           )}
-          {/* 호버 텍스트 */}
-          <span className="absolute right-16 bg-stone-900/90 text-amber-200 px-2 py-1 rounded text-sm whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
-            역사 기록
-          </span>
         </button>
       </div>
 
       {/* 메인 컨텐츠 */}
-      <div className="p-4">
+      <div className="px-3 py-3">
         {/* 지도 탭 */}
         {activeTab === 'map' && (
-          <div className="space-y-4 animate-fade-in">
-            <h2 className="text-lg font-bold text-gold flex items-center gap-2 title-glow">
-              🗺️ 천하 정세
-              <span className="text-sm font-normal text-silk/50">
-                (내 영토: {playerRegions.length}개)
+          <div className="space-y-3 animate-fade-in">
+            <div className="flex items-center justify-between">
+              <h2 className="text-base font-bold text-gold flex items-center gap-1.5 title-glow">
+                🗺️ 천하 정세
+              </h2>
+              <span className="text-xs text-silk/50">
+                내 영토 {playerRegions.length}개
               </span>
-            </h2>
+            </div>
             
             <WorldMap
               regions={game.regions}
@@ -335,33 +327,33 @@ export default function WarlordsGame() {
 
             {/* 선택된 지역 간단 정보 */}
             {selectedRegionData && (
-              <div className="dynasty-card rounded-lg p-4 animate-slide-up">
-                <div className="flex justify-between items-start">
+              <div className="dynasty-card rounded-lg p-3 animate-slide-up">
+                <div className="flex justify-between items-center mb-2">
                   <div>
-                    <h3 className="font-bold text-gold text-lg">
+                    <h3 className="font-bold text-gold text-base">
                       🏯 {selectedRegionData.nameKo}
                     </h3>
-                    <p className="text-sm text-silk/60">
+                    <p className="text-xs text-silk/60">
                       {game.factions[selectedRegionData.owner]?.nameKo} 세력
                     </p>
                   </div>
-                  <div className="text-right text-sm">
-                    <div className="text-crimson-light font-medium">⚔️ {selectedRegionData.troops.toLocaleString()}</div>
-                    <div className="text-jade-light font-medium">🏰 {selectedRegionData.defense}%</div>
+                  <div className="flex gap-3 text-sm">
+                    <span className="text-crimson-light font-medium">⚔️ {selectedRegionData.troops.toLocaleString()}</span>
+                    <span className="text-jade-light font-medium">🏰 {selectedRegionData.defense}%</span>
                   </div>
                 </div>
                 
                 {isPlayerRegion ? (
                   <button
                     onClick={() => setActiveTab('domestic')}
-                    className="btn-peace mt-3 w-full py-2 rounded-lg"
+                    className="btn-peace w-full py-2.5 rounded-lg text-sm active:scale-[0.98] transition-transform"
                   >
                     📋 내정 관리
                   </button>
                 ) : (
                   <button
                     onClick={() => setActiveTab('military')}
-                    className="btn-war mt-3 w-full py-2 rounded-lg"
+                    className="btn-war w-full py-2.5 rounded-lg text-sm active:scale-[0.98] transition-transform"
                   >
                     ⚔️ 출진 준비
                   </button>
@@ -373,22 +365,31 @@ export default function WarlordsGame() {
 
         {/* 내정 탭 */}
         {activeTab === 'domestic' && (
-          <div className="space-y-4 animate-fade-in">
-            <h2 className="text-lg font-bold text-gold flex items-center gap-2 title-glow">
-              🏠 내정
-              <span className="text-sm font-normal text-silk/50">
-                (남은 행동: {game.actionsRemaining}회)
-              </span>
-            </h2>
+          <div className="space-y-3 animate-fade-in">
+            {/* 헤더: 내정 + 행동력 뱃지 */}
+            <div className="flex items-center justify-between">
+              <h2 className="text-base font-bold text-gold flex items-center gap-1.5 title-glow">
+                🏠 내정
+              </h2>
+              <div className="flex items-center gap-1.5">
+                <span className={`text-xs px-2.5 py-1 rounded-full font-bold ${
+                  game.actionsRemaining > 0 
+                    ? 'bg-gold/20 text-gold border border-gold/40' 
+                    : 'bg-crimson/20 text-crimson-light border border-crimson/40'
+                }`}>
+                  행동 {game.actionsRemaining}회
+                </span>
+              </div>
+            </div>
 
             {/* 장수 관리 버튼 */}
             <div className="flex gap-2">
               <button
                 onClick={() => setShowRecruitPanel(true)}
                 disabled={!selectedRegionData || !isPlayerRegion}
-                className="btn-peace flex-1 py-2 px-4 rounded-lg text-sm"
+                className="btn-peace flex-1 min-h-[44px] py-2 px-3 rounded-lg text-sm active:scale-[0.97] transition-transform"
               >
-                🎯 재야 장수 등용
+                🎯 등용
                 {selectedRegionData && isPlayerRegion && (
                   <span className="ml-1 text-jade-light">
                     ({getFreeGeneralsInRegion(selectedRegionData.id).length})
@@ -397,9 +398,9 @@ export default function WarlordsGame() {
               </button>
               <button
                 onClick={() => setShowPrisonerPanel(true)}
-                className="btn-bronze flex-1 py-2 px-4 rounded-lg text-sm"
+                className="btn-bronze flex-1 min-h-[44px] py-2 px-3 rounded-lg text-sm active:scale-[0.97] transition-transform"
               >
-                ⛓️ 포로 관리
+                ⛓️ 포로
                 <span className="ml-1 text-bronze">
                   ({getPlayerPrisoners().length})
                 </span>
@@ -409,7 +410,7 @@ export default function WarlordsGame() {
             {/* 지역 선택 안됨 -> 목록 표시 */}
             {!selectedRegionData || !isPlayerRegion ? (
               <>
-                <p className="text-silk/50 text-sm">지역을 선택하세요</p>
+                <p className="text-silk/50 text-xs">지역을 선택하세요</p>
                 <RegionList
                   regions={playerRegions}
                   selectedRegion={game.selectedRegion}
@@ -432,21 +433,23 @@ export default function WarlordsGame() {
 
         {/* 군사 탭 */}
         {activeTab === 'military' && (
-          <div className="space-y-4 animate-fade-in">
-            <h2 className="text-lg font-bold text-gold flex items-center gap-2 title-glow">
-              ⚔️ 출진
+          <div className="space-y-3 animate-fade-in">
+            <div className="flex items-center justify-between">
+              <h2 className="text-base font-bold text-gold flex items-center gap-1.5 title-glow">
+                ⚔️ 출진
+              </h2>
               {game.march && (
-                <span className="text-sm font-normal text-silk/50">
+                <span className="text-xs text-silk/50">
                   출발: {selectedRegionData?.nameKo || playerRegions[0]?.nameKo}
                 </span>
               )}
-            </h2>
+            </div>
 
             {/* 출진 상태가 없으면 시작 버튼 */}
             {!game.march ? (
-              <div className="dynasty-card rounded-lg p-6 text-center">
-                <div className="text-5xl mb-4 animate-float">⚔️</div>
-                <p className="text-silk/70 mb-4">
+              <div className="dynasty-card rounded-lg p-5 text-center">
+                <div className="text-4xl mb-3 animate-float">⚔️</div>
+                <p className="text-silk/70 mb-3 text-sm">
                   {playerRegions.length > 0
                     ? `${isPlayerRegion ? selectedRegionData?.nameKo : playerRegions[0].nameKo}에서 출진합니다`
                     : '출발할 영토가 없습니다'}
@@ -454,7 +457,7 @@ export default function WarlordsGame() {
                 <button
                   onClick={startMarch}
                   disabled={playerRegions.length === 0}
-                  className="btn-war w-full py-3 rounded-lg text-lg"
+                  className="btn-war w-full min-h-[48px] py-3 rounded-lg text-base active:scale-[0.98] transition-transform"
                 >
                   출진 준비
                 </button>
@@ -465,6 +468,7 @@ export default function WarlordsGame() {
                 march={game.march}
                 playerRegions={playerRegions}
                 allRegions={game.regions}
+                factions={game.factions}
                 selectedSourceRegion={selectedRegionData && isPlayerRegion ? selectedRegionData : null}
                 getGeneral={getGeneral}
                 onSelectTarget={selectMarchTarget}

@@ -36,8 +36,8 @@ export default function EventLog({ triggeredEvents, currentTurn, onClose }: Even
     .filter((entry): entry is LogEntry => entry !== null);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-      <div className="bg-gradient-to-b from-stone-900 to-stone-950 rounded-xl border-2 border-amber-700 shadow-2xl w-full max-w-lg max-h-[80vh] flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 sm:p-4">
+      <div className="bg-gradient-to-b from-stone-900 to-stone-950 rounded-t-xl sm:rounded-xl border-t-2 sm:border-2 border-amber-700 shadow-2xl w-full max-w-lg max-h-[90vh] sm:max-h-[80vh] flex flex-col">
         
         {/* 헤더 */}
         <div className="p-4 border-b border-amber-800 bg-gradient-to-r from-amber-900/30 to-transparent flex justify-between items-center">
