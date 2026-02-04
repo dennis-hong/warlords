@@ -16,7 +16,8 @@ import {
   ConfirmModal,
   EventModal,
   EventLog,
-  DiplomacyPanel
+  DiplomacyPanel,
+  EnemyRegionPopup
 } from './ui';
 import AdvisorPanel from './ui/AdvisorPanel';
 import BattleScreen from './BattleScreen';
@@ -326,7 +327,7 @@ export default function WarlordsGame() {
             />
 
             {/* 선택된 지역 간단 정보 */}
-            {selectedRegionData && (
+            {selectedRegionData && isPlayerRegion && (
               <div className="dynasty-card rounded-lg p-3 animate-slide-up">
                 <div className="flex justify-between items-center mb-2">
                   <div>
@@ -342,23 +343,24 @@ export default function WarlordsGame() {
                     <span className="text-jade-light font-medium">🏰 {selectedRegionData.defense}%</span>
                   </div>
                 </div>
-                
-                {isPlayerRegion ? (
-                  <button
-                    onClick={() => setActiveTab('domestic')}
-                    className="btn-peace w-full py-2.5 rounded-lg text-sm active:scale-[0.98] transition-transform"
-                  >
-                    📋 내정 관리
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => setActiveTab('military')}
-                    className="btn-war w-full py-2.5 rounded-lg text-sm active:scale-[0.98] transition-transform"
-                  >
-                    ⚔️ 출진 준비
-                  </button>
-                )}
+                <button
+                  onClick={() => setActiveTab('domestic')}
+                  className="btn-peace w-full py-2.5 rounded-lg text-sm active:scale-[0.98] transition-transform"
+                >
+                  📋 내정 관리
+                </button>
               </div>
+            )}
+
+            {/* 적 성 정찰 정보 팝업 */}
+            {selectedRegionData && !isPlayerRegion && (
+              <EnemyRegionPopup
+                region={selectedRegionData}
+                faction={game.factions[selectedRegionData.owner]}
+                getGeneral={getGeneral}
+                onClose={() => selectRegion(null)}
+                onAttack={() => setActiveTab('military')}
+              />
             )}
           </div>
         )}

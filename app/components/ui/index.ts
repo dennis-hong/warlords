@@ -22,3 +22,5 @@ export { EventModal } from './EventModal';
 export { default as EventLog } from './EventLog';
 // 외교 시스템
 export { default as DiplomacyPanel } from './DiplomacyPanel';
+// 적 성 정보
+export { EnemyRegionPopup } from './EnemyRegionPopup';
