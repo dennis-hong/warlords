@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useGameState } from '../hooks/useGameState';
 import {
   ResourceBar,
@@ -88,6 +88,25 @@ export default function WarlordsGame() {
   const [showEventLog, setShowEventLog] = useState(false);
   const [showTransferPanel, setShowTransferPanel] = useState(false);
   const { messages: toastMessages, showToast, removeToast } = useToast();
+
+  // 행동력 0 → 턴 종료 모달 자동 팝업
+  const prevActionsRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (!game || gamePhase !== 'playing') return;
+    // 전투 중이거나 이벤트 표시 중이면 무시
+    if (game.phase === 'battle' || game.phase === 'battle_result' || game.activeEvent || game.gameOver) return;
+    
+    const prev = prevActionsRef.current;
+    const current = game.actionsRemaining;
+    
+    // 행동력이 >0에서 0으로 떨어졌을 때만 표시
+    if (prev !== null && prev > 0 && current === 0) {
+      // 약간의 딜레이로 자연스럽게
+      setTimeout(() => setShowEndTurnModal(true), 400);
+    }
+    
+    prevActionsRef.current = current;
+  }, [game?.actionsRemaining, game?.phase, game?.activeEvent, game?.gameOver, gamePhase]);
 
   // 전략 조언 세션 (game이 있을 때만)
   const advisorSession = useMemo(() => {
