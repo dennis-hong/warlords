@@ -80,8 +80,11 @@ export function WorldMap({
             <div
               className={`
                 w-12 h-12 rounded-lg flex items-center justify-center text-xl
-                border-2 shadow-lg transition-all
-                ${isPlayer ? 'border-jade-light shadow-jade/30' : 'border-wood shadow-wood/30'}
+                shadow-lg transition-all
+                ${isPlayer
+                  ? 'border-[3px] border-gold'
+                  : 'border-2 border-wood shadow-wood/30'}
+                ${isPlayer && !isSelected ? 'player-territory-glow' : ''}
                 ${isSelected ? 'ring-2 ring-gold ring-offset-1 ring-offset-dynasty-black animate-pulse-gold' : ''}
               `}
               style={{ backgroundColor: faction?.color || '#666' }}
@@ -91,14 +94,14 @@ export function WorldMap({
             {/* 지역명 */}
             <span className={`
               text-[11px] font-bold px-1.5 py-0.5 rounded shadow-sm leading-none
-              ${isPlayer 
-                ? 'bg-jade/90 text-silk' 
+              ${isPlayer
+                ? 'bg-jade/90 text-gold-light border border-gold/40'
                 : 'bg-wood/90 text-parchment'}
             `}>
               {region.nameKo}
             </span>
             {/* 병력 표시 */}
-            <span className={`text-[10px] font-bold leading-none px-1 py-0.5 rounded ${isPlayer ? 'bg-jade/80 text-silk' : 'bg-wood/80 text-parchment'}`}>
+            <span className={`text-[10px] font-bold leading-none px-1 py-0.5 rounded ${isPlayer ? 'bg-jade/80 text-gold-light border border-gold/30' : 'bg-wood/80 text-parchment'}`}>
               ⚔️{(region.troops / 1000).toFixed(0)}k
             </span>
           </button>
@@ -106,10 +109,10 @@ export function WorldMap({
       })}
 
       {/* 범례 */}
-      <div className="absolute bottom-2 left-2 bg-wood/90 rounded px-2 py-1 text-[10px] shadow-lg">
+      <div className="absolute bottom-2 left-2 bg-wood/90 rounded px-2 py-1 text-[10px] shadow-lg border border-gold/30">
         <div className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 rounded border border-jade-light" style={{ backgroundColor: factions[playerFaction]?.color }} />
-          <span className="text-jade-light font-medium">내 영토</span>
+          <span className="w-2.5 h-2.5 rounded border-2 border-gold player-territory-glow" style={{ backgroundColor: factions[playerFaction]?.color }} />
+          <span className="text-gold-light font-bold">내 영토</span>
         </div>
       </div>
     </div>

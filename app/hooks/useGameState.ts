@@ -740,7 +740,7 @@ export function useGameState() {
               newPrisoners.push({
                 generalId: fate.generalId,
                 capturedTurn: prev.turn,
-                capturedBy: isPlayer ? prev.playerFaction : newRegions[enemyRegionId].owner,
+                capturedBy: isPlayer ? newRegions[enemyRegionId].owner : prev.playerFaction,
                 location: isPlayer ? enemyRegionId : playerRegionId
               });
               break;

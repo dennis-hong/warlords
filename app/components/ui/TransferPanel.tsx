@@ -112,7 +112,7 @@ export function TransferPanel({
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
 
       {/* 패널 */}
-      <div className="relative silk-card rounded-t-xl sm:rounded-xl overflow-hidden shadow-2xl w-full max-w-md max-h-[85vh] flex flex-col animate-slide-up">
+      <div className="relative dynasty-card rounded-t-xl sm:rounded-xl overflow-hidden shadow-2xl w-full max-w-md max-h-[85vh] flex flex-col animate-slide-up border-2 border-wood">
         {/* 헤더 */}
         <div className="bg-wood px-4 py-3 border-b-2 border-gold/30 flex items-center justify-between shrink-0">
           <h3 className="text-lg font-bold text-gold title-glow flex items-center gap-2">

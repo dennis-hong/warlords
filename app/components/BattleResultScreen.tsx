@@ -207,29 +207,36 @@ export default function BattleResultScreen({
                         {selectedPrisoner === prisoner.generalId ? (
                           /* 등용 장수 선택 UI */
                           <div className="space-y-2">
-                            <div className="text-sm text-silk/70">등용을 시도할 장수를 선택하세요:</div>
-                            <select
-                              value={selectedRecruiter || ''}
-                              onChange={(e) => setSelectedRecruiter(e.target.value)}
-                              className="w-full bg-night border border-gold/30 rounded px-3 py-2 text-silk text-sm"
-                            >
-                              <option value="">장수 선택...</option>
+                            <div className="text-sm text-silk/70 mb-1">설득할 장수를 선택하세요:</div>
+                            <div className="space-y-1.5 max-h-36 overflow-y-auto">
                               {playerGenerals.map(pg => {
                                 const gen = getGeneral(pg.generalId);
+                                if (!gen) return null;
+                                const isSelected = selectedRecruiter === pg.generalId;
                                 return (
-                                  <option key={pg.generalId} value={pg.generalId}>
-                                    {gen?.nameKo || pg.generalId} (매력: {gen?.charisma || 0})
-                                  </option>
+                                  <button
+                                    key={pg.generalId}
+                                    onClick={() => setSelectedRecruiter(pg.generalId)}
+                                    className={`w-full p-2 rounded-lg text-left transition-all text-sm active:scale-[0.98] flex items-center gap-2 ${
+                                      isSelected
+                                        ? 'bg-jade/40 ring-2 ring-jade-light'
+                                        : 'bg-dynasty-medium/60 hover:bg-dynasty-medium'
+                                    }`}
+                                  >
+                                    <span className="text-lg">{gen.portrait || '👤'}</span>
+                                    <span className="font-bold text-silk flex-1">{gen.nameKo}</span>
+                                    <span className="text-xs text-gold">매{gen.charisma}</span>
+                                  </button>
                                 );
                               })}
-                            </select>
-                            <div className="flex gap-2">
+                            </div>
+                            <div className="flex gap-2 mt-2">
                               <button
                                 onClick={handleRecruit}
                                 disabled={!selectedRecruiter}
                                 className="btn-peace flex-1 py-2 rounded text-sm disabled:opacity-50"
                               >
-                                등용 시도
+                                🎯 등용 시도
                               </button>
                               <button
                                 onClick={() => {

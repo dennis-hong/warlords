@@ -1049,6 +1049,30 @@ body {
   animation: float 6s ease-in-out infinite;
 }
 
+/* ===== 플레이어 영토 강조 ===== */
+.player-territory-glow {
+  box-shadow:
+    0 0 8px rgba(201, 162, 39, 0.5),
+    0 0 18px rgba(201, 162, 39, 0.25),
+    inset 0 0 4px rgba(201, 162, 39, 0.15);
+  animation: playerTerritoryGlow 3s ease-in-out infinite;
+}
+
+@keyframes playerTerritoryGlow {
+  0%, 100% {
+    box-shadow:
+      0 0 8px rgba(201, 162, 39, 0.5),
+      0 0 18px rgba(201, 162, 39, 0.25),
+      inset 0 0 4px rgba(201, 162, 39, 0.15);
+  }
+  50% {
+    box-shadow:
+      0 0 14px rgba(201, 162, 39, 0.7),
+      0 0 28px rgba(201, 162, 39, 0.35),
+      inset 0 0 6px rgba(201, 162, 39, 0.25);
+  }
+}
+
 /* ===== 구분선 ===== */
 .divider-gold {
   height: 2px;

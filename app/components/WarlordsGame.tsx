@@ -111,6 +111,15 @@ export default function WarlordsGame() {
     prevActionsRef.current = current;
   }, [game?.actionsRemaining, game?.phase, game?.activeEvent, game?.gameOver, gamePhase]);
 
+  // 탭 전환 시 열려있던 패널 닫기
+  useEffect(() => {
+    if (activeTab !== 'domestic') {
+      setShowRecruitPanel(false);
+      setShowPrisonerPanel(false);
+      setShowTransferPanel(false);
+    }
+  }, [activeTab]);
+
   // 전략 조언 세션 (game이 있을 때만)
   const advisorSession = useMemo(() => {
     if (!game) return null;

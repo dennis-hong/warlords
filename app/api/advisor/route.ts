@@ -144,6 +144,7 @@ ${ctx.factionRanking.slice(0, 5).map((f, i) => `${i+1}. ${f.faction}: ${f.region
 3. 너무 길지 않게, 핵심만 간결하게 전달하세요 (200자 내외).
 4. 구체적이고 실행 가능한 조언을 포함하세요.
 5. 캐릭터 특유의 명대사나 표현을 자연스럽게 사용하세요.
+6. 마크다운 문법(**, *, #, - 등)을 절대 사용하지 마세요. 순수 텍스트로만 작성하세요.
 `;
 
   return characterPrompt + situation + questionPart;
