@@ -17,16 +17,15 @@ export default function TitleScreen({ onNewGame, onContinue, hasSaveData }: Titl
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-6 relative overflow-hidden">
-      {/* 배경 장식 - 용 */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="bg-dragon top-0 left-0 text-[12rem]" style={{ animationDelay: '0s' }}>🐉</div>
-        <div className="bg-dragon bottom-0 right-0 text-[10rem]" style={{ animationDelay: '3s' }}>🐲</div>
-        <div className="absolute top-1/4 right-10 text-6xl opacity-5 animate-float" style={{ animationDelay: '1s' }}>⚔️</div>
-        <div className="absolute bottom-1/4 left-10 text-5xl opacity-5 animate-float" style={{ animationDelay: '2s' }}>🏯</div>
-        
-        {/* 미세한 빛 효과 */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-96 bg-gradient-radial from-yellow-500/5 to-transparent rounded-full blur-3xl"></div>
-        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-96 h-64 bg-gradient-radial from-red-900/20 to-transparent rounded-full blur-3xl"></div>
+      {/* 배경 이미지 */}
+      <div className="absolute inset-0">
+        <img
+          src="/images/title-bg.png"
+          alt=""
+          className="w-full h-full object-cover"
+        />
+        {/* 어두운 오버레이 - 텍스트 가독성 */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/30 to-black/70"></div>
       </div>
 
       {/* 타이틀 로고 */}

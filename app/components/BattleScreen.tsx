@@ -582,8 +582,25 @@ export default function BattleScreen({ battleData, regions, onBattleEnd, battleB
     }
   };
 
+  // 전투 배경 이미지 결정
+  const battleBg = (() => {
+    const region = regions[battleData.enemyRegionId];
+    if (!region) return '/images/battle/plains.png';
+    // 강변 지역: 건업(jianye), 형주(jingzhou)
+    if (['jianye', 'jingzhou'].includes(battleData.enemyRegionId)) return '/images/battle/river.png';
+    // 방어 높은 지역은 공성전
+    if (region.defense >= 60) return '/images/battle/siege.png';
+    return '/images/battle/plains.png';
+  })();
+
   return (
-    <div className={`min-h-screen p-4 battle-atmosphere ${shakeClass} ${isDefeat ? 'defeat-overlay defeat-vignette' : ''}`}>
+    <div className={`min-h-screen p-4 battle-atmosphere ${shakeClass} ${isDefeat ? 'defeat-overlay defeat-vignette' : ''}`} style={{ position: 'relative' }}>
+      {/* 전투 배경 이미지 */}
+      <div className="absolute inset-0 z-0">
+        <img src={battleBg} alt="" className="w-full h-full object-cover" />
+        <div className="absolute inset-0 bg-black/40"></div>
+      </div>
+      <div className="relative z-10">
       {/* 전투 시작 인트로 오버레이 */}
       {showIntro && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 battle-intro">
@@ -769,6 +786,7 @@ export default function BattleScreen({ battleData, regions, onBattleEnd, battleB
           <p>👊 일기토로 적 사기를 크게 떨어뜨릴 수 있습니다</p>
         </div>
       )}
+      </div>
     </div>
   );
 }

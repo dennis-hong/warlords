@@ -21,16 +21,9 @@ export function WorldMap({
   return (
     <div className="relative w-full h-[calc(100vh-220px)] min-h-[350px] max-h-[500px] rounded-lg border-2 border-wood overflow-hidden">
       {/* 지도 배경 */}
-      <div className="absolute inset-0 bg-gradient-to-b from-parchment-dark/40 via-parchment/30 to-jade-dark/20"></div>
-      
-      {/* 배경 그리드 */}
-      <div className="absolute inset-0 opacity-5">
-        {[...Array(10)].map((_, i) => (
-          <div key={`h${i}`} className="absolute w-full border-t border-wood" style={{ top: `${i * 10}%` }} />
-        ))}
-        {[...Array(10)].map((_, i) => (
-          <div key={`v${i}`} className="absolute h-full border-l border-wood" style={{ left: `${i * 10}%` }} />
-        ))}
+      <div className="absolute inset-0">
+        <img src="/images/map-bg.png" alt="" className="w-full h-full object-cover" />
+        <div className="absolute inset-0 bg-black/20"></div>
       </div>
 
       {/* 연결선 */}

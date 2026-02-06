@@ -86,7 +86,9 @@ export default function FactionSelectScreen({ onSelectFaction, onBack }: Faction
                 animationDelay: `${idx * 0.05}s`
               }}
             >
-              <span className="text-3xl mb-1">{detail.emoji}</span>
+              <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-wood mb-1 bg-dynasty-black">
+                <img src={`/images/portraits/${factionId}.png`} alt={detail.rulerName} className="w-full h-full object-cover" />
+              </div>
               <span className="font-bold text-sm text-silk">{detail.displayName}</span>
               <span className="text-xs text-silk/60">{detail.rulerName}</span>
               <div className="text-xs mt-1">
@@ -110,7 +112,9 @@ export default function FactionSelectScreen({ onSelectFaction, onBack }: Faction
             }}
           >
             <div className="flex items-center gap-3">
-              <span className="text-5xl">{selectedDetail.emoji}</span>
+              <div className="w-16 h-16 rounded-full overflow-hidden border-2 shadow-lg flex-shrink-0 bg-dynasty-black" style={{ borderColor: selectedDetail.color }}>
+                <img src={`/images/portraits/${selectedFaction}.png`} alt={selectedDetail.rulerName} className="w-full h-full object-cover" />
+              </div>
               <div>
                 <h2 className="text-xl font-bold" style={{ color: selectedDetail.color }}>
                   {selectedDetail.displayName}
