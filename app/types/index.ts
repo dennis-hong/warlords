@@ -262,6 +262,7 @@ export interface GameState {
   triggeredEvents: string[];       // 이미 발생한 이벤트 ID 목록
   activeEvent: HistoricalEvent | null;  // 현재 표시 중인 이벤트
   battleBonuses: Record<string, number>; // 장수별 전투 보너스 (이벤트로 획득)
+  moraleBonus: number;                   // 이벤트로 획득한 사기 보너스
   // 외교 시스템
   diplomaticRelations: DiplomaticRelation[];  // 세력간 외교 관계
   diplomaticProposals: DiplomaticProposal[];  // 대기 중인 외교 제안

@@ -379,12 +379,12 @@ export default function AdvisorPanel({ session, gameState, onClose, onActionClic
           /* 기존 조언 섹션 */
           <>
             {/* 카테고리 필터 */}
-            <div className="px-4 py-2 border-b border-amber-800 bg-stone-900/30 flex gap-2 overflow-x-auto">
+            <div className="px-4 py-3 border-b border-amber-800 bg-stone-900/30 flex gap-2 overflow-x-auto">
               <button
                 onClick={() => setSelectedCategory('all')}
-                className={`px-3 py-1 rounded text-sm whitespace-nowrap transition-colors ${
-                  selectedCategory === 'all' 
-                    ? 'bg-amber-600 text-white' 
+                className={`px-3 py-1.5 rounded text-sm whitespace-nowrap transition-colors ${
+                  selectedCategory === 'all'
+                    ? 'bg-amber-600 text-white'
                     : 'bg-stone-700 text-amber-200 hover:bg-stone-600'
                 }`}
               >
@@ -397,9 +397,9 @@ export default function AdvisorPanel({ session, gameState, onClose, onActionClic
                   <button
                     key={cat}
                     onClick={() => setSelectedCategory(cat)}
-                    className={`px-3 py-1 rounded text-sm whitespace-nowrap transition-colors ${
-                      selectedCategory === cat 
-                        ? 'bg-amber-600 text-white' 
+                    className={`px-3 py-1.5 rounded text-sm whitespace-nowrap transition-colors ${
+                      selectedCategory === cat
+                        ? 'bg-amber-600 text-white'
                         : 'bg-stone-700 text-amber-200 hover:bg-stone-600'
                     }`}
                   >

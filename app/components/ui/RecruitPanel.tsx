@@ -102,7 +102,7 @@ export function RecruitPanel({
                       <div className="flex-1 min-w-0">
                         <div className="font-bold text-sm">{general.nameKo}</div>
                         <div className="text-[10px] text-gray-400">
-                          武{general.might} 知{general.intellect} 政{general.politics} 魅{general.charisma}
+                          무{general.might} 지{general.intellect} 정{general.politics} 매{general.charisma}
                         </div>
                       </div>
                       <div className="text-right text-[10px] shrink-0">
@@ -138,7 +138,7 @@ export function RecruitPanel({
                     <div className="flex items-center gap-2">
                       <span className="text-xl">{general.portrait}</span>
                       <span className="font-bold text-sm flex-1">{general.nameKo}</span>
-                      <span className="text-gray-400 text-xs">魅 {general.charisma}</span>
+                      <span className="text-gray-400 text-xs">매 {general.charisma}</span>
                     </div>
                   </button>
                 );

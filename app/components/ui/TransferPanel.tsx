@@ -120,13 +120,13 @@ export function TransferPanel({
           <div className="flex items-center gap-3">
             {/* 단계 표시 */}
             <div className="flex items-center gap-1 text-xs">
-              <span className={step === 'source' ? 'text-gold font-bold' : 'text-silk/40'}>출발</span>
-              <span className="text-silk/30">→</span>
-              <span className={step === 'destination' ? 'text-gold font-bold' : 'text-silk/40'}>도착</span>
-              <span className="text-silk/30">→</span>
-              <span className={step === 'items' ? 'text-gold font-bold' : 'text-silk/40'}>항목</span>
+              <span className={step === 'source' ? 'text-gold font-bold' : 'text-parchment/50'}>출발</span>
+              <span className="text-parchment/50">→</span>
+              <span className={step === 'destination' ? 'text-gold font-bold' : 'text-parchment/50'}>도착</span>
+              <span className="text-parchment/50">→</span>
+              <span className={step === 'items' ? 'text-gold font-bold' : 'text-parchment/50'}>항목</span>
             </div>
-            <button onClick={onClose} className="text-silk/40 text-lg active:text-silk">✕</button>
+            <button onClick={onClose} className="text-parchment/60 text-lg active:text-parchment">✕</button>
           </div>
         </div>
 
@@ -146,7 +146,7 @@ export function TransferPanel({
           {/* Step 1: 출발 성 선택 */}
           {step === 'source' && (
             <div className="space-y-2">
-              <p className="text-sm text-silk/60 mb-2">출발할 성을 선택하세요</p>
+              <p className="text-sm text-parchment/80 mb-2">출발할 성을 선택하세요</p>
               {playerRegions.map(region => (
                 <button
                   key={region.id}
@@ -156,11 +156,11 @@ export function TransferPanel({
                   <div className="flex justify-between items-center">
                     <div>
                       <span className="font-bold text-gold text-sm">🏯 {region.nameKo}</span>
-                      <div className="text-xs text-silk/50 mt-0.5">
+                      <div className="text-xs text-parchment/70 mt-0.5">
                         장수 {region.generals.length}명 · ⚔️{(region.troops / 1000).toFixed(0)}k
                       </div>
                     </div>
-                    <div className="text-xs text-silk/40 space-x-2">
+                    <div className="text-xs text-parchment/60 space-x-2">
                       <span>💰{region.gold.toLocaleString()}</span>
                       <span>🌾{region.food.toLocaleString()}</span>
                     </div>
@@ -174,18 +174,18 @@ export function TransferPanel({
           {step === 'destination' && sourceData && (
             <div className="space-y-2">
               <div className="flex items-center justify-between mb-1">
-                <p className="text-sm text-silk/60">
+                <p className="text-sm text-parchment/80">
                   <span className="text-gold font-medium">{sourceData.nameKo}</span>에서 이동할 곳
                 </p>
-                <button onClick={() => { setStep('source'); setSourceRegion(null); }} className="text-xs text-silk/40 active:text-silk">
+                <button onClick={() => { setStep('source'); setSourceRegion(null); }} className="text-xs text-parchment/60 active:text-parchment">
                   ← 변경
                 </button>
               </div>
 
               {availableDestinations.length === 0 ? (
                 <div className="dynasty-card rounded-lg p-4 text-center">
-                  <p className="text-sm text-silk/50">인접한 아군 성이 없습니다</p>
-                  <p className="text-xs text-silk/30 mt-1">인접한 자기 영토로만 이동할 수 있습니다</p>
+                  <p className="text-sm text-parchment/70">인접한 아군 성이 없습니다</p>
+                  <p className="text-xs text-parchment/50 mt-1">인접한 자기 영토로만 이동할 수 있습니다</p>
                 </div>
               ) : (
                 availableDestinations.map(region => (
@@ -197,7 +197,7 @@ export function TransferPanel({
                     <div className="flex justify-between items-center">
                       <div>
                         <span className="font-bold text-gold text-sm">🏯 {region.nameKo}</span>
-                        <div className="text-xs text-silk/50 mt-0.5">
+                        <div className="text-xs text-parchment/70 mt-0.5">
                           장수 {region.generals.length}명 · ⚔️{(region.troops / 1000).toFixed(0)}k
                         </div>
                       </div>
@@ -215,18 +215,18 @@ export function TransferPanel({
               {/* 경로 표시 */}
               <div className="flex items-center justify-center gap-2 text-sm py-1">
                 <span className="text-gold font-medium">🏯 {sourceData.nameKo}</span>
-                <span className="text-silk/40">→</span>
+                <span className="text-parchment/60">→</span>
                 <span className="text-jade-light font-medium">🏯 {destData.nameKo}</span>
-                <button onClick={() => { setStep('destination'); setDestRegion(null); }} className="text-xs text-silk/40 ml-1 active:text-silk">
+                <button onClick={() => { setStep('destination'); setDestRegion(null); }} className="text-xs text-parchment/60 ml-1 active:text-parchment">
                   변경
                 </button>
               </div>
 
               {/* 장수 이동 */}
               <div className="space-y-1.5">
-                <h4 className="text-xs text-silk/50 font-medium">🎖️ 장수 이동</h4>
+                <h4 className="text-xs text-parchment/80 font-medium">🎖️ 장수 이동</h4>
                 {sourceGenerals.length === 0 ? (
-                  <p className="text-xs text-silk/30 pl-2">이동 가능한 장수가 없습니다</p>
+                  <p className="text-xs text-parchment/50 pl-2">이동 가능한 장수가 없습니다</p>
                 ) : (
                   <div className="grid grid-cols-2 gap-1.5">
                     {sourceGenerals.map(general => {
@@ -238,7 +238,7 @@ export function TransferPanel({
                           className={`rounded-lg p-2 text-left transition-all active:scale-[0.97] text-sm ${
                             isSelected
                               ? 'bg-jade/20 border border-jade/50 text-jade-light'
-                              : 'bg-dynasty-dark/50 border border-wood/20 text-silk/70'
+                              : 'bg-dynasty-dark/50 border border-wood/20 text-parchment/80'
                           }`}
                         >
                           <span>{general.portrait} {general.nameKo}</span>
@@ -253,8 +253,8 @@ export function TransferPanel({
               {/* 병력 이동 */}
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <h4 className="text-xs text-silk/50 font-medium">⚔️ 병력 이동</h4>
-                  <span className="text-xs text-silk/30">보유: {sourceData.troops.toLocaleString()}</span>
+                  <h4 className="text-xs text-parchment/80 font-medium">⚔️ 병력 이동</h4>
+                  <span className="text-xs text-parchment/60">보유: {sourceData.troops.toLocaleString()}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <input
@@ -276,7 +276,7 @@ export function TransferPanel({
                     <button
                       key={ratio}
                       onClick={() => setTroopsToMove(Math.floor(sourceData.troops * ratio))}
-                      className="flex-1 text-xs py-1 rounded bg-dynasty-dark/50 text-silk/50 active:bg-dynasty-medium"
+                      className="flex-1 text-xs py-1 rounded bg-dynasty-dark/50 text-parchment/70 active:bg-dynasty-medium"
                     >
                       {ratio === 0 ? '0' : `${Math.round(ratio * 100)}%`}
                     </button>
@@ -287,8 +287,8 @@ export function TransferPanel({
               {/* 금 이동 */}
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <h4 className="text-xs text-silk/50 font-medium">💰 금 이동</h4>
-                  <span className="text-xs text-silk/30">보유: {sourceData.gold.toLocaleString()}</span>
+                  <h4 className="text-xs text-parchment/80 font-medium">💰 금 이동</h4>
+                  <span className="text-xs text-parchment/60">보유: {sourceData.gold.toLocaleString()}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <input
@@ -309,8 +309,8 @@ export function TransferPanel({
               {/* 식량 이동 */}
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <h4 className="text-xs text-silk/50 font-medium">🌾 식량 이동</h4>
-                  <span className="text-xs text-silk/30">보유: {sourceData.food.toLocaleString()}</span>
+                  <h4 className="text-xs text-parchment/80 font-medium">🌾 식량 이동</h4>
+                  <span className="text-xs text-parchment/60">보유: {sourceData.food.toLocaleString()}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <input
@@ -329,7 +329,7 @@ export function TransferPanel({
               </div>
 
               {/* 행동력 비용 안내 */}
-              <div className="bg-dynasty-dark/50 rounded-md p-2 text-xs text-silk/40 flex items-center gap-1.5">
+              <div className="bg-dynasty-dark/50 rounded-md p-2 text-xs text-parchment/70 flex items-center gap-1.5">
                 <span>⚡</span>
                 <span>이동에 행동력 1 소모 (남은 행동력: <span className={actionsRemaining > 0 ? 'text-gold' : 'text-crimson-light'}>{actionsRemaining}</span>)</span>
               </div>

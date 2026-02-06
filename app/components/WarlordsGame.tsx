@@ -56,6 +56,7 @@ export default function WarlordsGame() {
     toggleMarchGeneral,
     setCommander,
     assignTroops,
+    assignTroopsBatch,
     confirmMarch,
     handleBattleEnd,
     closeBattleResult,
@@ -244,6 +245,8 @@ export default function WarlordsGame() {
             battleData={game.battleData}
             regions={game.regions}
             onBattleEnd={handleBattleEnd}
+            battleBonuses={game.battleBonuses}
+            moraleBonus={game.moraleBonus || 0}
           />
         )}
       </>
@@ -458,6 +461,8 @@ export default function WarlordsGame() {
                 getGeneral={getGeneral}
                 onExecute={handleExecuteDomestic}
                 onClose={() => selectRegion(null)}
+                playerRegionIds={playerRegions.map(r => r.id)}
+                onNavigateRegion={(regionId) => selectRegion(regionId)}
               />
             )}
           </div>
@@ -507,6 +512,7 @@ export default function WarlordsGame() {
                 onToggleGeneral={toggleMarchGeneral}
                 onSetCommander={setCommander}
                 onAssignTroops={assignTroops}
+                onAssignTroopsBatch={assignTroopsBatch}
                 onSetStep={setMarchStep}
                 onConfirm={confirmMarch}
                 onCancel={cancelMarch}

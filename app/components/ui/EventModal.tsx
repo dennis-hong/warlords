@@ -50,7 +50,7 @@ export function EventModal({ event, onChoice }: EventModalProps) {
                   {event.nameKo}
                 </h2>
                 <p className="text-amber-200/60 text-sm font-serif italic">
-                  {event.name}
+                  {event.nameKo}
                 </p>
               </div>
             </div>

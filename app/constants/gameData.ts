@@ -636,7 +636,11 @@ export const GAME_CONFIG = {
   RANDOM_MIN: 0.8,
   RANDOM_MAX: 1.2,
   START_YEAR: 190,
-  START_MONTH: 1
+  START_MONTH: 1,
+  // 공성전 밸런스: 방어측 유리 (성벽/지형 보너스)
+  SIEGE_ATTACKER_PENALTY: 0.002,   // 성벽 1당 공격측 데미지 -0.2% (defense 100 → 0.8배)
+  SIEGE_DEFENDER_BONUS: 0.003,     // 성벽 1당 방어측 데미지 +0.3% (defense 100 → 1.3배)
+  SIEGE_DEFENDER_MORALE_BONUS: 10  // 방어측 초기 사기 보너스
 };
 
 export const MORALE_CHANGES = {

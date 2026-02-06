@@ -7,9 +7,11 @@ interface DomesticPanelProps {
   getGeneral: (id: string) => General | null;
   onExecute: (regionId: RegionId, action: DomesticAction) => void;
   onClose: () => void;
+  playerRegionIds?: RegionId[];
+  onNavigateRegion?: (regionId: RegionId) => void;
 }
 
-export function DomesticPanel({ region, actionsRemaining, getGeneral, onExecute, onClose }: DomesticPanelProps) {
+export function DomesticPanel({ region, actionsRemaining, getGeneral, onExecute, onClose, playerRegionIds, onNavigateRegion }: DomesticPanelProps) {
   const generals = region.generals
     .map(id => getGeneral(id))
     .filter((g): g is General => g !== null);
@@ -18,13 +20,42 @@ export function DomesticPanel({ region, actionsRemaining, getGeneral, onExecute,
     <div className="silk-card rounded-lg overflow-hidden animate-slide-up">
       {/* 헤더 */}
       <div className="bg-wood px-3 py-2.5 flex justify-between items-center">
-        <div className="min-w-0">
-          <h2 className="text-base font-bold text-gold flex items-center gap-1.5 truncate">
+        {/* 이전 성 */}
+        {playerRegionIds && playerRegionIds.length > 1 && onNavigateRegion ? (
+          <button
+            onClick={() => {
+              const idx = playerRegionIds.indexOf(region.id);
+              const prevIdx = (idx - 1 + playerRegionIds.length) % playerRegionIds.length;
+              onNavigateRegion(playerRegionIds[prevIdx]);
+            }}
+            className="text-parchment/60 active:text-gold text-lg transition-colors w-9 h-9 flex items-center justify-center shrink-0 -ml-1"
+          >
+            ◀
+          </button>
+        ) : <div className="w-9 shrink-0 -ml-1" />}
+
+        <div className="min-w-0 text-center flex-1">
+          <h2 className="text-base font-bold text-gold flex items-center justify-center gap-1.5 truncate">
             🏯 {region.nameKo}
           </h2>
           <p className="text-[10px] text-parchment/70 truncate">{region.description}</p>
         </div>
-        <button 
+
+        {/* 다음 성 */}
+        {playerRegionIds && playerRegionIds.length > 1 && onNavigateRegion ? (
+          <button
+            onClick={() => {
+              const idx = playerRegionIds.indexOf(region.id);
+              const nextIdx = (idx + 1) % playerRegionIds.length;
+              onNavigateRegion(playerRegionIds[nextIdx]);
+            }}
+            className="text-parchment/60 active:text-gold text-lg transition-colors w-9 h-9 flex items-center justify-center shrink-0"
+          >
+            ▶
+          </button>
+        ) : <div className="w-9 shrink-0" />}
+
+        <button
           onClick={onClose}
           className="text-parchment/60 active:text-parchment text-xl transition-colors w-10 h-10 flex items-center justify-center shrink-0 -mr-1"
         >

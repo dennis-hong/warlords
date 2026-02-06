@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import type { MarchState, MarchStep, Region, RegionId, TroopType, General, Faction, FactionId } from '../../types';
 
 interface MarchPanelProps {
@@ -14,6 +14,7 @@ interface MarchPanelProps {
   onToggleGeneral: (generalId: string, isCommander?: boolean) => void;
   onSetCommander: (generalId: string) => void;
   onAssignTroops: (generalId: string, troops: number, troopType: TroopType) => void;
+  onAssignTroopsBatch?: (assignments: { generalId: string; troops: number }[]) => void;
   onSetStep: (step: MarchStep) => void;
   onConfirm: () => void;
   onCancel: () => void;
@@ -43,6 +44,7 @@ export function MarchPanel({
   onToggleGeneral,
   onSetCommander,
   onAssignTroops,
+  onAssignTroopsBatch,
   onSetStep,
   onConfirm,
   onCancel
@@ -187,7 +189,7 @@ export function MarchPanel({
                             {isCommander && <span className="ml-1 text-gold">⭐</span>}
                           </div>
                           <div className="text-[10px] text-silk/50">
-                            武{general.might} 知{general.intellect} 政{general.politics} 魅{general.charisma}
+                            무{general.might} 지{general.intellect} 정{general.politics} 매{general.charisma}
                           </div>
                         </div>
                       </button>
@@ -223,131 +225,17 @@ export function MarchPanel({
 
       {/* Step 3: 병력 배분 */}
       {march.step === 'troops' && (
-        <div className="dynasty-card rounded-lg p-3 space-y-3 animate-fade-in">
-          <h3 className="text-gold font-bold text-sm">⚔️ 병력 편성</h3>
-
-          {/* 병력 현황 - 콤팩트 */}
-          <div className="silk-card rounded-lg p-2.5 space-y-1">
-            <div className="flex justify-between text-xs">
-              <span className="text-dynasty-medium">가용 병력</span>
-              <span className="text-jade font-bold">{availableTroops.toLocaleString()}</span>
-            </div>
-            <div className="flex justify-between text-xs">
-              <span className="text-dynasty-medium">배분 완료</span>
-              <span className="text-jade font-medium">{totalAssignedTroops.toLocaleString()}</span>
-            </div>
-            <div className="progress-bar h-2.5 mt-1">
-              <div 
-                className={`progress-fill ${totalAssignedTroops > availableTroops ? 'crimson' : 'jade'}`}
-                style={{ width: `${Math.min(100, (totalAssignedTroops / availableTroops) * 100)}%` }}
-              />
-            </div>
-            <div className="flex justify-between text-[10px]">
-              <span className="text-dynasty-medium">남은 {remainingTroops.toLocaleString()}</span>
-              <span className="text-dynasty-medium">{Math.round((totalAssignedTroops / availableTroops) * 100)}%</span>
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            {march.units.map(unit => {
-              const general = getGeneral(unit.generalId);
-              if (!general) return null;
-              const maxForThisUnit = remainingTroops + unit.troops;
-
-              return (
-                <div key={unit.generalId} className="peace-card rounded-lg p-2.5 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="text-lg">{general.portrait}</span>
-                      <span className="font-bold text-dynasty-black text-sm">{general.nameKo}</span>
-                      {unit.isCommander && <span className="text-gold text-xs">⭐</span>}
-                    </div>
-                    <span className="text-base font-bold text-jade">
-                      {unit.troops.toLocaleString()}
-                    </span>
-                  </div>
-
-                  {/* 병종 선택 */}
-                  <div className="flex gap-1.5">
-                    {TROOP_TYPES.map(type => (
-                      <button
-                        key={type.id}
-                        onClick={() => onAssignTroops(unit.generalId, unit.troops, type.id)}
-                        className={`flex-1 min-h-[40px] py-1.5 rounded text-xs transition-colors active:scale-95 ${
-                          unit.troopType === type.id ? 'btn-gold' : 'btn-wood'
-                        }`}
-                      >
-                        <div>{type.icon} {type.name}</div>
-                        {type.cost > 0 && <div className="text-[10px] opacity-70">💰{type.cost}</div>}
-                      </button>
-                    ))}
-                  </div>
-
-                  {/* 상성 */}
-                  <div className="text-[10px] text-center text-silk/60 bg-dynasty-dark/50 rounded px-2 py-0.5">
-                    {(() => {
-                      const type = TROOP_TYPES.find(t => t.id === unit.troopType);
-                      return type ? (
-                        <span>
-                          <span className="text-jade">✓{type.advantage}</span>
-                          {' / '}
-                          <span className="text-crimson">✗{type.disadvantage}</span>
-                        </span>
-                      ) : null;
-                    })()}
-                  </div>
-
-                  {/* 병력 슬라이더 */}
-                  <input
-                    type="range"
-                    min={0}
-                    max={Math.max(0, maxForThisUnit)}
-                    step={100}
-                    value={unit.troops}
-                    onChange={(e) => onAssignTroops(unit.generalId, Number(e.target.value), unit.troopType)}
-                    className="w-full h-4 bg-parchment-dark rounded-lg appearance-none cursor-pointer accent-gold touch-none"
-                    style={{ WebkitAppearance: 'none' }}
-                  />
-
-                  {/* 빠른 배분 */}
-                  <div className="flex gap-1.5">
-                    <button
-                      onClick={() => onAssignTroops(unit.generalId, 0, unit.troopType)}
-                      className="btn-wood flex-1 min-h-[36px] py-1 text-[11px] rounded active:scale-95"
-                    >
-                      초기화
-                    </button>
-                    <button
-                      onClick={() => onAssignTroops(unit.generalId, Math.floor(maxForThisUnit / 2), unit.troopType)}
-                      className="btn-wood flex-1 min-h-[36px] py-1 text-[11px] rounded active:scale-95"
-                    >
-                      절반
-                    </button>
-                    <button
-                      onClick={() => onAssignTroops(unit.generalId, maxForThisUnit, unit.troopType)}
-                      className="btn-gold flex-1 min-h-[36px] py-1 text-[11px] rounded active:scale-95"
-                    >
-                      최대
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          <div className="flex gap-2 pt-1">
-            <button onClick={() => onSetStep('generals')} className="btn-wood flex-1 min-h-[44px] py-2.5 rounded-lg active:scale-[0.97]">
-              ← 이전
-            </button>
-            <button
-              onClick={() => onSetStep('confirm')}
-              disabled={totalAssignedTroops === 0 || totalAssignedTroops > availableTroops}
-              className="btn-gold flex-1 min-h-[44px] py-2.5 rounded-lg active:scale-[0.97]"
-            >
-              다음 →
-            </button>
-          </div>
-        </div>
+        <TroopAllocationStep
+          march={march}
+          availableTroops={availableTroops}
+          totalAssignedTroops={totalAssignedTroops}
+          remainingTroops={remainingTroops}
+          sourceRegion={sourceRegion}
+          getGeneral={getGeneral}
+          onAssignTroops={onAssignTroops}
+          onAssignTroopsBatch={onAssignTroopsBatch}
+          onSetStep={onSetStep}
+        />
       )}
 
       {/* Step 4: 최종 확인 */}
@@ -462,6 +350,282 @@ export function MarchPanel({
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+// ============================================
+// 병력 배분 단계 (통합 분배 기능 포함)
+// ============================================
+
+interface TroopAllocationStepProps {
+  march: MarchState;
+  availableTroops: number;
+  totalAssignedTroops: number;
+  remainingTroops: number;
+  sourceRegion: Region;
+  getGeneral: (id: string) => General | null;
+  onAssignTroops: (generalId: string, troops: number, troopType: TroopType) => void;
+  onAssignTroopsBatch?: (assignments: { generalId: string; troops: number }[]) => void;
+  onSetStep: (step: MarchStep) => void;
+}
+
+function TroopAllocationStep({
+  march,
+  availableTroops,
+  totalAssignedTroops,
+  remainingTroops,
+  sourceRegion,
+  getGeneral,
+  onAssignTroops,
+  onAssignTroopsBatch,
+  onSetStep
+}: TroopAllocationStepProps) {
+  const [showDetail, setShowDetail] = useState(false);
+
+  const unitCount = march.units.length;
+
+  // 통합 분배: 모든 장수에게 균등 배분 (단일 state update)
+  const distributeEvenly = useCallback((totalToDistribute: number) => {
+    if (unitCount === 0) return;
+    const perUnit = Math.floor(totalToDistribute / unitCount);
+    const leftover = totalToDistribute - perUnit * unitCount;
+
+    if (onAssignTroopsBatch) {
+      // 일괄 처리 (단일 state update)
+      const assignments = march.units.map((unit, idx) => ({
+        generalId: unit.generalId,
+        troops: idx === 0 ? perUnit + leftover : perUnit
+      }));
+      onAssignTroopsBatch(assignments);
+    } else {
+      // 폴백: 개별 호출
+      march.units.forEach((unit, idx) => {
+        const troops = idx === 0 ? perUnit + leftover : perUnit;
+        onAssignTroops(unit.generalId, troops, unit.troopType);
+      });
+    }
+  }, [march.units, unitCount, onAssignTroops, onAssignTroopsBatch]);
+
+  // 수비 병력 남기고 분배
+  const distributeWithReserve = useCallback((reserveTroops: number) => {
+    const toDistribute = Math.max(0, availableTroops - reserveTroops);
+    distributeEvenly(toDistribute);
+  }, [availableTroops, distributeEvenly]);
+
+  return (
+    <div className="dynasty-card rounded-lg p-3 space-y-3 animate-fade-in">
+      <h3 className="text-gold font-bold text-sm">⚔️ 병력 편성</h3>
+
+      {/* 병력 현황 */}
+      <div className="silk-card rounded-lg p-2.5 space-y-1">
+        <div className="flex justify-between text-xs">
+          <span className="text-dynasty-medium">가용 병력</span>
+          <span className="text-jade font-bold">{availableTroops.toLocaleString()}</span>
+        </div>
+        <div className="flex justify-between text-xs">
+          <span className="text-dynasty-medium">배분 완료</span>
+          <span className="text-jade font-medium">{totalAssignedTroops.toLocaleString()}</span>
+        </div>
+        <div className="progress-bar h-2.5 mt-1">
+          <div
+            className={`progress-fill ${totalAssignedTroops > availableTroops ? 'crimson' : 'jade'}`}
+            style={{ width: `${Math.min(100, (totalAssignedTroops / availableTroops) * 100)}%` }}
+          />
+        </div>
+        <div className="flex justify-between text-[10px]">
+          <span className="text-dynasty-medium">남은 {remainingTroops.toLocaleString()}</span>
+          <span className="text-dynasty-medium">{availableTroops > 0 ? Math.round((totalAssignedTroops / availableTroops) * 100) : 0}%</span>
+        </div>
+      </div>
+
+      {/* 통합 분배 버튼 */}
+      <div className="space-y-1.5">
+        <div className="text-xs text-silk/60 font-medium">📦 통합 분배 ({unitCount}명에게 균등)</div>
+        <div className="grid grid-cols-3 gap-1.5">
+          <button
+            onClick={() => distributeEvenly(availableTroops)}
+            className="btn-gold min-h-[44px] py-2 rounded-lg text-xs active:scale-[0.97] flex flex-col items-center justify-center"
+          >
+            <span className="font-bold">전체</span>
+            <span className="text-[10px] opacity-80">{availableTroops > 0 ? `${Math.floor(availableTroops / unitCount).toLocaleString()}씩` : '0'}</span>
+          </button>
+          <button
+            onClick={() => distributeEvenly(Math.floor(availableTroops / 2))}
+            className="btn-peace min-h-[44px] py-2 rounded-lg text-xs active:scale-[0.97] flex flex-col items-center justify-center"
+          >
+            <span className="font-bold">절반</span>
+            <span className="text-[10px] opacity-80">{availableTroops > 0 ? `${Math.floor(availableTroops / 2 / unitCount).toLocaleString()}씩` : '0'}</span>
+          </button>
+          <button
+            onClick={() => distributeEvenly(0)}
+            className="btn-wood min-h-[44px] py-2 rounded-lg text-xs active:scale-[0.97] flex flex-col items-center justify-center"
+          >
+            <span className="font-bold">초기화</span>
+            <span className="text-[10px] opacity-80">0씩</span>
+          </button>
+        </div>
+
+        {/* 수비 남기고 분배 */}
+        <div className="flex gap-1.5 mt-1">
+          {[1000, 2000, 3000, 5000].map(reserve => {
+            const distributable = Math.max(0, availableTroops - reserve);
+            if (distributable <= 0 && reserve > 1000) return null;
+            return (
+              <button
+                key={reserve}
+                onClick={() => distributeWithReserve(reserve)}
+                disabled={distributable <= 0}
+                className={`flex-1 min-h-[38px] py-1.5 rounded-lg text-[11px] active:scale-[0.97] flex flex-col items-center justify-center ${
+                  distributable > 0 ? 'btn-peace' : 'bg-dynasty-medium/30 text-silk/30 cursor-not-allowed'
+                }`}
+              >
+                <span className="font-medium">{(reserve / 1000).toFixed(0)}k 수비</span>
+                <span className="text-[9px] opacity-70">{distributable > 0 ? `${Math.floor(distributable / unitCount).toLocaleString()}씩` : '-'}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* 장수별 세부 조정 (접기/펼치기) */}
+      <button
+        onClick={() => setShowDetail(!showDetail)}
+        className="w-full flex items-center justify-between text-xs text-silk/60 py-1.5 px-1 active:text-silk/80"
+      >
+        <span>🎛️ 장수별 세부 조정</span>
+        <span>{showDetail ? '▲ 접기' : '▼ 펼치기'}</span>
+      </button>
+
+      {/* 장수별 현재 배치 요약 (항상 표시) */}
+      {!showDetail && (
+        <div className="space-y-1">
+          {march.units.map(unit => {
+            const general = getGeneral(unit.generalId);
+            if (!general) return null;
+            const troopType = TROOP_TYPES.find(t => t.id === unit.troopType);
+            return (
+              <div key={unit.generalId} className="flex items-center justify-between peace-card rounded-lg px-2.5 py-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm">{general.portrait}</span>
+                  <span className="font-medium text-dynasty-black text-sm">
+                    {general.nameKo}
+                    {unit.isCommander && <span className="text-gold ml-0.5">⭐</span>}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[10px] text-dynasty-medium">{troopType?.icon} {troopType?.name}</span>
+                  <span className="text-sm font-bold text-jade">{unit.troops.toLocaleString()}</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* 장수별 세부 조정 (펼침 시) */}
+      {showDetail && (
+        <div className="space-y-3">
+          {march.units.map(unit => {
+            const general = getGeneral(unit.generalId);
+            if (!general) return null;
+            const currentRemaining = availableTroops - totalAssignedTroops;
+            const maxForThisUnit = currentRemaining + unit.troops;
+
+            return (
+              <div key={unit.generalId} className="peace-card rounded-lg p-2.5 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">{general.portrait}</span>
+                    <span className="font-bold text-dynasty-black text-sm">{general.nameKo}</span>
+                    {unit.isCommander && <span className="text-gold text-xs">⭐</span>}
+                  </div>
+                  <span className="text-base font-bold text-jade">
+                    {unit.troops.toLocaleString()}
+                  </span>
+                </div>
+
+                {/* 병종 선택 */}
+                <div className="flex gap-1.5">
+                  {TROOP_TYPES.map(type => (
+                    <button
+                      key={type.id}
+                      onClick={() => onAssignTroops(unit.generalId, unit.troops, type.id)}
+                      className={`flex-1 min-h-[40px] py-1.5 rounded text-xs transition-colors active:scale-95 ${
+                        unit.troopType === type.id ? 'btn-gold' : 'btn-wood'
+                      }`}
+                    >
+                      <div>{type.icon} {type.name}</div>
+                      {type.cost > 0 && <div className="text-[10px] opacity-70">💰{type.cost}</div>}
+                    </button>
+                  ))}
+                </div>
+
+                {/* 상성 */}
+                <div className="text-[10px] text-center text-silk/60 bg-dynasty-dark/50 rounded px-2 py-0.5">
+                  {(() => {
+                    const type = TROOP_TYPES.find(t => t.id === unit.troopType);
+                    return type ? (
+                      <span>
+                        <span className="text-jade">✓{type.advantage}</span>
+                        {' / '}
+                        <span className="text-crimson">✗{type.disadvantage}</span>
+                      </span>
+                    ) : null;
+                  })()}
+                </div>
+
+                {/* 병력 슬라이더 */}
+                <input
+                  type="range"
+                  min={0}
+                  max={Math.max(0, maxForThisUnit)}
+                  step={100}
+                  value={unit.troops}
+                  onChange={(e) => onAssignTroops(unit.generalId, Number(e.target.value), unit.troopType)}
+                  className="w-full h-4 bg-parchment-dark rounded-lg appearance-none cursor-pointer accent-gold touch-none"
+                  style={{ WebkitAppearance: 'none' }}
+                />
+
+                {/* 빠른 배분 */}
+                <div className="flex gap-1.5">
+                  <button
+                    onClick={() => onAssignTroops(unit.generalId, 0, unit.troopType)}
+                    className="btn-wood flex-1 min-h-[36px] py-1 text-[11px] rounded active:scale-95"
+                  >
+                    초기화
+                  </button>
+                  <button
+                    onClick={() => onAssignTroops(unit.generalId, Math.floor(maxForThisUnit / 2), unit.troopType)}
+                    className="btn-wood flex-1 min-h-[36px] py-1 text-[11px] rounded active:scale-95"
+                  >
+                    절반
+                  </button>
+                  <button
+                    onClick={() => onAssignTroops(unit.generalId, maxForThisUnit, unit.troopType)}
+                    className="btn-gold flex-1 min-h-[36px] py-1 text-[11px] rounded active:scale-95"
+                  >
+                    최대
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      <div className="flex gap-2 pt-1">
+        <button onClick={() => onSetStep('generals')} className="btn-wood flex-1 min-h-[44px] py-2.5 rounded-lg active:scale-[0.97]">
+          ← 이전
+        </button>
+        <button
+          onClick={() => onSetStep('confirm')}
+          disabled={totalAssignedTroops === 0 || totalAssignedTroops > availableTroops}
+          className="btn-gold flex-1 min-h-[44px] py-2.5 rounded-lg active:scale-[0.97]"
+        >
+          다음 →
+        </button>
+      </div>
     </div>
   );
 }

@@ -27,9 +27,11 @@ interface BattleScreenProps {
   battleData: BattleInitData;
   regions: Record<RegionId, Region>;
   onBattleEnd: (outcome: BattleOutcome) => void;
+  battleBonuses?: Record<string, number>;
+  moraleBonus?: number;
 }
 
-export default function BattleScreen({ battleData, regions, onBattleEnd }: BattleScreenProps) {
+export default function BattleScreen({ battleData, regions, onBattleEnd, battleBonuses = {}, moraleBonus = 0 }: BattleScreenProps) {
   // 전투 상태 초기화
   const initBattle = useCallback((): BattleState => {
     // 플레이어 주장 찾기
@@ -47,6 +49,14 @@ export default function BattleScreen({ battleData, regions, onBattleEnd }: Battl
     // 주장 병종
     const troopType = commanderUnit.troopType;
 
+    // 이벤트 전투 보너스 계산 (장수별 + 플레이어 전체)
+    const commanderBonus = battleBonuses[commanderUnit.generalId] || 0;
+    const playerGlobalBonus = battleBonuses['_player'] || 0;
+    const totalBattleBonus = commanderBonus + playerGlobalBonus;
+
+    // 사기 보너스 적용 (이벤트에서 획득)
+    const playerMorale = Math.min(GAME_CONFIG.MAX_MORALE, Math.max(0, GAME_CONFIG.INITIAL_MORALE + moraleBonus));
+
     return {
       round: 1,
       maxRounds: 5,
@@ -54,7 +64,7 @@ export default function BattleScreen({ battleData, regions, onBattleEnd }: Battl
         general: commanderGeneral,
         troops: totalPlayerTroops,
         maxTroops: totalPlayerTroops,
-        morale: GAME_CONFIG.INITIAL_MORALE,
+        morale: playerMorale,
         troopType,
         usedStratagems: []
       },
@@ -62,15 +72,27 @@ export default function BattleScreen({ battleData, regions, onBattleEnd }: Battl
         general: enemyGeneral,
         troops: enemyTroops,
         maxTroops: enemyTroops,
-        morale: GAME_CONFIG.INITIAL_MORALE,
+        morale: Math.min(GAME_CONFIG.MAX_MORALE, GAME_CONFIG.INITIAL_MORALE + GAME_CONFIG.SIEGE_DEFENDER_MORALE_BONUS),
         troopType: 'infantry',
         usedStratagems: []
       },
-      logs: [{
-        round: 0,
-        message: `⚔️ 전투 개시! ${commanderGeneral.nameKo} vs ${enemyGeneral.nameKo}`,
-        type: 'info'
-      }],
+      logs: [
+        {
+          round: 0,
+          message: `⚔️ 전투 개시! ${commanderGeneral.nameKo} vs ${enemyGeneral.nameKo} (🏰 성벽 ${regions[battleData.enemyRegionId]?.defense || 50}% - 방어측 유리)`,
+          type: 'info'
+        },
+        ...(totalBattleBonus > 0 ? [{
+          round: 0,
+          message: `🌟 전투 보너스 +${totalBattleBonus} 적용! (이벤트 효과)` as string,
+          type: 'info' as const
+        }] : []),
+        ...(moraleBonus !== 0 ? [{
+          round: 0,
+          message: `${moraleBonus > 0 ? '🔥' : '💔'} 사기 ${moraleBonus > 0 ? '+' : ''}${moraleBonus} (이벤트 효과)` as string,
+          type: 'morale' as const
+        }] : [])
+      ],
       phase: 'selection'
     };
   }, [battleData, regions]);
@@ -82,6 +104,16 @@ export default function BattleScreen({ battleData, regions, onBattleEnd }: Battl
     player: battleData.playerUnits.reduce((sum, u) => sum + u.troops, 0),
     enemy: battleData.enemyTroops || regions[battleData.enemyRegionId]?.troops || 5000
   });
+
+  // 공성전 방어 보너스 계산 (성벽 수치 기반)
+  const targetDefense = regions[battleData.enemyRegionId]?.defense || 50;
+  const siegeAttackerMod = 1 - (targetDefense * GAME_CONFIG.SIEGE_ATTACKER_PENALTY);   // 공격측 페널티
+  const siegeDefenderMod = 1 + (targetDefense * GAME_CONFIG.SIEGE_DEFENDER_BONUS);     // 방어측 보너스
+
+  // 이벤트 전투 보너스 계산
+  const commanderUnit = battleData.playerUnits.find(u => u.isCommander) || battleData.playerUnits[0];
+  const eventBattleBonus = (battleBonuses[commanderUnit.generalId] || 0) + (battleBonuses['_player'] || 0);
+  const eventBonusMod = 1 + (eventBattleBonus * 0.02); // 보너스 1당 2% 데미지 증가
 
   // 일기토 HP 상태 (장수 생존 판정용)
   const [duelHealth, setDuelHealth] = useState<DuelHealth>({ player: 100, enemy: 100 });
@@ -307,13 +339,13 @@ export default function BattleScreen({ battleData, regions, onBattleEnd }: Battl
       let enemy = { ...prev.enemy };
       const logs: BattleLog[] = [];
 
-      const playerDmg = calculateDamage(player, enemy, GAME_CONFIG.CHARGE_DAMAGE_MULTIPLIER, battleData.playerTraining || 50);
+      const playerDmg = calculateDamage(player, enemy, GAME_CONFIG.CHARGE_DAMAGE_MULTIPLIER * siegeAttackerMod * eventBonusMod, battleData.playerTraining || 50);
       enemy.troops = applyTroopDamage(enemy, playerDmg);
       logs.push({ round: prev.round, message: `⚔️ ${player.general.nameKo} 돌격! 적 ${playerDmg}명 피해!`, type: 'damage' });
 
       let enemyDmg = 0;
       if (enemyAction.action === 'charge') {
-        enemyDmg = calculateDamage(enemy, player, GAME_CONFIG.CHARGE_DAMAGE_MULTIPLIER, battleData.enemyTraining || 50);
+        enemyDmg = calculateDamage(enemy, player, GAME_CONFIG.CHARGE_DAMAGE_MULTIPLIER * siegeDefenderMod, battleData.enemyTraining || 50);
         player.troops = applyTroopDamage(player, enemyDmg);
         logs.push({ round: prev.round, message: `⚔️ ${enemy.general.nameKo} 반격! 아군 ${enemyDmg}명 피해!`, type: 'damage' });
         // 쌍방 충돌 애니메이션
@@ -363,7 +395,7 @@ export default function BattleScreen({ battleData, regions, onBattleEnd }: Battl
       logs.push({ round: prev.round, message: `🛡️ ${player.general.nameKo} 수비 태세!`, type: 'info' });
 
       if (enemyAction.action === 'charge') {
-        const enemyDmg = Math.round(calculateDamage(enemy, player, 1, battleData.enemyTraining || 50) * GAME_CONFIG.DEFEND_DAMAGE_REDUCTION);
+        const enemyDmg = Math.round(calculateDamage(enemy, player, siegeDefenderMod, battleData.enemyTraining || 50) * GAME_CONFIG.DEFEND_DAMAGE_REDUCTION);
         player.troops = applyTroopDamage(player, enemyDmg);
         logs.push({ round: prev.round, message: `⚔️ ${enemy.general.nameKo} 공격! (수비로 감소) 아군 ${enemyDmg}명 피해!`, type: 'damage' });
         playAnimation('enemyAttack', { player: enemyDmg }, 'charge');
@@ -414,7 +446,7 @@ export default function BattleScreen({ battleData, regions, onBattleEnd }: Battl
 
       const enemyAction = selectEnemyAction(enemy, player);
       if (enemyAction.action === 'charge') {
-        const enemyDamage = calculateDamage(enemy, player, GAME_CONFIG.CHARGE_DAMAGE_MULTIPLIER, battleData.enemyTraining || 50);
+        const enemyDamage = calculateDamage(enemy, player, GAME_CONFIG.CHARGE_DAMAGE_MULTIPLIER * siegeDefenderMod, battleData.enemyTraining || 50);
         player.troops = applyTroopDamage(player, enemyDamage);
         logs.push({ round: prev.round, message: `⚔️ ${enemy.general.nameKo} 돌격! 아군 ${enemyDamage}명 피해!`, type: 'damage' });
         player.morale = applyMoraleChange(player, MORALE_CHANGES.ROUND_LOSE);

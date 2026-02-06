@@ -10,7 +10,7 @@ import type {
 } from '../types';
 import { REGIONS, FACTIONS, DOMESTIC_COMMANDS, FACTION_DETAILS } from '../constants/worldData';
 import { GENERALS, INITIAL_FREE_GENERALS, INITIAL_LOYALTY, UNAFFILIATED_GENERALS } from '../constants/gameData';
-import { HISTORICAL_EVENTS } from '../constants/events';
+import { HISTORICAL_EVENTS, CUSTOM_CONDITION_CHECKS } from '../constants/events';
 import { attemptRecruit, getInitialLoyalty } from '../utils/battle';
 import {
   analyzeFactions,
@@ -61,6 +61,7 @@ const createInitialState = (selectedFaction: FactionId = 'player'): GameState =>
     triggeredEvents: [],
     activeEvent: null,
     battleBonuses: {},
+    moraleBonus: 0,
     // 외교 시스템
     diplomaticRelations: [],
     diplomaticProposals: [],
@@ -410,12 +411,16 @@ export function useGameState() {
           case 'has_general':
             if (!condition.generalId) return false;
             return Object.values(state.regions).some(
-              region => region.owner === state.playerFaction && 
+              region => region.owner === state.playerFaction &&
                         region.generals.includes(condition.generalId!)
             );
           case 'region_owner':
             if (!condition.regionId) return false;
             return state.regions[condition.regionId]?.owner === state.playerFaction;
+          case 'custom':
+            if (!condition.customCheck) return false;
+            const customFn = CUSTOM_CONDITION_CHECKS[condition.customCheck];
+            return customFn ? customFn(state) : false;
           default:
             return true;
         }
@@ -579,6 +584,26 @@ export function useGameState() {
     });
   }, []);
 
+  // 병력 일괄 배분 (통합 분배용)
+  const assignTroopsBatch = useCallback((assignments: { generalId: string; troops: number }[]) => {
+    setGame(prev => {
+      if (!prev || !prev.march) return prev;
+
+      const newUnits = prev.march.units.map(u => {
+        const assignment = assignments.find(a => a.generalId === u.generalId);
+        return assignment ? { ...u, troops: assignment.troops } : u;
+      });
+
+      const totalTroops = newUnits.reduce((sum, u) => sum + u.troops, 0);
+      const foodRequired = Math.ceil(totalTroops * 0.2);
+
+      return {
+        ...prev,
+        march: { ...prev.march, units: newUnits, foodRequired }
+      };
+    });
+  }, []);
+
   // 출진 확정 -> 전투 시작
   const confirmMarch = useCallback(() => {
     setGame(prev => {
@@ -668,8 +693,9 @@ export function useGameState() {
             const enemyTroops = state.battleData.enemyTroops;
             return (playerTroops / enemyTroops) <= condition.ratio;
           case 'custom':
-            // 커스텀 조건은 아직 미구현
-            return false;
+            if (!condition.customCheck) return false;
+            const battleCustomFn = CUSTOM_CONDITION_CHECKS[condition.customCheck];
+            return battleCustomFn ? battleCustomFn(state) : false;
           default:
             return true;
         }
@@ -805,6 +831,7 @@ export function useGameState() {
         generalLoyalty: newLoyalty,
         battleData: null,
         battleResult,
+        moraleBonus: 0, // 전투 후 사기 보너스 초기화
         phase: 'battle_result',
         actionsRemaining: Math.max(0, prev.actionsRemaining - 1)
       };
@@ -1186,8 +1213,9 @@ export function useGameState() {
         return (playerTroops / enemyTroops) <= condition.ratio;
       
       case 'custom':
-        // 커스텀 조건은 나중에 구현
-        return false;
+        if (!condition.customCheck) return false;
+        const customCheckFn = CUSTOM_CONDITION_CHECKS[condition.customCheck];
+        return customCheckFn ? customCheckFn(state) : false;
       
       default:
         return false;
@@ -1247,23 +1275,40 @@ export function useGameState() {
     
     switch (effect.type) {
       case 'add_general': {
-        // 재야 장수를 플레이어 영토로 이동
+        // 장수를 플레이어 영토로 이동
         if (!effect.generalId) break;
-        const freeGeneral = newState.freeGenerals.find(fg => fg.generalId === effect.generalId);
+        const gId = effect.generalId;
+
+        // 1. 재야 장수인 경우
+        const freeGeneral = newState.freeGenerals.find(fg => fg.generalId === gId);
         if (freeGeneral) {
-          // 재야에서 제거
-          newState.freeGenerals = newState.freeGenerals.filter(fg => fg.generalId !== effect.generalId);
-          // 플레이어 첫 번째 영토에 추가
-          const playerRegion = Object.values(newState.regions).find(r => r.owner === newState.playerFaction);
-          if (playerRegion) {
-            newState.regions = {
-              ...newState.regions,
-              [playerRegion.id]: {
-                ...playerRegion,
-                generals: [...playerRegion.generals, effect.generalId!]
-              }
-            };
+          newState.freeGenerals = newState.freeGenerals.filter(fg => fg.generalId !== gId);
+        } else {
+          // 2. 다른 세력 소속인 경우 - 해당 진영에서 제거
+          for (const [rId, region] of Object.entries(newState.regions)) {
+            if (region.owner !== newState.playerFaction && region.generals.includes(gId)) {
+              newState.regions = {
+                ...newState.regions,
+                [rId]: {
+                  ...region,
+                  generals: region.generals.filter(g => g !== gId)
+                }
+              };
+              break;
+            }
           }
+        }
+
+        // 플레이어 첫 번째 영토에 추가
+        const playerRegion = Object.values(newState.regions).find(r => r.owner === newState.playerFaction);
+        if (playerRegion) {
+          newState.regions = {
+            ...newState.regions,
+            [playerRegion.id]: {
+              ...playerRegion,
+              generals: [...playerRegion.generals, gId]
+            }
+          };
         }
         break;
       }
@@ -1360,20 +1405,66 @@ export function useGameState() {
         break;
       }
       
-      case 'battle_bonus': {
-        if (effect.generalId && effect.value !== undefined) {
-          newState.battleBonuses = {
-            ...newState.battleBonuses,
-            [effect.generalId]: (newState.battleBonuses[effect.generalId] || 0) + effect.value
-          };
+      case 'add_morale': {
+        // 사기 보너스 누적 (다음 전투에 적용)
+        if (effect.value !== undefined) {
+          newState.moraleBonus = (newState.moraleBonus || 0) + effect.value;
         }
         break;
       }
-      
+
+      case 'remove_general': {
+        // 장수를 플레이어 영토에서 제거 (재야로)
+        if (!effect.generalId) break;
+        const removeId = effect.generalId;
+        for (const [rId, region] of Object.entries(newState.regions)) {
+          if (region.owner === newState.playerFaction && region.generals.includes(removeId)) {
+            newState.regions = {
+              ...newState.regions,
+              [rId]: {
+                ...region,
+                generals: region.generals.filter(g => g !== removeId)
+              }
+            };
+            // 재야 장수로 추가
+            newState.freeGenerals = [
+              ...newState.freeGenerals,
+              { generalId: removeId, location: rId as RegionId, recruitDifficulty: 50 }
+            ];
+            break;
+          }
+        }
+        break;
+      }
+
+      case 'unlock_stratagem': {
+        // 계략 해금 (현재 계략 시스템이 고정이므로 메시지로 대체)
+        break;
+      }
+
+      case 'battle_bonus': {
+        if (effect.value !== undefined) {
+          if (effect.generalId) {
+            // 특정 장수에게 전투 보너스
+            newState.battleBonuses = {
+              ...newState.battleBonuses,
+              [effect.generalId]: (newState.battleBonuses[effect.generalId] || 0) + effect.value
+            };
+          } else if (effect.targetType === 'player') {
+            // 플레이어 전체에 전투 보너스 (특수 키 '_player')
+            newState.battleBonuses = {
+              ...newState.battleBonuses,
+              ['_player']: (newState.battleBonuses['_player'] || 0) + effect.value
+            };
+          }
+        }
+        break;
+      }
+
       case 'message':
         // 메시지는 UI에서 처리
         break;
-      
+
       default:
         break;
     }
@@ -1802,6 +1893,7 @@ export function useGameState() {
     toggleMarchGeneral,
     setCommander,
     assignTroops,
+    assignTroopsBatch,
     confirmMarch,
     handleBattleEnd,
     closeBattleResult,

@@ -1,4 +1,4 @@
-import type { HistoricalEvent, FactionId } from '../types';
+import type { HistoricalEvent, FactionId, GameState } from '../types';
 
 // ============================================
 // 역사 이벤트 데이터
@@ -249,7 +249,8 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     trigger: 'turn_start',
     conditions: [
       { type: 'faction', factionId: 'liubei' },
-      { type: 'custom', customCheck: 'guanyu_captured_by_caocao' }
+      { type: 'turnMin', turnMin: 3 },
+      { type: 'custom', customCheck: 'guanyu_in_caocao' }
     ],
     choices: [
       {
@@ -325,16 +326,16 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     trigger: 'region_captured',
     conditions: [
       { type: 'faction', factionId: 'liubei' },
-      { type: 'region_owner', regionId: 'chengdu' }
+      { type: 'region_owner', regionId: 'yizhou' }
     ],
     choices: [
       {
         id: 'establish_shu',
         text: '"이 땅을 기반으로 한실을 부흥시키겠노라!"',
         effects: [
-          { type: 'add_gold', regionId: 'chengdu', value: 3000 },
-          { type: 'add_food', regionId: 'chengdu', value: 5000 },
-          { type: 'add_troops', regionId: 'chengdu', value: 2000 },
+          { type: 'add_gold', regionId: 'yizhou', value: 3000 },
+          { type: 'add_food', regionId: 'yizhou', value: 5000 },
+          { type: 'add_troops', regionId: 'yizhou', value: 2000 },
           { type: 'message', message: '익주의 백성들이 환영합니다! 금 3000, 식량 5000, 병력 2000 획득!' }
         ]
       }
@@ -571,6 +572,7 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
         id: 'survive_betrayal',
         text: '"이 배은망덕한 놈!" (여포 이탈, 동탁 생존)',
         effects: [
+          { type: 'remove_general', generalId: 'lvbu' },
           { type: 'add_morale', targetType: 'player', value: -30 },
           { type: 'message', message: '여포가 배신하고 떠났습니다! 사기가 크게 하락합니다.' }
         ]
@@ -597,15 +599,26 @@ export const FACTION_START_EVENTS: Partial<Record<FactionId, string>> = {
 };
 
 // 커스텀 조건 체크 함수들
-export const CUSTOM_CONDITION_CHECKS: Record<string, (gameState: unknown) => boolean> = {
-  'guanyu_captured_by_caocao': (state: unknown) => {
-    // 관우가 조조에게 포로로 잡혔다가 탈출한 상태인지 체크
-    // 실제 구현은 gameState 타입에 맞게 수정 필요
-    return false;
+export const CUSTOM_CONDITION_CHECKS: Record<string, (gameState: GameState) => boolean> = {
+  'guanyu_in_caocao': (state: GameState) => {
+    // 관우가 조조 진영에 있는지 체크 (초기 배치 또는 포로)
+    return Object.values(state.regions).some(
+      region => region.owner === 'caocao' && region.generals.includes('guanyu')
+    );
   },
-  'chibi_battle_conditions': (state: unknown) => {
-    // 적벽대전 조건: 손권/유비 연합 vs 조조, 형주/건업 방면 전투
-    // 실제 구현은 battleData와 연동 필요
-    return false;
+  'chibi_battle_conditions': (state: GameState) => {
+    // 적벽대전 조건: 손권 또는 유비가 조조의 영토를 공격 중
+    if (!state.battleData) return false;
+    const selectedFaction = state.selectedFaction;
+    if (selectedFaction !== 'sunquan' && selectedFaction !== 'liubei') return false;
+    const targetRegion = state.regions[state.battleData.enemyRegionId];
+    return targetRegion?.owner === 'caocao';
+  },
+  'guandu_battle_conditions': (state: GameState) => {
+    // 관도대전 조건: 조조가 원소의 영토를 공격 중
+    if (!state.battleData) return false;
+    if (state.selectedFaction !== 'caocao') return false;
+    const targetRegion = state.regions[state.battleData.enemyRegionId];
+    return targetRegion?.owner === 'yuanshao';
   }
 };

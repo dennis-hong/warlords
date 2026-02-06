@@ -90,7 +90,7 @@ export function UnitCard({ unit, isPlayer = false, animState = 'idle', damageDis
         </span>
         <div>
           <div className="text-lg font-bold text-silk">{unit.general.nameKo}</div>
-          <div className="text-sm text-silk/50">{unit.general.name}</div>
+          <div className="text-sm text-silk/50">{unit.general.nameKo}</div>
         </div>
       </div>
       
@@ -100,19 +100,19 @@ export function UnitCard({ unit, isPlayer = false, animState = 'idle', damageDis
       {/* 능력치 */}
       <div className="grid grid-cols-4 gap-1 text-xs mb-3">
         <div className="stat-badge might text-center">
-          <div className="text-crimson-light">武</div>
+          <div className="text-crimson-light">무</div>
           <div className="font-bold text-silk">{unit.general.might}</div>
         </div>
         <div className="stat-badge intellect text-center">
-          <div className="text-blue-400">知</div>
+          <div className="text-blue-400">지</div>
           <div className="font-bold text-silk">{unit.general.intellect}</div>
         </div>
         <div className="stat-badge politics text-center">
-          <div className="text-jade-light">政</div>
+          <div className="text-jade-light">정</div>
           <div className="font-bold text-silk">{unit.general.politics}</div>
         </div>
         <div className="stat-badge charisma text-center">
-          <div className="text-gold-light">魅</div>
+          <div className="text-gold-light">매</div>
           <div className="font-bold text-silk">{unit.general.charisma}</div>
         </div>
       </div>

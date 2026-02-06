@@ -142,19 +142,19 @@ export default function FactionSelectScreen({ onSelectFaction, onBack }: Faction
               <h3 className="text-sm text-dynasty-medium mb-3">📊 군주 능력치</h3>
               <div className="grid grid-cols-4 gap-2 text-center text-sm">
                 <div className="stat-badge might rounded-lg p-2">
-                  <div className="text-crimson-light font-bold">武</div>
+                  <div className="text-crimson-light font-bold">무</div>
                   <div className="font-bold text-silk">{getGeneralInfo(selectedDetail.rulerId)?.might}</div>
                 </div>
                 <div className="stat-badge intellect rounded-lg p-2">
-                  <div className="text-blue-400 font-bold">知</div>
+                  <div className="text-blue-400 font-bold">지</div>
                   <div className="font-bold text-silk">{getGeneralInfo(selectedDetail.rulerId)?.intellect}</div>
                 </div>
                 <div className="stat-badge politics rounded-lg p-2">
-                  <div className="text-jade-light font-bold">政</div>
+                  <div className="text-jade-light font-bold">정</div>
                   <div className="font-bold text-silk">{getGeneralInfo(selectedDetail.rulerId)?.politics}</div>
                 </div>
                 <div className="stat-badge charisma rounded-lg p-2">
-                  <div className="text-gold-light font-bold">魅</div>
+                  <div className="text-gold-light font-bold">매</div>
                   <div className="font-bold text-silk">{getGeneralInfo(selectedDetail.rulerId)?.charisma}</div>
                 </div>
               </div>
@@ -175,7 +175,7 @@ export default function FactionSelectScreen({ onSelectFaction, onBack }: Faction
                   >
                     {general.nameKo}
                     <span className="text-gold-light ml-1 text-xs">
-                      武{general.might}
+                      무{general.might}
                     </span>
                   </span>
                 );
