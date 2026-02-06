@@ -571,10 +571,10 @@ export default function BattleScreen({ battleData, regions, onBattleEnd, battleB
   // 화면 흔들림 클래스
   const shakeClass = screenShake === 'strong' ? 'screen-shake-strong' : screenShake === 'light' ? 'screen-shake' : '';
   
-  // 액션 이펙트 클래스
-  const getEffectClass = (effect: ActionEffect) => {
+  // 액션 이펙트 클래스 (방향 구분)
+  const getEffectClass = (effect: ActionEffect, side?: 'player' | 'enemy') => {
     switch (effect) {
-      case 'charge': return 'charge-effect';
+      case 'charge': return side === 'enemy' ? 'charge-effect-left' : 'charge-effect-right';
       case 'defend': return 'defend-effect';
       case 'stratagem': return 'stratagem-effect';
       case 'fire': return 'fire-effect';
@@ -662,24 +662,28 @@ export default function BattleScreen({ battleData, regions, onBattleEnd, battleB
 
       {/* 전투 유닛 */}
       <div className="grid grid-cols-2 gap-4 mb-4 relative">
-        <div className={`unit-enter-left ${getEffectClass(playerEffect)}`}>
-          <UnitCard 
-            unit={battle.player} 
-            isPlayer 
-            animState={playerAnim}
-            damageDisplay={playerDamage}
-            isCritical={isCriticalDamage && playerDamage !== null}
-          />
+        <div className="unit-enter-left">
+          <div className={getEffectClass(playerEffect, 'player')}>
+            <UnitCard
+              unit={battle.player}
+              isPlayer
+              animState={playerAnim}
+              damageDisplay={playerDamage}
+              isCritical={isCriticalDamage && playerDamage !== null}
+            />
+          </div>
         </div>
-        <div className={`unit-enter-right ${getEffectClass(enemyEffect)}`}>
-          <UnitCard 
-            unit={battle.enemy} 
-            animState={enemyAnim}
-            damageDisplay={enemyDamage}
-            isCritical={isCriticalDamage && enemyDamage !== null}
-          />
+        <div className="unit-enter-right">
+          <div className={getEffectClass(enemyEffect, 'enemy')}>
+            <UnitCard
+              unit={battle.enemy}
+              animState={enemyAnim}
+              damageDisplay={enemyDamage}
+              isCritical={isCriticalDamage && enemyDamage !== null}
+            />
+          </div>
         </div>
-        
+
         {/* 충돌 이펙트 */}
         {showClash && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">

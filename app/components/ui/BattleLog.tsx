@@ -26,7 +26,7 @@ export function BattleLog({ logs }: BattleLogProps) {
   }, [logs]);
 
   return (
-    <div ref={scrollRef} className="dynasty-card rounded-xl p-4 h-48 overflow-y-auto">
+    <div ref={scrollRef} className="rounded-xl p-4 h-48 overflow-y-auto border border-silk/10 backdrop-blur-sm" style={{ background: 'linear-gradient(180deg, rgba(42,42,58,0.6) 0%, rgba(26,26,36,0.6) 100%)' }}>
       <div className="text-sm font-bold mb-3 text-gold flex items-center gap-2">
         📜 전투 기록
       </div>

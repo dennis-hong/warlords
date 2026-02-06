@@ -42,7 +42,7 @@ export function WorldMap({
                 y1={`${pos1.y}%`}
                 x2={`${pos2.x}%`}
                 y2={`${pos2.y}%`}
-                stroke="rgba(61, 35, 20, 0.4)"
+                stroke="rgba(255, 240, 200, 0.7)"
                 strokeWidth="2"
                 strokeDasharray="6,4"
               />
@@ -98,7 +98,7 @@ export function WorldMap({
               {region.nameKo}
             </span>
             {/* 병력 표시 */}
-            <span className={`text-[10px] font-medium leading-none ${isPlayer ? 'text-jade-light' : 'text-crimson-light'}`}>
+            <span className={`text-[10px] font-bold leading-none px-1 py-0.5 rounded ${isPlayer ? 'bg-jade/80 text-silk' : 'bg-wood/80 text-parchment'}`}>
               ⚔️{(region.troops / 1000).toFixed(0)}k
             </span>
           </button>

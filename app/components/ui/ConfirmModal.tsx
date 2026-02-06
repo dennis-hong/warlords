@@ -40,7 +40,7 @@ export function ConfirmModal({
 
         {/* 내용 */}
         <div className="p-4">
-          <p className="text-parchment text-sm leading-relaxed">
+          <p className="text-dynasty-black text-sm leading-relaxed">
             {message}
           </p>
         </div>

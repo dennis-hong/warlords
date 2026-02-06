@@ -543,37 +543,38 @@ body {
 
 /* 양측 카드 진입 애니메이션 */
 .unit-enter-left {
-  animation: unitEnterLeft 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  animation: unitEnterLeft 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
 @keyframes unitEnterLeft {
-  0% { 
-    opacity: 0; 
+  0% {
+    opacity: 0;
     transform: translateX(-100px) scale(0.8) rotate(-10deg);
   }
   60% {
+    opacity: 1;
     transform: translateX(10px) scale(1.05);
   }
-  100% { 
-    opacity: 1; 
+  100% {
+    opacity: 1;
     transform: translateX(0) scale(1) rotate(0);
   }
 }
 
 .unit-enter-right {
-  animation: unitEnterRight 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  animation: unitEnterRight 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) both;
   animation-delay: 0.2s;
-  opacity: 0;
 }
 @keyframes unitEnterRight {
-  0% { 
-    opacity: 0; 
+  0% {
+    opacity: 0;
     transform: translateX(100px) scale(0.8) rotate(10deg);
   }
   60% {
+    opacity: 1;
     transform: translateX(-10px) scale(1.05);
   }
-  100% { 
-    opacity: 1; 
+  100% {
+    opacity: 1;
     transform: translateX(0) scale(1) rotate(0);
   }
 }
@@ -680,23 +681,77 @@ body {
 
 /* ===== 액션별 이펙트 ===== */
 
-/* 돌격 이펙트 */
-.charge-effect {
-  animation: chargeEffect 0.6s ease-out;
+/* 돌격 이펙트 - 플레이어(오른쪽으로 돌진) */
+.charge-effect-right {
+  animation: chargeRight 0.6s ease-out;
 }
-@keyframes chargeEffect {
-  0% { 
-    transform: scale(1); 
+@keyframes chargeRight {
+  0% {
+    transform: translateX(0) scale(1);
     filter: brightness(1);
   }
-  30% { 
-    transform: scale(1.1) translateX(20px); 
+  25% {
+    transform: translateX(-8px) scale(1.05);
+    filter: brightness(1.1);
+  }
+  50% {
+    transform: translateX(30px) scale(1.08);
+    filter: brightness(1.4);
+  }
+  75% {
+    transform: translateX(-4px) scale(0.97);
+    filter: brightness(0.9);
+  }
+  100% {
+    transform: translateX(0) scale(1);
+    filter: brightness(1);
+  }
+}
+
+/* 돌격 이펙트 - 적(왼쪽으로 돌진) */
+.charge-effect-left {
+  animation: chargeLeft 0.6s ease-out;
+}
+@keyframes chargeLeft {
+  0% {
+    transform: translateX(0) scale(1);
+    filter: brightness(1);
+  }
+  25% {
+    transform: translateX(8px) scale(1.05);
+    filter: brightness(1.1);
+  }
+  50% {
+    transform: translateX(-30px) scale(1.08);
+    filter: brightness(1.4);
+  }
+  75% {
+    transform: translateX(4px) scale(0.97);
+    filter: brightness(0.9);
+  }
+  100% {
+    transform: translateX(0) scale(1);
+    filter: brightness(1);
+  }
+}
+
+/* (하위호환) 기본 돌격 이펙트 */
+.charge-effect {
+  animation: chargeRight 0.6s ease-out;
+}
+@keyframes chargeEffect {
+  0% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+  30% {
+    transform: scale(1.1) translateX(20px);
     filter: brightness(1.3);
   }
   60% {
     transform: scale(0.95) translateX(-5px);
   }
-  100% { 
+  100% {
     transform: scale(1) translateX(0); 
     filter: brightness(1);
   }
@@ -964,22 +1019,25 @@ body {
 }
 
 .portrait-attack {
-  animation: portraitAttack 0.4s ease;
+  animation: portraitAttack 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 @keyframes portraitAttack {
-  0% { transform: scale(1) translateX(0); }
-  30% { transform: scale(1.2) translateX(15px); filter: brightness(1.5); }
-  100% { transform: scale(1) translateX(0); }
+  0% { transform: scale(1) translateX(0); filter: brightness(1); }
+  20% { transform: scale(1.15) translateX(-4px); filter: brightness(1.2); }
+  45% { transform: scale(1.3) translateX(12px); filter: brightness(1.6) drop-shadow(0 0 8px rgba(255,100,50,0.8)); }
+  70% { transform: scale(1.1) translateX(2px); filter: brightness(1.1); }
+  100% { transform: scale(1) translateX(0); filter: brightness(1); }
 }
 
 .portrait-hurt {
-  animation: portraitHurt 0.4s ease;
+  animation: portraitHurt 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 @keyframes portraitHurt {
-  0% { transform: scale(1); filter: brightness(1); }
-  30% { transform: scale(0.9); filter: brightness(2) sepia(1); }
-  60% { transform: scale(1.05); filter: brightness(0.7); }
-  100% { transform: scale(1); filter: brightness(1); }
+  0% { transform: scale(1) translateX(0); filter: brightness(1); }
+  20% { transform: scale(0.85) translateX(-6px); filter: brightness(2) sepia(0.8); }
+  40% { transform: scale(0.9) translateX(4px); filter: brightness(0.6) saturate(1.5); }
+  60% { transform: scale(1.05) translateX(-2px); filter: brightness(0.8); }
+  100% { transform: scale(1) translateX(0); filter: brightness(1); }
 }
 
 /* ===== 배경 장식 ===== */
