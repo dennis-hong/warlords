@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import type { Region, RegionId, General } from '../../types';
+import { GeneralPortrait } from './GeneralPortrait';
 
 type TransferStep = 'source' | 'destination' | 'items';
 type TransferItemType = 'general' | 'troops' | 'gold' | 'food';
@@ -241,7 +242,7 @@ export function TransferPanel({
                               : 'bg-dynasty-dark/50 border border-wood/20 text-parchment/80'
                           }`}
                         >
-                          <span>{general.portrait} {general.nameKo}</span>
+                          <span className="flex items-center gap-1"><GeneralPortrait generalId={general.id} portrait={general.portrait || ''} size="sm" /> {general.nameKo}</span>
                           {isSelected && <span className="ml-1 text-xs">✓</span>}
                         </button>
                       );

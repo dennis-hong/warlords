@@ -14,6 +14,8 @@ export { MarchPanel } from './MarchPanel';
 // 장수 시스템
 export { RecruitPanel } from './RecruitPanel';
 export { PrisonerPanel } from './PrisonerPanel';
+// 장수 초상화
+export { GeneralPortrait } from './GeneralPortrait';
 // UI 공통
 export { Toast, useToast } from './Toast';
 export { ConfirmModal } from './ConfirmModal';
@@ -27,3 +29,5 @@ export { EnemyRegionPopup } from './EnemyRegionPopup';
 // 이동 시스템
 export { TransferPanel } from './TransferPanel';
 export type { TransferParams } from './TransferPanel';
+// AI 턴 오버레이
+export { AITurnOverlay } from './AITurnOverlay';

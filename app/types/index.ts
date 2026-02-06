@@ -286,6 +286,7 @@ export interface AITurnLog {
   factionId: FactionId;
   factionName: string;
   actions: string[];
+  actionDetails: { type: string; regionId?: RegionId; targetRegionId?: RegionId }[];
 }
 
 // 탭 종류

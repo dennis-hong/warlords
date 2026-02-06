@@ -803,11 +803,13 @@ export function useGameState() {
         // 적 생존 장수들에 대한 처리 (도망간 것으로 처리 - 인접 지역으로)
         // 간단히 처리: 그냥 사라짐 (나중에 재야로 등장 가능)
       } else {
-        // 패배: 남은 병력 귀환
+        // 패배: 남은 병력 귀환 (퇴각 손실 30% 추가)
+        const retreatLoss = Math.floor(survivingTroops * 0.3);
+        const returningTroops = Math.max(0, survivingTroops - retreatLoss);
         const sourceRegion = newRegions[playerRegionId];
         newRegions[playerRegionId] = {
           ...sourceRegion,
-          troops: sourceRegion.troops + survivingTroops,
+          troops: sourceRegion.troops + returningTroops,
           generals: sourceRegion.generals.filter(g => !removedPlayerGenerals.includes(g))
         };
       }

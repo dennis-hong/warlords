@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import type { Prisoner, General, RegionId } from '../../types';
 import { calculateRecruitSuccess } from '../../utils/battle';
+import { GeneralPortrait } from './GeneralPortrait';
 
 interface PrisonerPanelProps {
   prisoners: Prisoner[];
@@ -139,7 +140,7 @@ export function PrisonerPanel({
                     }`}
                   >
                     <div className="flex items-center gap-3">
-                      <span className="text-2xl shrink-0">{general.portrait}</span>
+                      <GeneralPortrait generalId={general.id} portrait={general.portrait || ''} size="md" />
                       <div className="flex-1 min-w-0">
                         <div className="font-bold text-sm">{general.nameKo}</div>
                         <div className="text-[10px] text-gray-400">
@@ -178,7 +179,7 @@ export function PrisonerPanel({
                       }`}
                     >
                       <div className="flex items-center gap-2">
-                        <span>{general.portrait}</span>
+                        <GeneralPortrait generalId={general.id} portrait={general.portrait || ''} size="sm" />
                         <span className="font-bold flex-1">{general.nameKo}</span>
                         <span className="text-gray-400 text-xs">매{general.charisma}</span>
                       </div>

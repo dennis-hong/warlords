@@ -1,5 +1,6 @@
 import type { BattleUnit } from '../../types';
 import { MoraleBar } from './MoraleBar';
+import { GeneralPortrait } from './GeneralPortrait';
 import { useState, useEffect, useRef } from 'react';
 
 interface UnitCardProps {
@@ -85,9 +86,9 @@ export function UnitCard({ unit, isPlayer = false, animState = 'idle', damageDis
       
       {/* 장수 정보 */}
       <div className="flex items-center gap-3 mb-3">
-        <span className={`text-4xl ${portraitAnimClass}`}>
-          {unit.general.portrait}
-        </span>
+        <div className={portraitAnimClass}>
+          <GeneralPortrait generalId={unit.general.id} portrait={unit.general.portrait || ''} size="xl" />
+        </div>
         <div>
           <div className="text-lg font-bold text-silk">{unit.general.nameKo}</div>
           <div className="text-sm text-silk/50">{unit.general.nameKo}</div>

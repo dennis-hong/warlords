@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import type { MarchState, MarchStep, Region, RegionId, TroopType, General, Faction, FactionId } from '../../types';
+import { GeneralPortrait } from './GeneralPortrait';
 
 interface MarchPanelProps {
   march: MarchState;
@@ -182,7 +183,7 @@ export function MarchPanel({
                         onClick={() => onToggleGeneral(general.id)}
                         className="flex items-center gap-2 flex-1 text-left min-h-[44px] active:opacity-70"
                       >
-                        <div className="text-2xl shrink-0">{general.portrait}</div>
+                        <GeneralPortrait generalId={general.id} portrait={general.portrait || ''} size="md" />
                         <div className="min-w-0">
                           <div className="font-bold text-silk text-sm truncate">
                             {general.nameKo}
@@ -262,7 +263,7 @@ export function MarchPanel({
               return (
                 <div key={unit.generalId} className="flex justify-between items-center py-1 border-b border-jade/30 last:border-0">
                   <div className="flex items-center gap-1.5">
-                    <span className="text-sm">{general.portrait}</span>
+                    <GeneralPortrait generalId={general.id} portrait={general.portrait || ''} size="sm" />
                     <span className="text-silk text-sm">
                       {general.nameKo}
                       {unit.isCommander && <span className="text-gold ml-0.5">⭐</span>}
@@ -507,7 +508,7 @@ function TroopAllocationStep({
             return (
               <div key={unit.generalId} className="flex items-center justify-between peace-card rounded-lg px-2.5 py-2">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm">{general.portrait}</span>
+                  <GeneralPortrait generalId={general.id} portrait={general.portrait || ''} size="sm" />
                   <span className="font-medium text-dynasty-black text-sm">
                     {general.nameKo}
                     {unit.isCommander && <span className="text-gold ml-0.5">⭐</span>}
@@ -536,7 +537,7 @@ function TroopAllocationStep({
               <div key={unit.generalId} className="peace-card rounded-lg p-2.5 space-y-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="text-lg">{general.portrait}</span>
+                    <GeneralPortrait generalId={general.id} portrait={general.portrait || ''} size="md" />
                     <span className="font-bold text-dynasty-black text-sm">{general.nameKo}</span>
                     {unit.isCommander && <span className="text-gold text-xs">⭐</span>}
                   </div>

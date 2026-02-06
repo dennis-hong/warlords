@@ -18,7 +18,8 @@ import {
   EventLog,
   DiplomacyPanel,
   EnemyRegionPopup,
-  TransferPanel
+  TransferPanel,
+  AITurnOverlay
 } from './ui';
 import AdvisorPanel from './ui/AdvisorPanel';
 import BattleScreen from './BattleScreen';
@@ -29,7 +30,7 @@ import GameOverScreen from './GameOverScreen';
 import { SEASONS, DOMESTIC_COMMANDS } from '../constants/worldData';
 import { INITIAL_LOYALTY } from '../constants/gameData';
 import { getAdvisorSession } from '../advisor';
-import type { GameTab, RegionId, DomesticAction } from '../types';
+import type { GameTab, RegionId, DomesticAction, AITurnLog } from '../types';
 
 export default function WarlordsGame() {
   const {
@@ -88,6 +89,7 @@ export default function WarlordsGame() {
   const [showAdvisorPanel, setShowAdvisorPanel] = useState(false);
   const [showEventLog, setShowEventLog] = useState(false);
   const [showTransferPanel, setShowTransferPanel] = useState(false);
+  const [aiOverlayLogs, setAiOverlayLogs] = useState<AITurnLog[] | null>(null);
   const { messages: toastMessages, showToast, removeToast } = useToast();
 
   // 행동력 0 → 턴 종료 모달 자동 팝업
@@ -114,6 +116,24 @@ export default function WarlordsGame() {
     if (!game) return null;
     return getAdvisorSession(game);
   }, [game?.turn, game?.playerFaction, game?.regions]);
+
+  // endTurn 후 aiTurnLogs가 갱신되면 오버레이 표시
+  const prevTurnRef2 = useRef<number | null>(null);
+  useEffect(() => {
+    if (!game || gamePhase !== 'playing') return;
+    const currentTurn = game.turn;
+    const prev = prevTurnRef2.current;
+    prevTurnRef2.current = currentTurn;
+
+    // 턴이 진행됐을 때만 (이전 턴 → 새 턴)
+    if (prev !== null && prev < currentTurn) {
+      if (game.aiTurnLogs && game.aiTurnLogs.length > 0) {
+        setAiOverlayLogs(game.aiTurnLogs);
+      } else {
+        showToast(`턴 ${currentTurn} 시작!`, 'info');
+      }
+    }
+  }, [game?.turn]);
 
   // 로딩 (클라이언트 준비 전)
   if (!isClient) {
@@ -203,21 +223,13 @@ export default function WarlordsGame() {
   const confirmEndTurn = () => {
     endTurn();
     setShowEndTurnModal(false);
-    showToast(`턴 ${game.turn + 1} 시작!`, 'info');
-    
-    // AI 턴 로그 표시 (공격 행동만 알림)
-    setTimeout(() => {
-      if (game.aiTurnLogs && game.aiTurnLogs.length > 0) {
-        game.aiTurnLogs.forEach(log => {
-          const attackActions = log.actions.filter(a => a.includes('⚔️'));
-          if (attackActions.length > 0) {
-            attackActions.forEach(action => {
-              showToast(`${log.factionName}: ${action}`, 'info');
-            });
-          }
-        });
-      }
-    }, 500);  // 턴 시작 토스트 후 약간 딜레이
+  };
+
+  const handleAIOverlayComplete = () => {
+    setAiOverlayLogs(null);
+    if (game) {
+      showToast(`턴 ${game.turn} 시작!`, 'info');
+    }
   };
 
   // 전투 결과 화면 닫기 핸들러
@@ -669,6 +681,16 @@ export default function WarlordsGame() {
           triggeredEvents={game.triggeredEvents}
           currentTurn={game.turn}
           onClose={() => setShowEventLog(false)}
+        />
+      )}
+
+      {/* AI 턴 오버레이 */}
+      {aiOverlayLogs && (
+        <AITurnOverlay
+          logs={aiOverlayLogs}
+          factions={game.factions}
+          regions={game.regions}
+          onComplete={handleAIOverlayComplete}
         />
       )}
 

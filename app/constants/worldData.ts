@@ -211,7 +211,7 @@ export const REGIONS: Record<RegionId, Region> = {
     agriculture: 50,
     defense: 100,
     training: 50,
-    generals: []
+    generals: ['zhangjiao']
   },
   xuchang: {
     id: 'xuchang',
@@ -245,7 +245,7 @@ export const REGIONS: Record<RegionId, Region> = {
     agriculture: 80,
     defense: 100,
     training: 60,
-    generals: ['zhangfei', 'zhaoyun']  // 제갈량은 삼고초려, 관우는 천리주단기 이벤트로 영입!
+    generals: ['liubei', 'zhangfei', 'zhaoyun']  // 제갈량은 삼고초려, 관우는 천리주단기 이벤트로 영입!
   },
   jianye: {
     id: 'jianye',
@@ -262,7 +262,7 @@ export const REGIONS: Record<RegionId, Region> = {
     agriculture: 60,
     defense: 100,
     training: 65,
-    generals: ['zhouyu']
+    generals: ['sunquan', 'zhouyu']
   },
   changan: {
     id: 'changan',
@@ -279,7 +279,7 @@ export const REGIONS: Record<RegionId, Region> = {
     agriculture: 40,
     defense: 100,
     training: 55,
-    generals: ['lvbu']
+    generals: ['dongzhuo', 'lvbu']
   },
   ye: {
     id: 'ye',
@@ -296,7 +296,7 @@ export const REGIONS: Record<RegionId, Region> = {
     agriculture: 55,
     defense: 100,
     training: 60,
-    generals: []
+    generals: ['yuanshao']
   },
   jingzhou: {
     id: 'jingzhou',
@@ -313,7 +313,7 @@ export const REGIONS: Record<RegionId, Region> = {
     agriculture: 70,
     defense: 100,
     training: 45,
-    generals: []
+    generals: ['liubiao']
   },
   yizhou: {
     id: 'yizhou',
@@ -330,7 +330,7 @@ export const REGIONS: Record<RegionId, Region> = {
     agriculture: 60,
     defense: 100,
     training: 40,
-    generals: []
+    generals: ['liuzhang']
   },
   youzhou: {
     id: 'youzhou',
@@ -347,7 +347,7 @@ export const REGIONS: Record<RegionId, Region> = {
     agriculture: 45,
     defense: 100,
     training: 50,
-    generals: []
+    generals: ['gongsunzan']
   }
 };
 

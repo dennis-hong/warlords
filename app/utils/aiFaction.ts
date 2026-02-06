@@ -57,14 +57,15 @@ function calculateRegionPriority(
   if (hasEnemyNeighbor) priority += 30;
   
   // 병력이 적으면 우선
-  if (region.troops < 3000) priority += 20;
-  
+  if (region.troops < 5000) priority += 20;
+  else if (region.troops < 10000) priority += 10;
+
   // 개발도가 낮으면 우선
-  if (region.agriculture < 50) priority += 10;
-  if (region.commerce < 50) priority += 10;
-  
+  if (region.agriculture < 70) priority += 10;
+  if (region.commerce < 70) priority += 10;
+
   // 훈련도가 낮으면 우선
-  if ((region.training || 50) < 60) priority += 10;
+  if ((region.training || 50) < 70) priority += 10;
   
   return priority;
 }
@@ -159,186 +160,191 @@ export function processAIFactionTurn(
   // AI 행동력 (플레이어와 동일하게 3)
   let actionsRemaining = 3;
   
-  // 1. 내정 행동
-  for (const region of myRegions) {
-    if (actionsRemaining <= 0) break;
-    
-    // 자원 확인
-    const canAfford = (gold: number, food: number) => 
-      region.gold >= gold && region.food >= food;
-    
-    // 병력 부족 → 징병
-    if (region.troops < 5000 && region.population > 10000 && canAfford(500, 500)) {
-      const recruited = Math.min(1000, Math.floor(region.population * 0.1));
-      state = {
-        ...state,
-        regions: {
-          ...state.regions,
-          [region.id]: {
-            ...state.regions[region.id],
-            troops: state.regions[region.id].troops + recruited,
-            population: state.regions[region.id].population - recruited,
-            gold: state.regions[region.id].gold - 500,
-            food: state.regions[region.id].food - 500
-          }
+  // 행동력 소진까지 반복 (내정 + 공격 통합)
+  let attackAttempted = false; // 턴당 공격은 1회만
+
+  while (actionsRemaining > 0) {
+    let actionTaken = false;
+
+    // 공격 가능 여부 먼저 확인 (아직 공격 안 했으면)
+    if (!attackAttempted) {
+      const attackTarget = findAttackTarget(factionId, state, analyses);
+      if (attackTarget) {
+        attackAttempted = true;
+        const { sourceRegion, targetRegion, troops } = attackTarget;
+        const target = state.regions[targetRegion];
+        const source = state.regions[sourceRegion];
+
+        const attackPower = troops * 1.0;
+        const defensePower = target.troops * 1.2 + target.defense * 10;
+        const powerRatio = attackPower / Math.max(defensePower, 1);
+
+        if (powerRatio > 1.2) {
+          const attackerLoss = Math.floor(troops * 0.2);
+          const defenderLoss = target.troops;
+          state = {
+            ...state,
+            regions: {
+              ...state.regions,
+              [sourceRegion]: { ...source, troops: source.troops - troops },
+              [targetRegion]: { ...target, owner: factionId, troops: troops - attackerLoss, generals: [] }
+            }
+          };
+          actions.push({
+            type: 'attack',
+            regionId: sourceRegion,
+            targetRegionId: targetRegion,
+            troops,
+            message: `⚔️ ${source.nameKo}에서 ${target.nameKo} 점령! (${defenderLoss}명 섬멸)`
+          });
+        } else {
+          const attackerLoss = Math.floor(troops * 0.3);
+          const defenderLoss = Math.floor(target.troops * 0.2);
+          state = {
+            ...state,
+            regions: {
+              ...state.regions,
+              [sourceRegion]: { ...source, troops: source.troops - attackerLoss },
+              [targetRegion]: { ...target, troops: target.troops - defenderLoss }
+            }
+          };
+          actions.push({
+            type: 'attack',
+            regionId: sourceRegion,
+            targetRegionId: targetRegion,
+            troops,
+            message: `⚔️ ${source.nameKo}에서 ${target.nameKo} 공격 실패 (${attackerLoss}명 손실)`
+          });
         }
-      };
-      actions.push({
-        type: 'recruit',
-        regionId: region.id,
-        troops: recruited,
-        message: `${region.nameKo}에서 ${recruited}명 징병`
-      });
-      actionsRemaining--;
-      continue;
+        actionsRemaining--;
+        actionTaken = true;
+        if (actionsRemaining <= 0) break;
+      }
     }
-    
-    // 훈련도 낮음 → 훈련
-    const training = region.training || 50;
-    if (training < 70 && canAfford(300, 200)) {
-      const increase = Math.min(10, 100 - training);
-      state = {
-        ...state,
-        regions: {
-          ...state.regions,
-          [region.id]: {
-            ...state.regions[region.id],
-            training: training + increase,
-            gold: state.regions[region.id].gold - 300,
-            food: state.regions[region.id].food - 200
+
+    // 내정 행동: 지역 우선순위 재계산
+    const sortedRegions = Object.values(state.regions)
+      .filter(r => r.owner === factionId)
+      .sort((a, b) =>
+        calculateRegionPriority(b, state, analyses) -
+        calculateRegionPriority(a, state, analyses)
+      );
+
+    let domesticDone = false;
+    for (const regionSnapshot of sortedRegions) {
+      if (actionsRemaining <= 0) break;
+
+      const region = state.regions[regionSnapshot.id];
+      const canAfford = (gold: number, food: number) =>
+        region.gold >= gold && region.food >= food;
+
+      // 병력 부족 → 징병 (인구 대비 병력이 적으면)
+      if (region.troops < 10000 && region.population > 5000 && canAfford(500, 500)) {
+        const recruited = Math.min(1500, Math.floor(region.population * 0.1));
+        state = {
+          ...state,
+          regions: {
+            ...state.regions,
+            [region.id]: {
+              ...state.regions[region.id],
+              troops: state.regions[region.id].troops + recruited,
+              population: state.regions[region.id].population - recruited,
+              gold: state.regions[region.id].gold - 500,
+              food: state.regions[region.id].food - 500
+            }
           }
-        }
-      };
-      actions.push({
-        type: 'train',
-        regionId: region.id,
-        message: `${region.nameKo}에서 병력 훈련 (+${increase})`
-      });
-      actionsRemaining--;
-      continue;
+        };
+        actions.push({ type: 'recruit', regionId: region.id, troops: recruited, message: `${region.nameKo}에서 ${recruited}명 징병` });
+        actionsRemaining--;
+        domesticDone = true;
+        break;
+      }
+
+      // 훈련도 → 훈련
+      const training = region.training || 50;
+      if (training < 90 && canAfford(300, 200)) {
+        const increase = Math.min(10, 100 - training);
+        state = {
+          ...state,
+          regions: {
+            ...state.regions,
+            [region.id]: {
+              ...state.regions[region.id],
+              training: training + increase,
+              gold: state.regions[region.id].gold - 300,
+              food: state.regions[region.id].food - 200
+            }
+          }
+        };
+        actions.push({ type: 'train', regionId: region.id, message: `${region.nameKo}에서 병력 훈련 (+${increase})` });
+        actionsRemaining--;
+        domesticDone = true;
+        break;
+      }
+
+      // 농업 개발
+      if (region.agriculture < 90 && canAfford(500, 0)) {
+        const increase = 5;
+        state = {
+          ...state,
+          regions: {
+            ...state.regions,
+            [region.id]: {
+              ...state.regions[region.id],
+              agriculture: Math.min(100, region.agriculture + increase),
+              gold: state.regions[region.id].gold - 500
+            }
+          }
+        };
+        actions.push({ type: 'develop', regionId: region.id, message: `${region.nameKo} 농업 개발 (+${increase}%)` });
+        actionsRemaining--;
+        domesticDone = true;
+        break;
+      }
+
+      // 상업 개발
+      if (region.commerce < 90 && canAfford(500, 0)) {
+        const increase = 5;
+        state = {
+          ...state,
+          regions: {
+            ...state.regions,
+            [region.id]: {
+              ...state.regions[region.id],
+              commerce: Math.min(100, region.commerce + increase),
+              gold: state.regions[region.id].gold - 500
+            }
+          }
+        };
+        actions.push({ type: 'develop', regionId: region.id, message: `${region.nameKo} 상업 개발 (+${increase}%)` });
+        actionsRemaining--;
+        domesticDone = true;
+        break;
+      }
+
+      // 성벽 강화 (다른 행동 조건이 안 맞을 때 폴백)
+      if (region.defense < 100 && canAfford(500, 0)) {
+        const increase = 5;
+        state = {
+          ...state,
+          regions: {
+            ...state.regions,
+            [region.id]: {
+              ...state.regions[region.id],
+              defense: Math.min(100, region.defense + increase),
+              gold: state.regions[region.id].gold - 500
+            }
+          }
+        };
+        actions.push({ type: 'develop', regionId: region.id, message: `${region.nameKo} 성벽 강화 (+${increase}%)` });
+        actionsRemaining--;
+        domesticDone = true;
+        break;
+      }
     }
-    
-    // 농업/상업 개발
-    if (region.agriculture < 70 && canAfford(500, 0)) {
-      const increase = 5;
-      state = {
-        ...state,
-        regions: {
-          ...state.regions,
-          [region.id]: {
-            ...state.regions[region.id],
-            agriculture: Math.min(100, region.agriculture + increase),
-            gold: state.regions[region.id].gold - 500
-          }
-        }
-      };
-      actions.push({
-        type: 'develop',
-        regionId: region.id,
-        message: `${region.nameKo} 농업 개발 (+${increase}%)`
-      });
-      actionsRemaining--;
-      continue;
-    }
-    
-    if (region.commerce < 70 && canAfford(500, 0)) {
-      const increase = 5;
-      state = {
-        ...state,
-        regions: {
-          ...state.regions,
-          [region.id]: {
-            ...state.regions[region.id],
-            commerce: Math.min(100, region.commerce + increase),
-            gold: state.regions[region.id].gold - 500
-          }
-        }
-      };
-      actions.push({
-        type: 'develop',
-        regionId: region.id,
-        message: `${region.nameKo} 상업 개발 (+${increase}%)`
-      });
-      actionsRemaining--;
-    }
-  }
-  
-  // 2. 공격 행동 (간소화 - 실제 전투는 복잡하므로 병력 손실만 계산)
-  // 참고: 실제 전투 시스템과 통합하려면 더 복잡한 로직 필요
-  // 지금은 간단히 병력 이동 + 손실 계산만
-  
-  const attackTarget = findAttackTarget(factionId, state, analyses);
-  
-  if (attackTarget && actionsRemaining > 0) {
-    const { sourceRegion, targetRegion, troops } = attackTarget;
-    const target = state.regions[targetRegion];
-    const source = state.regions[sourceRegion];
-    
-    // 간단한 전투 계산
-    const attackPower = troops * 1.0;  // 공격력
-    const defensePower = target.troops * 1.2 + target.defense * 10;  // 방어력 (방어 보너스)
-    
-    const powerRatio = attackPower / Math.max(defensePower, 1);
-    
-    if (powerRatio > 1.2) {
-      // 공격 성공
-      const attackerLoss = Math.floor(troops * 0.2);  // 20% 손실
-      const defenderLoss = target.troops;  // 전멸
-      
-      // 지역 점령
-      state = {
-        ...state,
-        regions: {
-          ...state.regions,
-          [sourceRegion]: {
-            ...source,
-            troops: source.troops - troops  // 출진 병력 감소
-          },
-          [targetRegion]: {
-            ...target,
-            owner: factionId,
-            troops: troops - attackerLoss,  // 남은 병력
-            generals: []  // 장수는 도망 (간소화)
-          }
-        }
-      };
-      
-      actions.push({
-        type: 'attack',
-        regionId: sourceRegion,
-        targetRegionId: targetRegion,
-        troops,
-        message: `⚔️ ${source.nameKo}에서 ${target.nameKo} 점령! (${defenderLoss}명 섬멸)`
-      });
-    } else {
-      // 공격 실패 (손실만 발생)
-      const attackerLoss = Math.floor(troops * 0.3);  // 30% 손실
-      const defenderLoss = Math.floor(target.troops * 0.2);  // 20% 손실
-      
-      state = {
-        ...state,
-        regions: {
-          ...state.regions,
-          [sourceRegion]: {
-            ...source,
-            troops: source.troops - attackerLoss
-          },
-          [targetRegion]: {
-            ...target,
-            troops: target.troops - defenderLoss
-          }
-        }
-      };
-      
-      actions.push({
-        type: 'attack',
-        regionId: sourceRegion,
-        targetRegionId: targetRegion,
-        troops,
-        message: `⚔️ ${source.nameKo}에서 ${target.nameKo} 공격 실패 (${attackerLoss}명 손실)`
-      });
-    }
-    actionsRemaining--;
+
+    // 공격도 내정도 못 했으면 종료
+    if (!actionTaken && !domesticDone) break;
   }
   
   return { newState: state, actions };
@@ -369,7 +375,12 @@ export function processAllAITurns(gameState: GameState): {
         turn: state.turn,
         factionId,
         factionName: state.factions[factionId]?.nameKo || factionId,
-        actions: actions.map(a => a.message)
+        actions: actions.map(a => a.message),
+        actionDetails: actions.map(a => ({
+          type: a.type,
+          regionId: a.regionId,
+          targetRegionId: a.targetRegionId
+        }))
       });
     }
   }

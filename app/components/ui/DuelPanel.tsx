@@ -1,4 +1,5 @@
 import type { DuelChoice, BattleUnit } from '../../types';
+import { GeneralPortrait } from './GeneralPortrait';
 
 interface DuelPanelProps {
   player: BattleUnit;
@@ -20,13 +21,17 @@ export function DuelPanel({ player, enemy, onSelect }: DuelPanelProps) {
       {/* 대결 구도 */}
       <div className="flex items-center justify-center gap-4 mb-6">
         <div className="text-center peace-card rounded-lg p-3">
-          <span className="text-4xl block mb-1">{player.general.portrait}</span>
+          <div className="flex justify-center mb-1">
+            <GeneralPortrait generalId={player.general.id} portrait={player.general.portrait || ''} size="xl" />
+          </div>
           <div className="font-bold text-silk">{player.general.nameKo}</div>
           <div className="text-sm text-crimson-light font-medium">무 {player.general.might}</div>
         </div>
         <div className="text-3xl font-bold text-gold animate-pulse">VS</div>
         <div className="text-center war-card rounded-lg p-3">
-          <span className="text-4xl block mb-1">{enemy.general.portrait}</span>
+          <div className="flex justify-center mb-1">
+            <GeneralPortrait generalId={enemy.general.id} portrait={enemy.general.portrait || ''} size="xl" />
+          </div>
           <div className="font-bold text-silk">{enemy.general.nameKo}</div>
           <div className="text-sm text-crimson-light font-medium">무 {enemy.general.might}</div>
         </div>

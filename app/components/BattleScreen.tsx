@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import type { BattleInitData, BattleOutcome, BattleState, BattleUnit, BattleLog, DuelChoice, RegionId, Region, GeneralFate, DuelHealth } from '../types';
+import type { BattleInitData, BattleOutcome, BattleState, BattleUnit, BattleLog, DuelChoice, RegionId, Region, GeneralFate, DuelHealth, General } from '../types';
 import { GENERALS, GAME_CONFIG, MORALE_CHANGES, findGeneral } from '../constants/gameData';
 import {
   calculateDamage,
@@ -16,6 +16,18 @@ import {
   checkDuelDeath
 } from '../utils/battle';
 import { UnitCard, BattleLog as BattleLogPanel, ActionButtons, DuelPanel } from './ui';
+
+// 장수 없는 성의 무명 장수
+const ANONYMOUS_GENERAL: General = {
+  id: '_anonymous',
+  name: 'Anonymous',
+  nameKo: '무명 장수',
+  might: 40,
+  intellect: 30,
+  politics: 30,
+  charisma: 30,
+  portrait: '🏴'
+};
 
 // 애니메이션 상태 타입
 type AnimState = 'idle' | 'attacking' | 'hit' | 'dead';
@@ -39,9 +51,11 @@ export default function BattleScreen({ battleData, regions, onBattleEnd, battleB
     const commanderGeneral = findGeneral(commanderUnit.generalId) || GENERALS.xiaohoudun;
     const totalPlayerTroops = battleData.playerUnits.reduce((sum, u) => sum + u.troops, 0);
 
-    // 적 장수 (첫 번째 또는 기본)
-    const enemyGeneralId = battleData.enemyGeneralIds[0] || 'xiaohoudun';
-    const enemyGeneral = findGeneral(enemyGeneralId) || GENERALS.xiaohoudun;
+    // 적 장수 (첫 번째 또는 무명 장수)
+    const enemyGeneralId = battleData.enemyGeneralIds[0];
+    const enemyGeneral: General = enemyGeneralId
+      ? (findGeneral(enemyGeneralId) || ANONYMOUS_GENERAL)
+      : ANONYMOUS_GENERAL;
 
     // 적 병력
     const enemyTroops = battleData.enemyTroops || regions[battleData.enemyRegionId]?.troops || 5000;

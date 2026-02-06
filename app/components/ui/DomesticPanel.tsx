@@ -1,5 +1,6 @@
 import type { Region, RegionId, DomesticAction, General } from '../../types';
 import { DOMESTIC_COMMANDS } from '../../constants/worldData';
+import { GeneralPortrait } from './GeneralPortrait';
 
 interface DomesticPanelProps {
   region: Region;
@@ -161,7 +162,7 @@ export function DomesticPanel({ region, actionsRemaining, getGeneral, onExecute,
                 key={g.id}
                 className="bg-wood text-parchment px-2 py-1 rounded text-xs flex items-center gap-1 shadow-sm"
               >
-                <span>{g.portrait}</span>
+                <GeneralPortrait generalId={g.id} portrait={g.portrait || ''} size="sm" />
                 <span className="font-medium">{g.nameKo}</span>
                 <span className="text-[10px] text-parchment/60">
                   ({g.might}/{g.intellect}/{g.politics})

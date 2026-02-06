@@ -1,4 +1,5 @@
 import type { Region, RegionId, General } from '../../types';
+import { GeneralPortrait } from './GeneralPortrait';
 
 interface RegionListProps {
   regions: Region[];
@@ -64,7 +65,7 @@ export function RegionList({ regions, selectedRegion, getGeneral, onSelectRegion
                     key={g.id}
                     className="bg-wood/80 text-parchment px-1.5 py-0.5 rounded text-[10px] shadow-sm"
                   >
-                    {g.portrait} {g.nameKo}
+                    <GeneralPortrait generalId={g.id} portrait={g.portrait || ''} size="sm" /> {g.nameKo}
                   </span>
                 ))}
                 {generals.length > 4 && (

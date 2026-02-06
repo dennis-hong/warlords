@@ -26,7 +26,6 @@ export function ConfirmModal({
       {/* 백드롭 */}
       <div
         className="absolute inset-0 bg-black/70 backdrop-blur-sm"
-        onClick={onCancel}
       />
 
       {/* 모달 */}
