@@ -136,3 +136,70 @@ Original prompt: 장수 등용/영입 성공 후 보유 장수 및 주둔 장수
 - [ ] GameOverScreen 모바일 최적화
 - [ ] 지도에서 핀치줌/팬 지원 (현재는 고정 뷰)
 - [ ] 가로 모드 대응
+
+---
+
+## 2026-02-22: 버그 수정 + 모바일 최적화 + 안정성 보강
+
+### 요청 반영 항목
+- [x] 토스트 메시지가 출진 스텝 인디케이터와 겹치는 문제 수정
+- [x] TitleScreen 모바일 최적화
+- [x] FactionSelectScreen 모바일 최적화
+- [x] BattleScreen 모바일 최적화
+- [x] BattleResultScreen 모바일 최적화
+- [x] GameOverScreen 모바일 최적화
+- [x] AI/전투/상태 관리 로직 버그 보강
+- [x] `app/` 전체 정적 점검 기반 런타임/엣지 케이스 수정
+
+### 수정 파일
+- `app/components/ui/Toast.tsx`
+- `app/components/TitleScreen.tsx`
+- `app/components/FactionSelectScreen.tsx`
+- `app/components/BattleScreen.tsx`
+- `app/components/BattleResultScreen.tsx`
+- `app/components/GameOverScreen.tsx`
+- `app/components/ui/WorldMap.tsx`
+- `app/hooks/useBattleState.ts`
+- `app/hooks/useGameState.ts`
+- `app/utils/aiFaction.ts`
+- `app/utils/battle.ts`
+- `app/layout.tsx`
+- `app/globals.css`
+
+### 주요 변경 요약
+
+#### 1) UI/모바일
+- **Toast 위치 조정**: 모바일에서 상단 고정 → 하단 safe-area 근처로 이동하여 출진 스텝과 겹침 제거.
+- **TitleScreen**: `overflow-hidden` 기반 고정 레이아웃을 스크롤 가능한 구조로 변경해 작은 화면에서 버튼/하단 정보 접근성 개선.
+- **FactionSelectScreen**: 3열 고정 그리드를 반응형(`1/2/3열`)으로 변경, 뒤로가기/시작 버튼 터치 타겟 보강.
+- **BattleScreen**: 유닛 카드 영역을 모바일 1열로 변경, 자동진행/속도 버튼 44px+ 터치 타겟 적용, 작은 화면 텍스트/간격 보정.
+- **BattleResultScreen**: 카드 높이 제한 + 내부 스크롤로 긴 포로 처리 UI에서도 버튼 접근 가능하게 수정.
+- **GameOverScreen**: 모바일 스크롤 가능한 구조로 변경, confetti 레이어를 상대 컨테이너에 클리핑하여 overflow 이슈 완화.
+
+#### 2) 상태/로직 버그
+- **WorldMap 포지션 가드**: `REGION_POSITIONS` 누락 시 렌더 크래시 방지.
+- **useBattleState**: `useState(() => setIsClient(true))` 오용 제거, `useEffect`로 교체.
+- **AI 훈련도 판정**: `training || 50` → `training ?? 50`으로 0 값 보존.
+- **AI 점령 시 장수 소실 버그**: 점령된 지역의 장수를 포로(`state.prisoners`)로 이전하도록 처리.
+- **AI 턴 분석 갱신**: `processAllAITurns`에서 세력별 처리 전 최신 분석 재계산.
+- **전투 계략 방어 코드**: 잘못된 계략 ID 입력 시 런타임 크래시 방지.
+- **전투 후 장수 소실 버그(플레이어 승리 시)**: 포로/전사 제외 적 생존 장수를 재야 장수로 이탈 처리.
+
+#### 3) 타입/안전성 보강
+- `||` 기본값 다수를 `??`로 보강(훈련도/충성도 등 falsy 값 보존).
+- 일부 불필요 디버그 로그 제거.
+- 자동 진행 effect의 콜백 참조/의존성 정리(오래된 클로저 위험 완화).
+
+### 검증 결과
+- `pnpm build` (기본 Turbopack): **실패 (샌드박스 제한)**
+  - 내부 포트 바인딩 권한 오류(`Operation not permitted`)로 빌드 파이프라인 중단.
+- 대체 검증: `pnpm exec next build --webpack` **성공**
+  - 타입 체크/정적 페이지 생성 포함 완료.
+
+### 환경 제약 메모
+- 샌드박스에서 로컬 서버 포트 바인딩(`next start`, `next dev`)이 차단되어 Playwright 실기동 검증 불가.
+
+### TODOs for next agent
+- [ ] 사용자/실서버 환경에서 `pnpm build`(기본 Turbopack) 재확인
+- [ ] 실제 기기(특히 iPhone SE급 높이)에서 BattleResult/GameOver 스크롤 체감 확인
+- [ ] lint 경고/오류 전면 정리(react-hooks/compiler 규칙) 필요 시 별도 정리 PR로 분리

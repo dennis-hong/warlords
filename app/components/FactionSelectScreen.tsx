@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { FACTION_DETAILS, type FactionDetail } from '../constants/worldData';
+import { FACTION_DETAILS } from '../constants/worldData';
 import { GENERALS } from '../constants/gameData';
 import type { FactionId } from '../types';
 
@@ -50,22 +50,23 @@ export default function FactionSelectScreen({ onSelectFaction, onBack }: Faction
   };
 
   return (
-    <div className="min-h-screen p-4 pb-28">
+    <div className="min-h-screen p-3 sm:p-4 pb-32 sm:pb-28 overflow-y-auto">
+      <div className="max-w-5xl mx-auto">
       {/* 헤더 */}
-      <div className="flex items-center gap-3 mb-6 animate-fade-in">
+      <div className="flex items-center gap-3 mb-4 sm:mb-6 animate-fade-in">
         <button
           onClick={onBack}
-          className="btn-wood p-2 rounded-lg"
+          className="btn-wood min-h-[44px] min-w-[44px] px-3 py-2 rounded-lg flex items-center justify-center"
         >
           ←
         </button>
-        <h1 className="text-xl font-bold text-gold flex items-center gap-2 title-glow">
+        <h1 className="text-lg sm:text-xl font-bold text-gold flex items-center gap-2 title-glow">
           ⚔️ 세력을 선택하라
         </h1>
       </div>
 
       {/* 세력 그리드 (3x3) */}
-      <div className="grid grid-cols-3 gap-3 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-5 sm:mb-6">
         {PLAYABLE_FACTIONS.map((factionId, idx) => {
           const detail = FACTION_DETAILS[factionId];
           if (!detail) return null;
@@ -76,7 +77,7 @@ export default function FactionSelectScreen({ onSelectFaction, onBack }: Faction
             <button
               key={factionId}
               onClick={() => setSelectedFaction(factionId)}
-              className={`p-3 rounded-lg border-2 transition-all duration-200 flex flex-col items-center animate-scale-in
+              className={`p-3 rounded-lg border-2 transition-all duration-200 min-h-[132px] flex flex-col items-center justify-center animate-scale-in
                 ${isSelected 
                   ? 'dynasty-card scale-105 animate-pulse-gold' 
                   : 'dynasty-card hover:scale-102'}`}
@@ -86,10 +87,10 @@ export default function FactionSelectScreen({ onSelectFaction, onBack }: Faction
                 animationDelay: `${idx * 0.05}s`
               }}
             >
-              <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-wood mb-1 bg-dynasty-black">
+              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full overflow-hidden border-2 border-wood mb-1 bg-dynasty-black">
                 <img src={`/images/portraits/${factionId}.png`} alt={detail.rulerName} className="w-full h-full object-cover" />
               </div>
-              <span className="font-bold text-sm text-silk">{detail.displayName}</span>
+              <span className="font-bold text-sm sm:text-base text-silk">{detail.displayName}</span>
               <span className="text-xs text-silk/60">{detail.rulerName}</span>
               <div className="text-xs mt-1">
                 <span className="text-gold">{'★'.repeat(detail.difficulty)}</span>
@@ -208,17 +209,18 @@ export default function FactionSelectScreen({ onSelectFaction, onBack }: Faction
       )}
 
       {/* 게임 시작 버튼 (하단 고정) */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-dynasty-black via-dynasty-black/95 to-transparent safe-area-bottom">
+      <div className="fixed bottom-0 left-0 right-0 p-3 sm:p-4 bg-gradient-to-t from-dynasty-black via-dynasty-black/95 to-transparent safe-area-bottom z-30">
         <button
           onClick={handleStart}
           disabled={!selectedFaction}
-          className={`w-full py-4 rounded-lg text-xl flex items-center justify-center gap-3 ${
+          className={`w-full min-h-[48px] py-3.5 sm:py-4 rounded-lg text-lg sm:text-xl flex items-center justify-center gap-3 ${
             selectedFaction ? 'btn-gold animate-pulse-gold' : 'btn-wood opacity-50'
           }`}
         >
           <span className="text-2xl">🎮</span>
           {selectedFaction ? `${FACTION_DETAILS[selectedFaction]?.displayName}으로 시작` : '세력을 선택하세요'}
         </button>
+      </div>
       </div>
     </div>
   );

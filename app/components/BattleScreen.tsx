@@ -47,8 +47,8 @@ export default function BattleScreen({ battleData, regions, onBattleEnd, battleB
   // 전투 상태 초기화
   const initBattle = useCallback((): BattleState => {
     // 플레이어 주장 찾기
-    const commanderUnit = battleData.playerUnits.find(u => u.isCommander) || battleData.playerUnits[0];
-    const commanderGeneral = findGeneral(commanderUnit.generalId) || GENERALS.xiaohoudun;
+    const commanderUnit = battleData.playerUnits.find(u => u.isCommander) || battleData.playerUnits[0] || null;
+    const commanderGeneral = commanderUnit ? (findGeneral(commanderUnit.generalId) || GENERALS.xiaohoudun) : GENERALS.xiaohoudun;
     const totalPlayerTroops = battleData.playerUnits.reduce((sum, u) => sum + u.troops, 0);
 
     // 적 장수 (첫 번째 또는 무명 장수)
@@ -58,13 +58,13 @@ export default function BattleScreen({ battleData, regions, onBattleEnd, battleB
       : ANONYMOUS_GENERAL;
 
     // 적 병력
-    const enemyTroops = battleData.enemyTroops || regions[battleData.enemyRegionId]?.troops || 5000;
+    const enemyTroops = battleData.enemyTroops ?? regions[battleData.enemyRegionId]?.troops ?? 5000;
 
     // 주장 병종
-    const troopType = commanderUnit.troopType;
+    const troopType = commanderUnit?.troopType ?? 'infantry';
 
     // 이벤트 전투 보너스 계산 (장수별 + 플레이어 전체)
-    const commanderBonus = battleBonuses[commanderUnit.generalId] || 0;
+    const commanderBonus = commanderUnit ? (battleBonuses[commanderUnit.generalId] || 0) : 0;
     const playerGlobalBonus = battleBonuses['_player'] || 0;
     const totalBattleBonus = commanderBonus + playerGlobalBonus;
 
@@ -93,7 +93,7 @@ export default function BattleScreen({ battleData, regions, onBattleEnd, battleB
       logs: [
         {
           round: 0,
-          message: `⚔️ 전투 개시! ${commanderGeneral.nameKo} vs ${enemyGeneral.nameKo} (🏰 성벽 ${regions[battleData.enemyRegionId]?.defense || 50}% - 방어측 유리)`,
+          message: `⚔️ 전투 개시! ${commanderGeneral.nameKo} vs ${enemyGeneral.nameKo} (🏰 성벽 ${regions[battleData.enemyRegionId]?.defense ?? 50}% - 방어측 유리)`,
           type: 'info'
         },
         ...(totalBattleBonus > 0 ? [{
@@ -109,24 +109,24 @@ export default function BattleScreen({ battleData, regions, onBattleEnd, battleB
       ],
       phase: 'selection'
     };
-  }, [battleData, regions]);
+  }, [battleData, regions, battleBonuses, moraleBonus]);
 
   const [battle, setBattle] = useState<BattleState>(initBattle);
 
   // 초기 병력 저장 (결과 계산용)
   const [initialTroops] = useState({
     player: battleData.playerUnits.reduce((sum, u) => sum + u.troops, 0),
-    enemy: battleData.enemyTroops || regions[battleData.enemyRegionId]?.troops || 5000
+    enemy: battleData.enemyTroops ?? regions[battleData.enemyRegionId]?.troops ?? 5000
   });
 
   // 공성전 방어 보너스 계산 (성벽 수치 기반)
-  const targetDefense = regions[battleData.enemyRegionId]?.defense || 50;
+  const targetDefense = regions[battleData.enemyRegionId]?.defense ?? 50;
   const siegeAttackerMod = 1 - (targetDefense * GAME_CONFIG.SIEGE_ATTACKER_PENALTY);   // 공격측 페널티
   const siegeDefenderMod = 1 + (targetDefense * GAME_CONFIG.SIEGE_DEFENDER_BONUS);     // 방어측 보너스
 
   // 이벤트 전투 보너스 계산
-  const commanderUnit = battleData.playerUnits.find(u => u.isCommander) || battleData.playerUnits[0];
-  const eventBattleBonus = (battleBonuses[commanderUnit.generalId] || 0) + (battleBonuses['_player'] || 0);
+  const commanderUnit = battleData.playerUnits.find(u => u.isCommander) || battleData.playerUnits[0] || null;
+  const eventBattleBonus = (commanderUnit ? (battleBonuses[commanderUnit.generalId] || 0) : 0) + (battleBonuses['_player'] || 0);
   const eventBonusMod = 1 + (eventBattleBonus * 0.02); // 보너스 1당 2% 데미지 증가
 
   // 일기토 HP 상태 (장수 생존 판정용)
@@ -244,36 +244,6 @@ export default function BattleScreen({ battleData, regions, onBattleEnd, battleB
     }, 800);
   }, []);
 
-  // 자동 진행 처리
-  useEffect(() => {
-    if (autoPlay && battle.phase === 'selection') {
-      autoPlayRef.current = setTimeout(() => {
-        // 랜덤 액션 선택 (자동 플레이)
-        const actions = ['charge', 'defend', 'duel'];
-        const randomAction = actions[Math.floor(Math.random() * actions.length)];
-        if (randomAction === 'charge') charge();
-        else if (randomAction === 'defend') defend();
-        else startDuel();
-      }, 2000 / playSpeed);
-    }
-    return () => {
-      if (autoPlayRef.current) clearTimeout(autoPlayRef.current);
-    };
-  }, [autoPlay, battle.phase, playSpeed]);
-
-  // 일기토 자동 진행
-  useEffect(() => {
-    if (autoPlay && battle.phase === 'duel') {
-      autoPlayRef.current = setTimeout(() => {
-        const choices: DuelChoice[] = ['power', 'counter', 'special'];
-        selectDuelChoice(choices[Math.floor(Math.random() * choices.length)]);
-      }, 1000 / playSpeed);
-    }
-    return () => {
-      if (autoPlayRef.current) clearTimeout(autoPlayRef.current);
-    };
-  }, [autoPlay, battle.phase, playSpeed]);
-
   // 전투 종료 체크
   const checkBattleEnd = useCallback((player: BattleUnit, enemy: BattleUnit, round: number, maxRounds: number): 'victory' | 'defeat' | null => {
     if (checkRout(enemy) || enemy.troops <= 0) return 'victory';
@@ -353,13 +323,13 @@ export default function BattleScreen({ battleData, regions, onBattleEnd, battleB
       let enemy = { ...prev.enemy };
       const logs: BattleLog[] = [];
 
-      const playerDmg = calculateDamage(player, enemy, GAME_CONFIG.CHARGE_DAMAGE_MULTIPLIER * siegeAttackerMod * eventBonusMod, battleData.playerTraining || 50);
+      const playerDmg = calculateDamage(player, enemy, GAME_CONFIG.CHARGE_DAMAGE_MULTIPLIER * siegeAttackerMod * eventBonusMod, battleData.playerTraining ?? 50);
       enemy.troops = applyTroopDamage(enemy, playerDmg);
       logs.push({ round: prev.round, message: `⚔️ ${player.general.nameKo} 돌격! 적 ${playerDmg}명 피해!`, type: 'damage' });
 
       let enemyDmg = 0;
       if (enemyAction.action === 'charge') {
-        enemyDmg = calculateDamage(enemy, player, GAME_CONFIG.CHARGE_DAMAGE_MULTIPLIER * siegeDefenderMod, battleData.enemyTraining || 50);
+        enemyDmg = calculateDamage(enemy, player, GAME_CONFIG.CHARGE_DAMAGE_MULTIPLIER * siegeDefenderMod, battleData.enemyTraining ?? 50);
         player.troops = applyTroopDamage(player, enemyDmg);
         logs.push({ round: prev.round, message: `⚔️ ${enemy.general.nameKo} 반격! 아군 ${enemyDmg}명 피해!`, type: 'damage' });
         // 쌍방 충돌 애니메이션
@@ -394,7 +364,7 @@ export default function BattleScreen({ battleData, regions, onBattleEnd, battleB
         phase: battleEnd || 'selection'
       };
     });
-  }, [checkBattleEnd, playAnimation]);
+  }, [battleData.enemyTraining, battleData.playerTraining, checkBattleEnd, eventBonusMod, playAnimation, siegeAttackerMod, siegeDefenderMod]);
 
   // 수비
   const defend = useCallback(() => {
@@ -409,7 +379,7 @@ export default function BattleScreen({ battleData, regions, onBattleEnd, battleB
       logs.push({ round: prev.round, message: `🛡️ ${player.general.nameKo} 수비 태세!`, type: 'info' });
 
       if (enemyAction.action === 'charge') {
-        const enemyDmg = Math.round(calculateDamage(enemy, player, siegeDefenderMod, battleData.enemyTraining || 50) * GAME_CONFIG.DEFEND_DAMAGE_REDUCTION);
+        const enemyDmg = Math.round(calculateDamage(enemy, player, siegeDefenderMod, battleData.enemyTraining ?? 50) * GAME_CONFIG.DEFEND_DAMAGE_REDUCTION);
         player.troops = applyTroopDamage(player, enemyDmg);
         logs.push({ round: prev.round, message: `⚔️ ${enemy.general.nameKo} 공격! (수비로 감소) 아군 ${enemyDmg}명 피해!`, type: 'damage' });
         playAnimation('enemyAttack', { player: enemyDmg }, 'charge');
@@ -435,7 +405,7 @@ export default function BattleScreen({ battleData, regions, onBattleEnd, battleB
         phase: battleEnd || 'selection'
       };
     });
-  }, [checkBattleEnd, playAnimation]);
+  }, [battleData.enemyTraining, checkBattleEnd, playAnimation, siegeDefenderMod]);
 
   // 계략
   const useStratagem = useCallback((stratagemId: string) => {
@@ -460,7 +430,7 @@ export default function BattleScreen({ battleData, regions, onBattleEnd, battleB
 
       const enemyAction = selectEnemyAction(enemy, player);
       if (enemyAction.action === 'charge') {
-        const enemyDamage = calculateDamage(enemy, player, GAME_CONFIG.CHARGE_DAMAGE_MULTIPLIER * siegeDefenderMod, battleData.enemyTraining || 50);
+        const enemyDamage = calculateDamage(enemy, player, GAME_CONFIG.CHARGE_DAMAGE_MULTIPLIER * siegeDefenderMod, battleData.enemyTraining ?? 50);
         player.troops = applyTroopDamage(player, enemyDamage);
         logs.push({ round: prev.round, message: `⚔️ ${enemy.general.nameKo} 돌격! 아군 ${enemyDamage}명 피해!`, type: 'damage' });
         player.morale = applyMoraleChange(player, MORALE_CHANGES.ROUND_LOSE);
@@ -478,7 +448,7 @@ export default function BattleScreen({ battleData, regions, onBattleEnd, battleB
         phase: battleEnd || 'selection'
       };
     });
-  }, [checkBattleEnd, playAnimation]);
+  }, [battleData.enemyTraining, checkBattleEnd, playAnimation, siegeDefenderMod]);
 
   // 일기토 시작
   const startDuel = useCallback(() => {
@@ -577,6 +547,36 @@ export default function BattleScreen({ battleData, regions, onBattleEnd, battleB
     });
   }, [checkBattleEnd, playAnimation, duelHealth]);
 
+  // 자동 진행 처리
+  useEffect(() => {
+    if (autoPlay && battle.phase === 'selection') {
+      autoPlayRef.current = setTimeout(() => {
+        // 랜덤 액션 선택 (자동 플레이)
+        const actions = ['charge', 'defend', 'duel'];
+        const randomAction = actions[Math.floor(Math.random() * actions.length)];
+        if (randomAction === 'charge') charge();
+        else if (randomAction === 'defend') defend();
+        else startDuel();
+      }, 2000 / playSpeed);
+    }
+    return () => {
+      if (autoPlayRef.current) clearTimeout(autoPlayRef.current);
+    };
+  }, [autoPlay, battle.phase, charge, defend, playSpeed, startDuel]);
+
+  // 일기토 자동 진행
+  useEffect(() => {
+    if (autoPlay && battle.phase === 'duel') {
+      autoPlayRef.current = setTimeout(() => {
+        const choices: DuelChoice[] = ['power', 'counter', 'special'];
+        selectDuelChoice(choices[Math.floor(Math.random() * choices.length)]);
+      }, 1000 / playSpeed);
+    }
+    return () => {
+      if (autoPlayRef.current) clearTimeout(autoPlayRef.current);
+    };
+  }, [autoPlay, battle.phase, playSpeed, selectDuelChoice]);
+
   const isGameOver = battle.phase === 'victory' || battle.phase === 'defeat';
   const isVictory = battle.phase === 'victory';
   const isDefeat = battle.phase === 'defeat';
@@ -608,27 +608,27 @@ export default function BattleScreen({ battleData, regions, onBattleEnd, battleB
   })();
 
   return (
-    <div className={`min-h-screen p-4 battle-atmosphere ${shakeClass} ${isDefeat ? 'defeat-overlay defeat-vignette' : ''}`} style={{ position: 'relative' }}>
+    <div className={`min-h-screen p-3 sm:p-4 battle-atmosphere overflow-x-hidden ${shakeClass} ${isDefeat ? 'defeat-overlay defeat-vignette' : ''}`} style={{ position: 'relative' }}>
       {/* 전투 배경 이미지 */}
       <div className="absolute inset-0 z-0">
         <img src={battleBg} alt="" className="w-full h-full object-cover" />
         <div className="absolute inset-0 bg-black/40"></div>
       </div>
-      <div className="relative z-10">
+      <div className="relative z-10 max-w-5xl mx-auto">
       {/* 전투 시작 인트로 오버레이 */}
       {showIntro && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 battle-intro">
           <div className="text-center">
-            <div className="text-6xl mb-4 animate-float">⚔️</div>
-            <h2 className="text-4xl font-bold text-gold title-glow mb-2">전투 개시!</h2>
-            <p className="text-xl text-silk/70">{targetRegion?.nameKo} 공략전</p>
+            <div className="text-5xl sm:text-6xl mb-4 animate-float">⚔️</div>
+            <h2 className="text-3xl sm:text-4xl font-bold text-gold title-glow mb-2">전투 개시!</h2>
+            <p className="text-lg sm:text-xl text-silk/70">{targetRegion?.nameKo} 공략전</p>
           </div>
         </div>
       )}
 
       {/* 헤더 */}
-      <header className="text-center mb-6 animate-fade-in">
-        <h1 className="text-2xl font-bold text-gold mb-2 title-fancy">
+      <header className="text-center mb-4 sm:mb-6 animate-fade-in">
+        <h1 className="text-xl sm:text-2xl font-bold text-gold mb-2 title-fancy">
           ⚔️ {targetRegion?.nameKo} 공략전 ⚔️
         </h1>
         <div className="flex items-center justify-center gap-4">
@@ -646,10 +646,10 @@ export default function BattleScreen({ battleData, regions, onBattleEnd, battleB
       </header>
 
       {/* 실시간 중계 컨트롤 */}
-      <div className="flex justify-center gap-2 mb-4">
+      <div className="flex flex-wrap justify-center items-center gap-2 mb-4">
         <button
           onClick={() => setAutoPlay(!autoPlay)}
-          className={`px-4 py-2 rounded-lg text-sm font-bold transition ${
+          className={`min-h-[44px] px-4 py-2 rounded-lg text-sm font-bold transition ${
             autoPlay 
               ? 'btn-war' 
               : 'btn-peace'
@@ -657,12 +657,12 @@ export default function BattleScreen({ battleData, regions, onBattleEnd, battleB
         >
           {autoPlay ? '⏸️ 멈춤' : '▶️ 자동 진행'}
         </button>
-        <div className="flex gap-1">
+        <div className="flex gap-1.5">
           {[1, 2, 3].map(speed => (
             <button
               key={speed}
               onClick={() => setPlaySpeed(speed)}
-              className={`px-3 py-2 rounded-lg text-sm font-bold transition ${
+              className={`min-h-[44px] min-w-[44px] px-3 py-2 rounded-lg text-sm font-bold transition ${
                 playSpeed === speed 
                   ? 'btn-gold' 
                   : 'btn-wood'
@@ -675,7 +675,7 @@ export default function BattleScreen({ battleData, regions, onBattleEnd, battleB
       </div>
 
       {/* 전투 유닛 */}
-      <div className="grid grid-cols-2 gap-4 mb-4 relative">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 mb-4 relative">
         <div className="unit-enter-left">
           <div className={getEffectClass(playerEffect, 'player')}>
             <UnitCard
@@ -708,7 +708,7 @@ export default function BattleScreen({ battleData, regions, onBattleEnd, battleB
 
       {/* VS 표시 */}
       <div className="text-center mb-4">
-        <span className={`text-2xl font-bold text-gold ${showClash ? 'duel-clash' : vsIntense ? 'vs-intense' : 'vs-pulse'}`}>
+        <span className={`text-xl sm:text-2xl font-bold text-gold ${showClash ? 'duel-clash' : vsIntense ? 'vs-intense' : 'vs-pulse'}`}>
           ⚡ VS ⚡
         </span>
       </div>
@@ -739,7 +739,7 @@ export default function BattleScreen({ battleData, regions, onBattleEnd, battleB
         )}
 
         {isGameOver && (
-          <div className={`dynasty-card rounded-xl p-6 text-center animate-scale-in relative overflow-hidden ${
+          <div className={`dynasty-card rounded-xl p-4 sm:p-6 text-center animate-scale-in relative overflow-hidden ${
             isVictory ? 'victory-celebration victory-rays' : ''
           }`}>
             {/* 승리 시 추가 파티클 */}
@@ -752,7 +752,7 @@ export default function BattleScreen({ battleData, regions, onBattleEnd, battleB
               </>
             )}
             
-            <div className={`text-5xl font-bold mb-4 winner-bounce relative z-10 ${
+            <div className={`text-4xl sm:text-5xl font-bold mb-4 winner-bounce relative z-10 ${
               isVictory ? 'text-jade-light winner-glow' : 'text-crimson-light'
             }`}>
               {isVictory ? '🎉 대승리! 🎉' : '💀 패배...'}
@@ -765,7 +765,7 @@ export default function BattleScreen({ battleData, regions, onBattleEnd, battleB
             </div>
             <div className="divider-gold my-4 relative z-10"></div>
             <div className="text-sm text-silk/60 space-y-2 relative z-10">
-              <div className="flex justify-center gap-6">
+              <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-6">
                 <div className="bg-jade/20 px-4 py-2 rounded-lg">
                   <span className="block text-xs text-silk/50">아군 피해</span>
                   <span className="text-jade-light font-bold text-lg">{(initialTroops.player - battle.player.troops).toLocaleString()}명</span>

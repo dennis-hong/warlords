@@ -9,10 +9,9 @@ import type {
   FactionId, 
   RegionId,
   Region,
-  DiplomaticRelationType,
+  Prisoner,
   AITurnLog
 } from '../types';
-import { GENERALS, UNAFFILIATED_GENERALS } from '../constants/gameData';
 import { getRelationBetween, analyzeFactions, type FactionAnalysis } from './aiDiplomacy';
 
 // AI 행동 결과
@@ -37,8 +36,7 @@ export type { AITurnLog };
  */
 function calculateRegionPriority(
   region: Region,
-  gameState: GameState,
-  analyses: FactionAnalysis[]
+  gameState: GameState
 ): number {
   let priority = 0;
   
@@ -65,7 +63,7 @@ function calculateRegionPriority(
   if (region.commerce < 70) priority += 10;
 
   // 훈련도가 낮으면 우선
-  if ((region.training || 50) < 70) priority += 10;
+  if ((region.training ?? 50) < 70) priority += 10;
   
   return priority;
 }
@@ -149,8 +147,8 @@ export function processAIFactionTurn(
   const myRegions = Object.values(state.regions)
     .filter(r => r.owner === factionId)
     .sort((a, b) => 
-      calculateRegionPriority(b, state, analyses) - 
-      calculateRegionPriority(a, state, analyses)
+      calculateRegionPriority(b, state) - 
+      calculateRegionPriority(a, state)
     );
   
   if (myRegions.length === 0) {
@@ -182,12 +180,26 @@ export function processAIFactionTurn(
         if (powerRatio > 1.2) {
           const attackerLoss = Math.floor(troops * 0.2);
           const defenderLoss = target.troops;
+          const capturedGenerals: Prisoner[] = target.generals
+            .filter(generalId => !state.prisoners.some(p => p.generalId === generalId))
+            .map(generalId => ({
+              generalId,
+              capturedTurn: state.turn,
+              capturedBy: factionId,
+              location: targetRegion
+            }));
           state = {
             ...state,
+            prisoners: [...state.prisoners, ...capturedGenerals],
             regions: {
               ...state.regions,
               [sourceRegion]: { ...source, troops: source.troops - troops },
-              [targetRegion]: { ...target, owner: factionId, troops: troops - attackerLoss, generals: [] }
+              [targetRegion]: {
+                ...target,
+                owner: factionId,
+                troops: Math.max(0, troops - attackerLoss),
+                generals: []
+              }
             }
           };
           actions.push({
@@ -205,7 +217,7 @@ export function processAIFactionTurn(
             regions: {
               ...state.regions,
               [sourceRegion]: { ...source, troops: source.troops - attackerLoss },
-              [targetRegion]: { ...target, troops: target.troops - defenderLoss }
+              [targetRegion]: { ...target, troops: Math.max(0, target.troops - defenderLoss) }
             }
           };
           actions.push({
@@ -226,8 +238,8 @@ export function processAIFactionTurn(
     const sortedRegions = Object.values(state.regions)
       .filter(r => r.owner === factionId)
       .sort((a, b) =>
-        calculateRegionPriority(b, state, analyses) -
-        calculateRegionPriority(a, state, analyses)
+        calculateRegionPriority(b, state) -
+        calculateRegionPriority(a, state)
       );
 
     let domesticDone = false;
@@ -261,7 +273,7 @@ export function processAIFactionTurn(
       }
 
       // 훈련도 → 훈련
-      const training = region.training || 50;
+      const training = region.training ?? 50;
       if (training < 90 && canAfford(300, 200)) {
         const increase = Math.min(10, 100 - training);
         state = {
@@ -357,17 +369,17 @@ export function processAllAITurns(gameState: GameState): {
   newState: GameState; 
   logs: AITurnLog[] 
 } {
-  const analyses = analyzeFactions(gameState);
   const logs: AITurnLog[] = [];
   let state = { ...gameState };
   
   // 생존 AI 세력
-  const aiFactions = analyses
+  const aiFactions = analyzeFactions(state)
     .filter(a => a.isAlive && a.factionId !== state.playerFaction && a.factionId !== 'player')
     .map(a => a.factionId);
   
   for (const factionId of aiFactions) {
-    const { newState, actions } = processAIFactionTurn(state, factionId, analyses);
+    const currentAnalyses = analyzeFactions(state);
+    const { newState, actions } = processAIFactionTurn(state, factionId, currentAnalyses);
     state = newState;
     
     if (actions.length > 0) {

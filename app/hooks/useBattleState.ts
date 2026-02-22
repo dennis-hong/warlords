@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import type { BattleState, BattleUnit, BattleLog, DuelChoice } from '../types';
-import { GENERALS, GAME_CONFIG, MORALE_CHANGES, STRATAGEMS } from '../constants/gameData';
+import { GENERALS, GAME_CONFIG, MORALE_CHANGES } from '../constants/gameData';
 import {
   calculateDamage,
   resolveDuel,
@@ -45,16 +45,8 @@ export function useBattleState() {
   const [isClient, setIsClient] = useState(false);
 
   // 클라이언트 확인
-  useState(() => {
+  useEffect(() => {
     setIsClient(true);
-  });
-
-  // 로그 추가
-  const addLog = useCallback((log: Omit<BattleLog, 'round'>) => {
-    setBattle(prev => ({
-      ...prev,
-      logs: [...prev.logs, { ...log, round: prev.round }]
-    }));
   }, []);
 
   // 승패 체크

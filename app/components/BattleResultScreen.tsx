@@ -33,7 +33,6 @@ export default function BattleResultScreen({
   const [prisonerMessages, setPrisonerMessages] = useState<Record<string, { text: string; type: 'success' | 'error' | 'info' }>>({});
   
   // 포로 처리 UI 표시 여부
-  const [showPrisonerActions, setShowPrisonerActions] = useState(false);
   const [selectedPrisoner, setSelectedPrisoner] = useState<string | null>(null);
   const [selectedRecruiter, setSelectedRecruiter] = useState<string | null>(null);
 
@@ -59,7 +58,6 @@ export default function BattleResultScreen({
     }
     setSelectedPrisoner(null);
     setSelectedRecruiter(null);
-    setShowPrisonerActions(false);
   };
 
   // 포로 처형
@@ -87,7 +85,7 @@ export default function BattleResultScreen({
   };
 
   // 장수 운명 표시
-  const renderGeneralFates = (fates: GeneralFate[], label: string, isEnemy: boolean) => {
+  const renderGeneralFates = (fates: GeneralFate[], label: string) => {
     const significantFates = fates.filter(f => f.fate !== 'alive');
     if (significantFates.length === 0) return null;
 
@@ -123,8 +121,8 @@ export default function BattleResultScreen({
   };
 
   return (
-    <div className="min-h-screen p-4 flex items-center justify-center">
-      <div className="dynasty-card rounded-xl p-6 w-full max-w-md animate-scale-in">
+    <div className="min-h-screen p-3 sm:p-4 flex items-start sm:items-center justify-center">
+      <div className="dynasty-card rounded-xl p-4 sm:p-6 w-full max-w-md animate-scale-in max-h-[calc(100vh-24px)] sm:max-h-[90vh] overflow-y-auto">
         {/* 승리/패배 헤더 */}
         <div className="text-center mb-6">
           <div className={`text-5xl font-bold mb-3 ${
@@ -163,8 +161,8 @@ export default function BattleResultScreen({
         </div>
 
         {/* 장수 운명 */}
-        {outcome.playerGeneralFates && renderGeneralFates(outcome.playerGeneralFates, '아군 장수', false)}
-        {outcome.enemyGeneralFates && renderGeneralFates(outcome.enemyGeneralFates, '적군 장수', true)}
+        {outcome.playerGeneralFates && renderGeneralFates(outcome.playerGeneralFates, '아군 장수')}
+        {outcome.enemyGeneralFates && renderGeneralFates(outcome.enemyGeneralFates, '적군 장수')}
 
         {/* 포로 처리 섹션 */}
         {isVictory && hasPrisoners && (
@@ -217,7 +215,7 @@ export default function BattleResultScreen({
                                   <button
                                     key={pg.generalId}
                                     onClick={() => setSelectedRecruiter(pg.generalId)}
-                                    className={`w-full p-2 rounded-lg text-left transition-all text-sm active:scale-[0.98] flex items-center gap-2 ${
+                                    className={`w-full min-h-[44px] p-2 rounded-lg text-left transition-all text-sm active:scale-[0.98] flex items-center gap-2 ${
                                       isSelected
                                         ? 'bg-jade/40 ring-2 ring-jade-light'
                                         : 'bg-dynasty-medium/60 hover:bg-dynasty-medium'
@@ -234,7 +232,7 @@ export default function BattleResultScreen({
                               <button
                                 onClick={handleRecruit}
                                 disabled={!selectedRecruiter}
-                                className="btn-peace flex-1 py-2 rounded text-sm disabled:opacity-50"
+                                className="btn-peace flex-1 min-h-[44px] py-2 rounded text-sm disabled:opacity-50"
                               >
                                 🎯 등용 시도
                               </button>
@@ -243,7 +241,7 @@ export default function BattleResultScreen({
                                   setSelectedPrisoner(null);
                                   setSelectedRecruiter(null);
                                 }}
-                                className="btn-wood px-4 py-2 rounded text-sm"
+                                className="btn-wood min-h-[44px] px-4 py-2 rounded text-sm"
                               >
                                 취소
                               </button>
@@ -251,22 +249,22 @@ export default function BattleResultScreen({
                           </div>
                         ) : (
                           /* 포로 행동 버튼 */
-                          <div className="flex gap-2">
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                             <button
                               onClick={() => setSelectedPrisoner(prisoner.generalId)}
-                              className="btn-peace flex-1 py-2 rounded text-sm"
+                              className="btn-peace min-h-[44px] py-2 rounded text-sm"
                             >
                               🤝 등용
                             </button>
                             <button
                               onClick={() => handleExecute(prisoner.generalId)}
-                              className="btn-war flex-1 py-2 rounded text-sm"
+                              className="btn-war min-h-[44px] py-2 rounded text-sm"
                             >
                               ⚔️ 처형
                             </button>
                             <button
                               onClick={() => handleRelease(prisoner.generalId)}
-                              className="btn-wood flex-1 py-2 rounded text-sm"
+                              className="btn-wood min-h-[44px] py-2 rounded text-sm"
                             >
                               🕊️ 석방
                             </button>
@@ -291,7 +289,6 @@ export default function BattleResultScreen({
             <div className="text-sm text-silk/70">
               {Array.from(processedPrisoners).map(id => {
                 const msg = prisonerMessages[id];
-                const gen = getGeneral(id) || GENERALS[id];
                 return msg ? (
                   <div key={id} className={
                     msg.type === 'success' ? 'text-jade-light' :
@@ -309,7 +306,7 @@ export default function BattleResultScreen({
         {/* 확인 버튼 */}
         <button
           onClick={onClose}
-          className={`w-full py-3 rounded-lg text-lg font-bold ${
+          className={`w-full min-h-[48px] py-3 rounded-lg text-lg font-bold ${
             isVictory ? 'btn-gold' : 'btn-war'
           }`}
         >

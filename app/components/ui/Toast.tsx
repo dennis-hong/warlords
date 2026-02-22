@@ -13,7 +13,7 @@ interface ToastProps {
 
 export function Toast({ messages, onRemove }: ToastProps) {
   return (
-    <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 flex flex-col gap-2 pointer-events-none">
+    <div className="fixed left-1/2 -translate-x-1/2 z-[70] flex w-full max-w-sm flex-col gap-2 px-3 pointer-events-none bottom-[88px] sm:bottom-auto sm:top-20">
       {messages.map(msg => (
         <ToastItem key={msg.id} message={msg} onRemove={onRemove} />
       ))}
@@ -47,7 +47,7 @@ function ToastItem({ message, onRemove }: { message: ToastMessage; onRemove: (id
         ${bgColor} border-2 px-4 py-2 rounded-lg shadow-lg
         text-parchment text-sm font-medium
         animate-slide-up pointer-events-auto
-        flex items-center gap-2 min-w-[200px] max-w-[300px]
+        flex items-center gap-2 w-full sm:min-w-[220px] sm:max-w-[320px]
       `}
     >
       <span className="text-lg">{icon}</span>

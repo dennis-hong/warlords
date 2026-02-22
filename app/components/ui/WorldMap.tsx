@@ -34,7 +34,7 @@ export function WorldMap({
             if (!adj) return null;
             const pos1 = REGION_POSITIONS[region.id];
             const pos2 = REGION_POSITIONS[adjId];
-            if (region.id > adjId) return null;
+            if (!pos1 || !pos2 || region.id > adjId) return null;
             return (
               <line
                 key={`${region.id}-${adjId}`}
@@ -54,6 +54,7 @@ export function WorldMap({
       {/* 지역 노드 */}
       {regionList.map(region => {
         const pos = REGION_POSITIONS[region.id];
+        if (!pos) return null;
         const faction = factions[region.owner];
         const isPlayer = region.owner === playerFaction;
         const isSelected = selectedRegion === region.id;

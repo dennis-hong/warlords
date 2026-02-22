@@ -98,7 +98,7 @@ export function checkRout(unit: BattleUnit): boolean {
 }
 
 // AI 행동 선택 (간단한 로직)
-export function selectEnemyAction(enemy: BattleUnit, player: BattleUnit): {
+export function selectEnemyAction(enemy: BattleUnit, _player: BattleUnit): {
   action: 'charge' | 'defend' | 'stratagem';
   stratagem?: string;
 } {
@@ -233,23 +233,32 @@ export function getInitialLoyalty(generalId: string): number {
 
 // 계략 효과 적용
 export function applyStratagem(
-  stratagemeId: string,
+  stratagemId: string,
   caster: BattleUnit,
   target: BattleUnit
 ): { caster: BattleUnit; target: BattleUnit; message: string } {
-  const stratagem = STRATAGEMS[stratagemeId];
+  const stratagem = STRATAGEMS[stratagemId];
+  const updatedCaster = { ...caster, usedStratagems: [...caster.usedStratagems, stratagemId] };
+  const updatedTarget = { ...target };
+
+  if (!stratagem) {
+    return {
+      caster: updatedCaster,
+      target: updatedTarget,
+      message: `${caster.general.nameKo}의 계략이 발동하지 않았습니다.`
+    };
+  }
+
   const success = Math.random() * 100 < calculateStratagemSuccess(caster, target);
   
   let message = '';
-  let updatedCaster = { ...caster, usedStratagems: [...caster.usedStratagems, stratagemeId] };
-  let updatedTarget = { ...target };
   
   if (!success) {
     message = `${caster.general.nameKo}의 ${stratagem.nameKo} 실패!`;
     return { caster: updatedCaster, target: updatedTarget, message };
   }
   
-  switch (stratagemeId) {
+  switch (stratagemId) {
     case 'fireAttack':
       const fireDamage = Math.round(target.troops * 0.3);
       updatedTarget.troops = applyTroopDamage(target, fireDamage);

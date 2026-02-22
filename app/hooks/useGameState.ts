@@ -189,7 +189,7 @@ export function useGameState() {
 
     // 담당 장수 찾기 (가장 능력치 높은 장수)
     const assignedGeneral = region.generals
-      .map(id => GENERALS[id])
+      .map(id => GENERALS[id] || UNAFFILIATED_GENERALS[id])
       .filter(Boolean)
       .sort((a, b) => (b?.[command.statRequired] || 0) - (a?.[command.statRequired] || 0))[0];
 
@@ -220,7 +220,7 @@ export function useGameState() {
         case 'train':
           // 훈련도 증가 (최대 100)
           const trainingIncrease = Math.floor(5 * (1 + bonus));
-          newRegion.training = Math.min(100, (newRegion.training || 50) + trainingIncrease);
+          newRegion.training = Math.min(100, (newRegion.training ?? 50) + trainingIncrease);
           break;
       }
 
@@ -618,7 +618,7 @@ export function useGameState() {
 
       // 식량 체크 & 차감 (출발 지역에서)
       // selectedRegion이 플레이어 영토인 경우 사용, 아니면 첫 번째 영토
-      let sourceRegion = prev.selectedRegion && prev.regions[prev.selectedRegion]?.owner === prev.playerFaction
+      const sourceRegion = prev.selectedRegion && prev.regions[prev.selectedRegion]?.owner === prev.playerFaction
         ? prev.regions[prev.selectedRegion]
         : currentPlayerRegions[0];
 
@@ -653,8 +653,8 @@ export function useGameState() {
         enemyRegionId: prev.march.targetRegion,
         enemyGeneralIds: targetRegion.generals,
         enemyTroops: targetRegion.troops,
-        playerTraining: sourceRegion.training || 50,
-        enemyTraining: targetRegion.training || 50
+        playerTraining: sourceRegion.training ?? 50,
+        enemyTraining: targetRegion.training ?? 50
       };
 
       // 출발 지역에서 병력 & 식량 & 금 차감
@@ -688,7 +688,7 @@ export function useGameState() {
             return state.battleData?.playerUnits.some(u => u.generalId === condition.generalId) || false;
           case 'troops_ratio':
             // 아군이 적의 일정 비율 이하인지 체크
-            if (!state.battleData || !condition.ratio) return false;
+            if (!state.battleData || condition.ratio === undefined) return false;
             const playerTroops = state.battleData.playerUnits.reduce((sum, u) => sum + u.troops, 0);
             const enemyTroops = state.battleData.enemyTroops;
             return (playerTroops / enemyTroops) <= condition.ratio;
@@ -725,8 +725,9 @@ export function useGameState() {
 
       const { playerRegionId, enemyRegionId, playerUnits } = prev.battleData;
       const newRegions = { ...prev.regions };
-      let newPrisoners = [...prev.prisoners];
-      let newDeadGenerals = [...prev.deadGenerals];
+      const newPrisoners = [...prev.prisoners];
+      const newDeadGenerals = [...prev.deadGenerals];
+      const newFreeGenerals = [...prev.freeGenerals];
       const newLoyalty = { ...prev.generalLoyalty };
 
       // 장수 운명 처리
@@ -779,10 +780,6 @@ export function useGameState() {
       if (outcome.winner === 'player') {
         // 승리: 적 영토 점령
         const targetRegion = newRegions[enemyRegionId];
-        
-        // 적 생존 장수는 그 지역에 남음 (포로 제외)
-        const survivingEnemyGenerals = targetRegion.generals
-          .filter(id => !removedEnemyGenerals.includes(id));
 
         newRegions[enemyRegionId] = {
           ...targetRegion,
@@ -800,8 +797,21 @@ export function useGameState() {
           generals: sourceRegion.generals.filter(g => !movedGeneralIds.includes(g))
         };
 
-        // 적 생존 장수들에 대한 처리 (도망간 것으로 처리 - 인접 지역으로)
-        // 간단히 처리: 그냥 사라짐 (나중에 재야로 등장 가능)
+        // 포로/사망 제외 적 장수는 재야로 이탈 처리 (실종 방지)
+        const escapedEnemyGenerals = targetRegion.generals
+          .filter(id => !removedEnemyGenerals.includes(id))
+          .filter(id =>
+            !newPrisoners.some(p => p.generalId === id) &&
+            !newDeadGenerals.includes(id) &&
+            !newFreeGenerals.some(fg => fg.generalId === id)
+          );
+        for (const escapedId of escapedEnemyGenerals) {
+          newFreeGenerals.push({
+            generalId: escapedId,
+            location: enemyRegionId,
+            recruitDifficulty: 20
+          });
+        }
       } else {
         // 패배: 남은 병력 귀환 (퇴각 손실 30% 추가)
         const retreatLoss = Math.floor(survivingTroops * 0.3);
@@ -829,6 +839,7 @@ export function useGameState() {
         ...prev,
         regions: newRegions,
         prisoners: newPrisoners,
+        freeGenerals: newFreeGenerals,
         deadGenerals: newDeadGenerals,
         generalLoyalty: newLoyalty,
         battleData: null,
@@ -960,7 +971,6 @@ export function useGameState() {
         const newRegions = { ...prev.regions };
         const oldGenerals = newRegions[regionId].generals;
         const newGenerals = [...oldGenerals, generalId];
-        console.log('[DEBUG] 등용 성공:', { regionId, generalId, oldGenerals, newGenerals });
         newRegions[regionId] = {
           ...newRegions[regionId],
           generals: newGenerals
@@ -1157,7 +1167,7 @@ export function useGameState() {
         // 석방하면 충성도가 조금 올라감
         generalLoyalty: {
           ...prev.generalLoyalty,
-          [prisonerId]: Math.min(100, (prev.generalLoyalty[prisonerId] || 50) + 10)
+          [prisonerId]: Math.min(100, (prev.generalLoyalty[prisonerId] ?? 50) + 10)
         }
       };
     });
@@ -1209,7 +1219,7 @@ export function useGameState() {
       
       case 'troops_ratio':
         // 전투 중일 때만 체크 (battleData 필요)
-        if (!state.battleData || !condition.ratio) return false;
+        if (!state.battleData || condition.ratio === undefined) return false;
         const playerTroops = state.battleData.playerUnits.reduce((sum, u) => sum + u.troops, 0);
         const enemyTroops = state.battleData.enemyTroops;
         return (playerTroops / enemyTroops) <= condition.ratio;
@@ -1327,7 +1337,7 @@ export function useGameState() {
       
       case 'add_loyalty': {
         if (effect.generalId && effect.value !== undefined) {
-          const current = newState.generalLoyalty[effect.generalId] || 50;
+          const current = newState.generalLoyalty[effect.generalId] ?? 50;
           newState.generalLoyalty = {
             ...newState.generalLoyalty,
             [effect.generalId]: Math.min(100, Math.max(0, current + effect.value))

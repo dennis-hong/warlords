@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import { useMemo } from 'react';
 import type { GameOverState, FactionId } from '../types';
 import { FACTION_DETAILS } from '../constants/worldData';
 
@@ -19,17 +19,29 @@ export default function GameOverScreen({
 }: GameOverScreenProps) {
   const isVictory = gameOver.result === 'victory';
   const factionDetail = FACTION_DETAILS[selectedFaction];
+  const confetti = useMemo(
+    () =>
+      Array.from({ length: 20 }, (_, i) => ({
+        id: i,
+        left: `${Math.random() * 100}%`,
+        top: `${Math.random() * 100}%`,
+        delay: `${Math.random() * 2}s`,
+        duration: `${2 + Math.random() * 2}s`,
+        emoji: ['⭐', '✨', '🎊', '🎉'][Math.floor(Math.random() * 4)]
+      })),
+    []
+  );
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
-      <div className="max-w-md w-full text-center animate-fade-in">
+    <div className="min-h-screen flex items-start sm:items-center justify-center p-3 sm:p-4 overflow-y-auto">
+      <div className="max-w-md w-full text-center animate-fade-in relative overflow-hidden rounded-xl dynasty-card p-4 sm:p-6">
         {/* 결과 아이콘 */}
-        <div className={`text-8xl mb-6 ${isVictory ? 'animate-float' : 'animate-pulse'}`}>
+        <div className={`text-6xl sm:text-8xl mb-4 sm:mb-6 ${isVictory ? 'animate-float' : 'animate-pulse'}`}>
           {isVictory ? '👑' : '💀'}
         </div>
 
         {/* 타이틀 */}
-        <h1 className={`text-4xl font-bold mb-4 ${
+        <h1 className={`text-3xl sm:text-4xl font-bold mb-4 ${
           isVictory 
             ? 'text-amber-300 title-glow' 
             : 'text-red-400'
@@ -46,26 +58,26 @@ export default function GameOverScreen({
         </div>
 
         {/* 메시지 */}
-        <p className="text-xl text-silk/80 mb-2">
+        <p className="text-lg sm:text-xl text-silk/80 mb-2">
           {gameOver.message}
         </p>
 
         {/* 통계 */}
-        <div className="dynasty-card p-6 rounded-xl mb-8">
+        <div className="dynasty-card p-4 sm:p-6 rounded-xl mb-6">
           <div className="grid grid-cols-2 gap-4 text-center">
             <div>
-              <div className="text-3xl font-bold text-amber-300">{gameOver.year}</div>
+              <div className="text-2xl sm:text-3xl font-bold text-amber-300">{gameOver.year}</div>
               <div className="text-sm text-silk/60">년</div>
             </div>
             <div>
-              <div className="text-3xl font-bold text-jade-light">{gameOver.turn}</div>
+              <div className="text-2xl sm:text-3xl font-bold text-jade-light">{gameOver.turn}</div>
               <div className="text-sm text-silk/60">턴</div>
             </div>
           </div>
         </div>
 
         {/* 결과별 메시지 */}
-        <div className={`p-4 rounded-lg mb-8 ${
+        <div className={`p-4 rounded-lg mb-6 ${
           isVictory 
             ? 'bg-amber-900/30 border border-amber-600/50' 
             : 'bg-red-900/30 border border-red-600/50'
@@ -82,7 +94,7 @@ export default function GameOverScreen({
         <div className="space-y-3">
           <button
             onClick={onNewGame}
-            className={`w-full py-4 rounded-xl text-lg font-bold transition-all ${
+            className={`w-full min-h-[48px] py-4 rounded-xl text-lg font-bold transition-all ${
               isVictory 
                 ? 'btn-peace'
                 : 'btn-war'
@@ -93,7 +105,7 @@ export default function GameOverScreen({
           
           <button
             onClick={onBackToTitle}
-            className="w-full py-3 rounded-xl text-amber-300/70 hover:text-amber-200 transition-colors"
+            className="w-full min-h-[44px] py-3 rounded-xl text-amber-300/70 hover:text-amber-200 transition-colors"
           >
             타이틀로 돌아가기
           </button>
@@ -102,18 +114,18 @@ export default function GameOverScreen({
         {/* 승리 시 축하 효과 */}
         {isVictory && (
           <div className="absolute inset-0 pointer-events-none overflow-hidden">
-            {[...Array(20)].map((_, i) => (
+            {confetti.map((piece) => (
               <div
-                key={i}
+                key={piece.id}
                 className="absolute text-2xl animate-float"
                 style={{
-                  left: `${Math.random() * 100}%`,
-                  top: `${Math.random() * 100}%`,
-                  animationDelay: `${Math.random() * 2}s`,
-                  animationDuration: `${2 + Math.random() * 2}s`
+                  left: piece.left,
+                  top: piece.top,
+                  animationDelay: piece.delay,
+                  animationDuration: piece.duration
                 }}
               >
-                {['⭐', '✨', '🎊', '🎉'][Math.floor(Math.random() * 4)]}
+                {piece.emoji}
               </div>
             ))}
           </div>
